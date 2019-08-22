@@ -1,0 +1,56 @@
+{
+	"JSON schema": {
+		"name": "QFT JSON",
+		"version_major": 0,
+		"version_minor": 1
+	},
+	"Quantum Field Theory": {
+		"model name": "qed",
+		"topological manifold": {
+			"type": "vector space",
+			"algebraic field": "real numbers",
+			"dimension": "spacetime dimension",
+			"additional data": {
+				"metric": "euclidean"
+			}
+		},
+		"classical fields": [
+			{
+				"name": "\\psi",
+				"algebraic field": "complex grassmann numbers",
+				"dimension": 4
+			},
+			{
+				"name": "A",
+				"algebraic field": "real numbers",
+				"dimension": "spacetime dimension"
+			}
+		],
+		"lagrangian": [
+			{
+				"monomial": "\\bar{\\psi} \\DiracOperator \\psi",
+				"coefficient": "Z_\\psi",
+				"constant factor": "i"
+			},
+			{
+				"monomial": "\\bar{\\psi} \\psi",
+				"coefficient": "m",
+				"constant factor": "-i"
+			},
+			{
+				"monomial": "(\\partial_\\mu A_\\nu - \\partial_\\nu A_\\mu) (\\partial^\\mu A^\\nu - \\partial^\\nu A^\\mu)",
+				"coefficient": "Z_A",
+				"constant factor": "1/4"
+			},
+			{
+				"monomial": "\\bar{\\psi} \\gamma_\\mu A^\\mu \\psi",
+				"coefficient": "e",
+				"constant factor": "-1"
+			},
+			{
+				"monomial": "(\\partial_\\mu A^\\mu)^2",
+				"coefficient": "xi"
+			}
+		]
+	}
+}
