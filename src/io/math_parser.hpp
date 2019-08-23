@@ -6,9 +6,9 @@
 #define PQUANTUM_MATH_PARSER_HPP
 
 #include "logging.hpp"
-#include "string_to_uuid.hpp"
+#include "parser_rules/rule_for_symbol_fwd.hpp"
 
-#include "error/control.hpp"
+#include "error/error.hpp"
 #include "mathutils/expressions.hpp"
 #include "model/classical_field.hpp"
 
@@ -20,19 +20,14 @@ namespace PQuantum
 {
 namespace io
 {
-namespace parser_rules
-{
-template<class Symbol> class rule_for_symbol;
-}
-
-template<class Symbol>
-std::vector<Symbol> parse_symbols( const std::string &string, const string_to_uuid &uuid_gen )
+template<class Symbol, class Context>
+std::vector<Symbol> parse_symbols( const std::string &string, Context &&context )
 {
 	BOOST_LOG_NAMED_SCOPE( "io::parse_symbols()" );
 	io::severity_logger logger;
 	
 	std::vector<Symbol> symbols;
-	const auto symbol_parser = parser_rules::rule_for_symbol<Symbol>{ uuid_gen };
+	const auto symbol_parser = parser_rules::rule_for_symbol<Symbol>( std::forward<Context>( context ));
 	auto it = string.begin();
 	
 	bool parsing_result = boost::spirit::x3::phrase_parse( it, string.end(), *symbol_parser,
@@ -43,7 +38,7 @@ std::vector<Symbol> parse_symbols( const std::string &string, const string_to_uu
 	
 	if( parsing_result == false ) {
 		BOOST_LOG_SEV( logger, severity_level::error ) << "Cannot parse input string: \"" << string << "\"";
-		control::exit_upon_error();
+		error::exit_upon_error();
 	}
 	
 	if( it != string.end()) {

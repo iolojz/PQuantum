@@ -4,7 +4,7 @@
 
 #include "program_options_handler.hpp"
 #include "qft_json_parser.hpp"
-#include "error/control.hpp"
+#include "error/error.hpp"
 
 #include <boost/log/attributes.hpp>
 
@@ -45,7 +45,7 @@ void program_options_handler::take_action( void )
 	
 	if( model_file.length() == 0 ) {
 		BOOST_LOG_SEV( logger, io::severity_level::error ) << "No model file specified.";
-		control::exit_upon_error();
+		error::exit_upon_error();
 	}
 	
 	qft_json_parser::parse( model_file );

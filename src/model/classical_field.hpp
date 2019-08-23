@@ -23,24 +23,8 @@ struct classical_field_specification
 	std::variant<int, mathutils::spacetime_dimension> dimension;
 };
 
-class classical_field_id
-{
-	boost::uuids::uuid id;
-public:
-	classical_field_id( void ) : id{ boost::uuids::random_generator()() }
-	{}
-	classical_field_id &operator=( boost::uuids::uuid uid )
-	{
-		id = uid;
-		return *this;
-	}
-	
-	bool operator==( const classical_field_id &f ) const
-	{ return id == f.id; }
-	
-	bool operator<( const classical_field_id &f ) const
-	{ return id < f.id; }
-};
+using classical_field_id = boost::uuids::uuid
+id;
 }
 }
 

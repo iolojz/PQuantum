@@ -8,7 +8,7 @@
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <variant>
 
-#include "error/control.hpp"
+#include "error/error.hpp"
 #include "io/logging.hpp"
 
 namespace PQuantum
@@ -51,7 +51,7 @@ struct vector_space
 		if( std::holds_alternative<int>( dimension ) && std::get<int>( dimension ) < 0 ) {
 			BOOST_LOG_SEV( logger, io::severity_level::error ) << "Negative dimension specified: "
 															   << std::get<int>( dimension );
-			control::exit_upon_error();
+			error::exit_upon_error();
 		}
 		
 		switch( metric ) {
@@ -60,14 +60,14 @@ struct vector_space
 				if( field != algebraic_field::real ) {
 					BOOST_LOG_SEV( logger, io::severity_level::error )
 						<< "Only real vector spaces can have a euclidean metric.";
-					control::exit_upon_error();
+					error::exit_upon_error();
 				}
 				break;
 			case vector_space_metric::complex_nondegenerate:
 				if( field != algebraic_field::complex ) {
 					BOOST_LOG_SEV( logger, io::severity_level::error )
 						<< "Only complex vector spaces can have a complex nondegenerate metric.";
-					control::exit_upon_error();
+					error::exit_upon_error();
 				}
 				break;
 			case vector_space_metric::unspecified:

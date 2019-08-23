@@ -2,15 +2,15 @@
 // Created by jayz on 29.07.19.
 //
 
-#ifndef PQUANTUM_CONTROL_HPP
-#define PQUANTUM_CONTROL_HPP
+#ifndef PQUANTUM_ERROR_HPP
+#define PQUANTUM_ERROR_HPP
 
 namespace PQuantum
 {
-namespace control
+namespace error
 {
 [[noreturn]] void exit_upon_error( void );
 }
 }
 
-#endif //PQUANTUM_CONTROL_HPP
+#endif //PQUANTUM_ERROR_HPP

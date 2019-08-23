@@ -5,13 +5,12 @@
 #include "qft_json_parser.hpp"
 
 #include "logging.hpp"
-#include "string_to_uuid.hpp"
 #include "parser_rules/lagrangian_symbol.hpp"
 #include "math_parser.hpp"
 
 #include "model/model_specification.hpp"
 #include "model/lagrangian.hpp"
-#include "error/control.hpp"
+#include "error/error.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -37,7 +36,7 @@ qft_json_parser qft_json_parser::parse( const std::string &path_to_file )
 		boost::property_tree::read_json( path_to_file, property_tree );
 	} catch( const boost::property_tree::json_parser_error &exception ) {
 		BOOST_LOG_SEV( logger, io::severity_level::error ) << "Error parsing QFT JSON file: " << exception.what();
-		control::exit_upon_error();
+		error::exit_upon_error();
 	}
 	
 	return qft_json_parser{ std::move( property_tree ) };
@@ -52,12 +51,12 @@ model::model_specification qft_json_parser::parse_model_specification( const io:
 	if( header.name != "QFT JSON" ) {
 		BOOST_LOG_SEV( logger, io::severity_level::error )
 			<< "The header name does not read \"QFT JSON\". Corrupt file?";
-		control::exit_upon_error();
+		error::exit_upon_error();
 	}
 	if( header.version_major != 0 || header.version_minor != 1 ) {
 		BOOST_LOG_SEV( logger, io::severity_level::error ) << "Incompatible header version " << header.version_major
 														   << "." << header.version_minor;
-		control::exit_upon_error();
+		error::exit_upon_error();
 	}
 	
 	std::string model_name = property_tree.get<std::string>( "model name" );
@@ -101,7 +100,7 @@ qft_json_parser::parse_manifold_specification( const boost::property_tree::ptree
 	std::string type = property_tree.get<std::string>( "type" );
 	if( type != "vector space" ) {
 		BOOST_LOG_SEV( logger, io::severity_level::error ) << "Unrecognized manifold type: \"" << type << "\"";
-		control::exit_upon_error();
+		error::exit_upon_error();
 	}
 	
 	return { parse_vector_space_specification( property_tree ) };
@@ -123,7 +122,7 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 		field = mathutils::manifold_types::vector_space::algebraic_field::complex_grassmann;
 	else {
 		BOOST_LOG_SEV( logger, io::severity_level::error ) << "Unrecognized algebraic field: \"" << field_name << "\"";
-		control::exit_upon_error();
+		error::exit_upon_error();
 	}
 	
 	std::variant<int, mathutils::spacetime_dimension> dimension;
@@ -137,7 +136,7 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 		else {
 			BOOST_LOG_SEV( logger, io::severity_level::error ) << "Unrecognized dimension: \"" << dimension_string
 															   << "\" encountered";
-			control::exit_upon_error();
+			error::exit_upon_error();
 		}
 	}
 	
@@ -159,7 +158,7 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 				metric = mathutils::manifold_types::vector_space::vector_space_metric::unspecified;
 			else {
 				BOOST_LOG_SEV( logger, io::severity_level::error ) << "Unrecognized metric: \"" << *metric_name << "\"";
-				control::exit_upon_error();
+				error::exit_upon_error();
 			}
 		}
 	}
@@ -172,16 +171,23 @@ model::lagrangian qft_json_parser::parse_lagrangian( const boost::property_tree:
 	BOOST_LOG_NAMED_SCOPE( "model::parse_lagrangian()" );
 	io::severity_logger logger;
 	
-	string_to_uuid uuid_gen;
+	std::map<std::string, boost::uuids::uuid> string_id_map = field_id_map;
+	auto string_to_uuid = [&logger, &string_id_map]( const auto &str ) {
+		auto it = string_id_map.find( str );
+		if( it != string_id_map.end())
+			return it->second;
+		return ( string_id_map[str] = boost::uuids::random_generator()());
+	};
+	
 	model::lagrangian terms;
-	std::for_each( property_tree.begin(), property_tree.end(), [&terms, &uuid_gen]( const auto &key_value_pair ) {
+	std::for_each( property_tree.begin(), property_tree.end(), [&terms, &string_to_uuid]( const auto &key_value_pair ) {
 		const boost::property_tree::ptree &node = key_value_pair.second;
 		
 		std::string monomial_string = node.get<std::string>( "monomial" );
 		std::string coefficient_string = node.get<std::string>( "coefficient" );
 		auto constant_factor = node.get_optional<std::string>( "constant factor" );
 		
-		auto symbols = io::parse_symbols<model::lagrangian_symbol>( monomial_string, uuid_gen );
+		auto symbols = io::parse_symbols<model::lagrangian_symbol>( monomial_string, string_to_uuid );
 		
 		model::lagrangian term{ io::parse_polynomial_expression( std::move( coefficient_string )),
 								std::make_move_iterator( symbols.begin()), std::make_move_iterator( symbols.end()) };
@@ -191,6 +197,8 @@ model::lagrangian qft_json_parser::parse_lagrangian( const boost::property_tree:
 		
 		terms += std::move( term );
 	} );
+	
+	// TODO: assert that all field_ids are present in field_id_map
 	
 	return terms;
 }
