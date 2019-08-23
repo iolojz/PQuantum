@@ -6,13 +6,13 @@
 #define PQUANTUM_QFT_JSON_PARSER_HPP
 
 #include <boost/property_tree/ptree_fwd.hpp>
-#include <model/lagrangian.hpp>
 
-#include "error/control.hpp"
 #include "logging.hpp"
-
 #include "qft_json_header.hpp"
+
 #include "model/model_specification.hpp"
+
+#include <map>
 
 namespace PQuantum
 {
@@ -34,7 +34,7 @@ class qft_json_parser
 	static mathutils::manifold_types::vector_space
 	parse_vector_space_specification( const boost::property_tree::ptree &property_tree );
 	
-	static model::lagrangian parse_lagrangian( const boost::property_tree::ptree &property_tree );
+	static model::lagrangian parse_lagrangian( const boost::property_tree::ptree &property_tree, const std::map<std::string, model::classical_field_id> &field_name_map );
 	
 	static model::classical_field_specification
 	parse_field_specification( const boost::property_tree::ptree &property_tree );

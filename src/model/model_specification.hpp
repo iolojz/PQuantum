@@ -8,10 +8,9 @@
 #include <boost/property_tree/ptree_fwd.hpp>
 #include <map>
 
-#include "error/control.hpp"
-#include "io/logging.hpp"
-
 #include "classical_field.hpp"
+#include "lagrangian.hpp"
+
 #include "mathutils/manifold_specification.hpp"
 
 namespace PQuantum
@@ -27,11 +26,12 @@ class model_specification
 {
 	std::string model_name;
 	mathutils::manifold_specification spacetime_manifold;
-	std::vector<classical_field_id> fields;
 	std::map<classical_field_id, classical_field_specification> field_id_map;
+	lagrangian lag;
 public:
 	model_specification( std::string &&n, mathutils::manifold_specification &&m,
-						 std::vector<classical_field_specification> &&f );
+						 std::map<classical_field_id, classical_field_specification> &&fi,
+						 lagrangian &&l );
 	
 	const std::string &name( void ) const
 	{ return model_name; }
@@ -39,13 +39,20 @@ public:
 	const mathutils::manifold_specification &spacetime( void ) const
 	{ return spacetime_manifold; }
 	
-	const std::vector<classical_field_id> &field_ids( void ) const
-	{ return fields; }
+	std::vector<classical_field_id> field_ids( void ) const
+	{
+		std::vector<classical_field_id> fields;
+		for( const auto &id_entry : field_id_map )
+			fields.push_back( id_entry.first );
+		return fields;
+	}
 	
 	const classical_field_specification &field_specification_for_id( const classical_field_id &id ) const
 	{
 		return field_id_map.at( id );
 	}
+	
+	const lagrangian &lagrangian( void ) const { return lag; }
 };
 }
 }

@@ -29,6 +29,11 @@ class classical_field_id
 public:
 	classical_field_id( void ) : id{ boost::uuids::random_generator()() }
 	{}
+	classical_field_id &operator=( boost::uuids::uuid uid )
+	{
+		id = uid;
+		return *this;
+	}
 	
 	bool operator==( const classical_field_id &f ) const
 	{ return id == f.id; }

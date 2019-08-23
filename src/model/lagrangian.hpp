@@ -22,8 +22,6 @@ using lagrangian_symbol = std::variant<mathutils::linear_operator, classical_fie
 
 using lagrangian = mathutils::free_polynomial<lagrangian_symbol, mathutils::polynomial_expression //< coefficients
 >;
-
-lagrangian parse_lagrangian( const boost::property_tree::ptree &property_tree );
 }
 }
 

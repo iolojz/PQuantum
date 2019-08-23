@@ -9,15 +9,11 @@ namespace PQuantum
 namespace model
 {
 model_specification::model_specification( std::string &&n, mathutils::manifold_specification &&m,
-										  std::vector<classical_field_specification> &&f ) : model_name(
-std::move( n )), spacetime_manifold( std::move( m ))
+		std::map<classical_field_id, classical_field_specification> &&fi,
+		lagrangian &&l ) : model_name{ std::move( n ) }, spacetime_manifold{ std::move( m ) },
+		field_id_map{ std::move( fi ) }, lag{ std::move( l ) }
 {
-	for( const auto &field_spec : f )
-		field_id_map.emplace( classical_field_id{}, std::move( field_spec ));
-	std::transform( field_id_map.begin(), field_id_map.end(), std::back_inserter( fields ),
-					[]( const auto &key_value ) {
-						return key_value.first;
-					} );
+	// TODO: assert that the lagrangian only contains correct ids
 }
 }
 }

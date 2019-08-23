@@ -4,12 +4,14 @@
 
 #include "qft_json_parser.hpp"
 
-#include "error/control.hpp"
 #include "logging.hpp"
+#include "string_to_uuid.hpp"
+#include "parser_rules/lagrangian_symbol.hpp"
 #include "math_parser.hpp"
 
 #include "model/model_specification.hpp"
 #include "model/lagrangian.hpp"
+#include "error/control.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -64,12 +66,21 @@ model::model_specification qft_json_parser::parse_model_specification( const io:
 	std::vector<model::classical_field_specification> field_specifications;
 	std::transform( property_tree.get_child( "classical fields" ).begin(),
 					property_tree.get_child( "classical fields" ).end(), std::back_inserter( field_specifications ),
-					[&logger]( const auto &key_value_pair ) {
+					[&]( const auto &key_value_pair ) {
 						const boost::property_tree::ptree &node = key_value_pair.second;
 						return parse_field_specification( node );
 					} );
 	
-	return { std::move( model_name ), std::move( manifold_spec ), std::move( field_specifications ) };
+	std::map<model::classical_field_id, model::classical_field_specification> field_id_map;
+	for( auto &&spec : field_specifications )
+		field_id_map.emplace( model::classical_field_id{}, std::move( spec ) );
+	
+	std::map<std::string, model::classical_field_id> field_name_map;
+	for( const auto &id : field_id_map )
+		field_name_map.emplace( id.second.name, id.first );
+	auto lagrangian = parse_lagrangian( property_tree.get_child( "lagrangian" ), std::move( field_name_map ) );
+	
+	return { std::move( model_name ), std::move( manifold_spec ), std::move( field_id_map ), std::move( lagrangian ) };
 }
 
 model::classical_field_specification
@@ -130,7 +141,10 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 		}
 	}
 	
-	mathutils::manifold_types::vector_space::vector_space_metric metric;
+	mathutils::manifold_types::vector_space::vector_space_metric metric{
+		mathutils::manifold_types::vector_space::vector_space_metric::unspecified
+	};
+	
 	auto additional_data = property_tree.get_child_optional( "additional data" );
 	if( additional_data ) {
 		auto metric_name = additional_data->get_optional<std::string>( "metric" );
@@ -153,20 +167,21 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 	return { std::move( field ), std::move( dimension ), std::move( metric ) };
 }
 
-model::lagrangian qft_json_parser::parse_lagrangian( const boost::property_tree::ptree &property_tree )
+model::lagrangian qft_json_parser::parse_lagrangian( const boost::property_tree::ptree &property_tree, const std::map<std::string, model::classical_field_id> &field_id_map )
 {
 	BOOST_LOG_NAMED_SCOPE( "model::parse_lagrangian()" );
 	io::severity_logger logger;
 	
+	string_to_uuid uuid_gen;
 	model::lagrangian terms;
-	std::for_each( property_tree.begin(), property_tree.end(), [&logger, &terms]( const auto &key_value_pair ) {
+	std::for_each( property_tree.begin(), property_tree.end(), [&terms, &uuid_gen]( const auto &key_value_pair ) {
 		const boost::property_tree::ptree &node = key_value_pair.second;
 		
 		std::string monomial_string = node.get<std::string>( "monomial" );
 		std::string coefficient_string = node.get<std::string>( "coefficient" );
 		auto constant_factor = node.get_optional<std::string>( "constant factor" );
 		
-		auto symbols = io::parse_symbols<model::lagrangian_symbol>( monomial_string );
+		auto symbols = io::parse_symbols<model::lagrangian_symbol>( monomial_string, uuid_gen );
 		
 		model::lagrangian term{ io::parse_polynomial_expression( std::move( coefficient_string )),
 								std::make_move_iterator( symbols.begin()), std::make_move_iterator( symbols.end()) };

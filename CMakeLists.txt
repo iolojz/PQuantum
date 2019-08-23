@@ -11,7 +11,7 @@ set(CMAKE_CXX_EXTENSIONS NO)
 
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost 1.68 COMPONENTS log program_options REQUIRED)
+find_package(Boost COMPONENTS log program_options REQUIRED)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 set(${PROJECT_NAME}_BUILD_TESTS YES)
