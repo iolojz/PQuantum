@@ -11,6 +11,7 @@
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
+#include <boost/fusion/include/adapt_struct.hpp>
 
 namespace PQuantum
 {
@@ -23,9 +24,18 @@ struct classical_field_specification
 	std::variant<int, mathutils::spacetime_dimension> dimension;
 };
 
-using classical_field_id = boost::uuids::uuid
-id;
+struct classical_field_id
+{
+	boost::uuids::uuid id;
+	
+	bool operator<( const classical_field_id &field_id ) const
+	{
+		return id < field_id.id;
+	}
+};
 }
 }
+
+BOOST_FUSION_ADAPT_STRUCT( PQuantum::model::classical_field_id, id )
 
 #endif //PQUANTUM_CLASSICAL_FIELD_HPP

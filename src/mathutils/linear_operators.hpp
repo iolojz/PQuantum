@@ -5,6 +5,7 @@
 #ifndef PQUANTUM_LINEAR_OPERATORS_HPP
 #define PQUANTUM_LINEAR_OPERATORS_HPP
 
+#include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <variant>
 
@@ -14,12 +15,11 @@ namespace mathutils
 {
 struct spacetime_index
 {
-	std::variant<int, boost::uuids::uuid> id;
-	
 	enum class index_variance
 	{
 		lower, upper
 	} variance;
+	std::variant<int, boost::uuids::uuid> id;
 	
 	constexpr bool operator==( const spacetime_index &si ) const
 	{
@@ -97,5 +97,11 @@ struct dirac_operator
 using linear_operator = std::variant<gamma_matrix, sigma_matrix, spacetime_derivative, dirac_operator>;
 }
 }
+
+BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::spacetime_index, variance, id )
+BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::gamma_matrix, index )
+BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::sigma_matrix, index1, index2 )
+BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::spacetime_derivative, index )
+BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::dirac_operator )
 
 #endif //PQUANTUM_LINEAR_OPERATORS_HPP

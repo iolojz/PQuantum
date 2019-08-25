@@ -18,16 +18,6 @@ struct rule_for_symbol_impl
 {
 };
 template<class Symbol> constexpr auto rule_for_symbol = rule_for_symbol_impl<Symbol>{};
-
-template<class ...Alternatives>
-struct rule_for_symbol_impl<std::variant<Alternatives...>>
-{
-	template<class Context>
-	constexpr auto operator()( Context &&c )
-	{
-		return (rule_for_symbol<Alternatives>( c ) | ...);
-	}
-};
 }
 }
 }

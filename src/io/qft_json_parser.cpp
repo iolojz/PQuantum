@@ -171,12 +171,18 @@ model::lagrangian qft_json_parser::parse_lagrangian( const boost::property_tree:
 	BOOST_LOG_NAMED_SCOPE( "model::parse_lagrangian()" );
 	io::severity_logger logger;
 	
-	std::map<std::string, boost::uuids::uuid> string_id_map = field_id_map;
-	auto string_to_uuid = [&logger, &string_id_map]( const auto &str ) {
+	std::map<std::string, boost::uuids::uuid> string_id_map;
+	for( const auto &field_id_entry : field_id_map )
+		string_id_map[field_id_entry.first] = field_id_entry.second.id;
+	
+	auto string_to_uuid = [&string_id_map]( const std::string &str ) {
 		auto it = string_id_map.find( str );
 		if( it != string_id_map.end())
 			return it->second;
-		return ( string_id_map[str] = boost::uuids::random_generator()());
+		
+		auto new_uuid = boost::uuids::random_generator()();
+		string_id_map[str] = new_uuid;
+		return new_uuid;
 	};
 	
 	model::lagrangian terms;

@@ -52,7 +52,8 @@ public:
 		return field_id_map.at( id );
 	}
 	
-	const lagrangian &lagrangian( void ) const { return lag; }
+	const lagrangian &model_lagrangian( void ) const
+	{ return lag; }
 };
 }
 }
