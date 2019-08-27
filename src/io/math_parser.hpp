@@ -30,10 +30,8 @@ std::vector<Symbol> parse_symbols( const std::string &string, Context &&context 
 	const auto symbol_parser = parser_rules::rule_for_symbol<Symbol>( std::forward<Context>( context ));
 	auto it = string.begin();
 	
-	bool parsing_result = boost::spirit::x3::phrase_parse( it, string.end(), *symbol_parser,
-														   boost::spirit::x3::ascii::space /*,
- * 		symbols
- */
+	bool parsing_result = boost::spirit::x3::phrase_parse(it, string.end(), *symbol_parser,
+														  boost::spirit::x3::ascii::space, symbols
 	);
 	
 	if( parsing_result == false ) {

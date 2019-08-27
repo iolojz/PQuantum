@@ -34,7 +34,9 @@ class qft_json_parser
 	static mathutils::manifold_types::vector_space
 	parse_vector_space_specification( const boost::property_tree::ptree &property_tree );
 	
-	static model::lagrangian parse_lagrangian( const boost::property_tree::ptree &property_tree, const std::map<std::string, model::classical_field_id> &field_name_map );
+	static model::lagrangian parse_lagrangian(const boost::property_tree::ptree &property_tree,
+											  const std::map<std::string, model::classical_field_id> &field_name_map,
+											  std::map<mathutils::variable_id, std::string> &coefficient_id_map);
 	
 	static model::classical_field_specification
 	parse_field_specification( const boost::property_tree::ptree &property_tree );

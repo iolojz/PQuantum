@@ -202,6 +202,8 @@ public:
 	
 	bool operator==( const free_polynomial &p ) const
 	{ return monomial_map == p.monomial_map; }
+	
+	auto monomials(void) const { return monomial_map; }
 };
 }
 }

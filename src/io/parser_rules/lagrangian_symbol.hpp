@@ -64,7 +64,7 @@ struct rule_for_symbol_impl<index_core>
 	auto operator()( StringToUUID &&uuid_gen ) const
 	{
 		auto rule_def = ( rule_for_symbol<int>( uuid_gen ) | rule_for_symbol<string_id>( uuid_gen )).operator[](
-		[&uuid_gen]( auto &&context ) {
+				[](auto &&context) {
 			boost::spirit::x3::_val( context ) = template_helpers::to_std_variant<int, boost::uuids::uuid>(
 			boost::spirit::x3::_attr( context ));
 		} );

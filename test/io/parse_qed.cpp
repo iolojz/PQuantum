@@ -30,11 +30,16 @@ BOOST_AUTO_TEST_CASE( parse_qed )
 	auto field_ids = model.field_ids();
 	BOOST_TEST( field_ids.size() == 2 );
 	
+	auto psi_id = field_ids.front();
 	auto psi_specification = model.field_specification_for_id( field_ids.front());
+	
+	auto a_id = field_ids.front();
 	auto a_specification = model.field_specification_for_id( field_ids.back());
 	
-	if( psi_specification.name == "A" && a_specification.name == "\\psi" )
-		std::swap( psi_specification, a_specification );
+	if( psi_specification.name == "A" && a_specification.name == "\\psi" ) {
+		std::swap(psi_id, a_id);
+		std::swap(psi_specification, a_specification);
+	}
 	
 	BOOST_TEST( psi_specification.name == "\\psi" );
 	BOOST_TEST(
@@ -54,4 +59,33 @@ BOOST_AUTO_TEST_CASE( parse_qed )
 	BOOST_TEST( std::holds_alternative<mathutils::spacetime_dimension>( spacetime_vector_space.dimension ));
 	BOOST_TEST(
 	spacetime_vector_space.metric == mathutils::manifold_types::vector_space::vector_space_metric::euclidean );
+	
+	const auto &lagrangian_monomial_map = model.model_lagrangian().monomials();
+	BOOST_TEST(lagrangian_monomial_map.size() == 5);
+	
+	BOOST_TEST(lagrangian_monomial_map.at({psi_id, mathutils::dirac_operator{}, psi_id}) == {{}});
+	/*
+	"monomial": "\\bar{\\psi} \\DiracOperator \\psi",
+			"coefficient": "Z_\\psi",
+			"constant factor": "i"
+},
+{
+"monomial": "\\bar{\\psi} \\psi",
+"coefficient": "m",
+"constant factor": "-i"
+},
+{
+"monomial": "(\\partial_\\mu A_\\nu - \\partial_\\nu A_\\mu) (\\partial^\\mu A^\\nu - \\partial^\\nu A^\\mu)",
+"coefficient": "Z_A",
+"constant factor": "1/4"
+},
+{
+"monomial": "\\bar{\\psi} \\gamma_\\mu A^\\mu \\psi",
+"coefficient": "e",
+"constant factor": "-1"
+},
+{
+"monomial": "(\\partial_\\mu A^\\mu)^2",
+"coefficient": "xi"
+	 */
 }

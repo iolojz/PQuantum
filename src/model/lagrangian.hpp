@@ -20,8 +20,7 @@ namespace model
 {
 using lagrangian_symbol = std::variant<mathutils::linear_operator, classical_field_id>;
 
-using lagrangian = mathutils::free_polynomial<lagrangian_symbol, mathutils::polynomial_expression //< coefficients
->;
+using lagrangian = mathutils::free_polynomial<lagrangian_symbol, mathutils::polynomial_expression>;
 }
 }
 

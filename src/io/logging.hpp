@@ -28,7 +28,8 @@ enum severity_level
 	trace, //< output to std::cout
 	debug, //< output to std::cerr
 	warning, //< output to std::cerr
-	error //< output to std::cerr
+	error, //< output to std::cerr
+	internal_error //< output to std::cerr
 };
 }
 

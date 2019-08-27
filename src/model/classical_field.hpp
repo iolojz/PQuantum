@@ -32,6 +32,10 @@ struct classical_field_id
 	{
 		return id < field_id.id;
 	}
+	
+	bool operator==(const classical_field_id &field_id) const {
+		return id == field_id.id;
+	}
 };
 }
 }

@@ -49,6 +49,9 @@ static std::ostream &operator<<( std::ostream &os, severity_level slevel )
 		case error:
 			return os << "error";
 			break;
+		case internal_error:
+			return os << "internal error";
+			break;
 	}
 	
 	return os;

@@ -15,6 +15,8 @@ namespace mathutils
 class number
 {
 public:
+	static number one(void) noexcept { return {}; }
+	
 	number &operator+=( const number & )
 	{ return *this; };
 	
