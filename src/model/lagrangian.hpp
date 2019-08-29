@@ -7,7 +7,7 @@
 
 #include "mathutils/expressions.hpp"
 #include "mathutils/linear_operators.hpp"
-#include "mathutils/free_polynomial.hpp"
+#include "mathutils/abstract_algebra/free_polynomial.hpp"
 
 #include "classical_field.hpp"
 

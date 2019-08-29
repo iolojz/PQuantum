@@ -27,17 +27,7 @@ struct spacetime_index
 	}
 };
 
-constexpr bool operator<( const spacetime_index &si1, const spacetime_index &si2 )
-{
-	if( si1.id < si2.id )
-		return true;
-	if( si1.id == si2.id )
-		return si1.variance < si2.variance;
-	
-	return false;
-}
-
-constexpr bool operator<( const spacetime_index::index_variance &v1, const spacetime_index::index_variance &v2 )
+static constexpr bool operator<(const spacetime_index::index_variance &v1, const spacetime_index::index_variance &v2)
 {
 	switch( v1 ) {
 		case spacetime_index::index_variance::lower:
@@ -49,6 +39,22 @@ constexpr bool operator<( const spacetime_index::index_variance &v1, const space
 	}
 	
 	return false;
+}
+
+namespace detail {
+struct less_spacetime_index_ids {
+	constexpr bool operator()(int id1, int id2) const noexcept { return (id1 < id2); }
+	
+	constexpr bool operator()(int, boost::uuids::uuid) const noexcept { return true; }
+	
+	constexpr bool operator()(boost::uuids::uuid, int) const noexcept { return false; }
+	
+	bool operator()(boost::uuids::uuid id1, boost::uuids::uuid id2) const noexcept { return (id1 < id2); }
+};
+}
+
+static constexpr bool operator<(const spacetime_index &si1, const spacetime_index &si2) {
+	return std::visit(detail::less_spacetime_index_ids{}, si1.id, si2.id);
 }
 
 struct gamma_matrix

@@ -7,6 +7,9 @@
 
 #include <utility>
 
+#include "abstract_algebra/ring.hpp"
+#include "abstract_algebra/operator_helpers.hpp"
+
 namespace PQuantum
 {
 namespace mathutils
@@ -17,42 +20,52 @@ class number
 public:
 	static number one(void) noexcept { return {}; }
 	
-	number &operator+=( const number & )
+	constexpr number &operator+=(const number &)
 	{ return *this; };
 	
-	number &operator*=( const number & )
+	constexpr number &operator-=(const number &) { return *this; };
+	
+	constexpr number &operator*=(const number &)
 	{ return *this; };
 	
-	number operator+( const number &n ) const &
-	{ return number{ *this } += n; }
+	constexpr number operator-(void) const { return *this; };
 	
-	number operator+( const number &n ) &&
-	{ return std::move( *this ) += n; }
+	PQUANTUM_COMMUTATIVE_BINARY_OPERATOR_OVERLOAD(number, +)
 	
-	number operator+( number &&n ) const &
-	{ return std::move( n ) += *this; }
+	PQUANTUM_COMMUTATIVE_BINARY_OPERATOR_OVERLOAD(number, *)
 	
-	number operator+( number &&n ) &&
-	{ return std::move( *this ) += std::move( n ); }
+	PQUANTUM_BINARY_OPERATOR_OVERLOAD(number, -, -)
 	
-	number operator*( const number &n ) const &
-	{ return number{ *this } *= n; }
-	
-	number operator*( const number &n ) &&
-	{ return std::move( *this ) *= n; }
-	
-	number operator*( number &&n ) const &
-	{ return std::move( n ) *= *this; }
-	
-	number operator*( number &&n ) &&
-	{ return std::move( *this ) *= std::move( n ); }
-	
-	constexpr bool operator==( const number & ) const noexcept
-	{ return true; }
-	
-	constexpr bool operator<( const number & ) const noexcept
-	{ return false; }
+	constexpr bool operator==(const number &) const { return true; }
 };
+
+namespace abstract_algebra {
+// group of numbers under addition (no overflow detection)
+template<>
+struct group<number, void> {
+	static constexpr bool is_abelian = true;
+	
+	static constexpr number compose(const number &a, const number &b) noexcept { return a + b; }
+	
+	static constexpr number inverse(const number &a) noexcept { return -a; }
+	
+	static constexpr number neutral_element(void) noexcept { return number{}; }
+};
+
+// ring of numbers under addition and multiplication (no overflow detection)
+template<>
+struct ring<number, void> {
+	static constexpr number add(const number &a, const number &b) noexcept { return group<number>::compose(a, b); }
+	
+	static constexpr number multiply(const number &a, const number &b) noexcept { return a * b; }
+	
+	static constexpr number negate(const number &a) noexcept { return group<number>::inverse(a); }
+	
+	static constexpr number zero(void) noexcept { return group<number>::neutral_element(); }
+	
+	static constexpr number one(void) noexcept { return group<number>::neutral_element(); }
+};
+}
 }
 }
 
