@@ -63,7 +63,9 @@ BOOST_AUTO_TEST_CASE( parse_qed )
 	const auto &lagrangian_monomial_map = model.model_lagrangian().monomials();
 	BOOST_TEST(lagrangian_monomial_map.size() == 5);
 	
-	BOOST_TEST(lagrangian_monomial_map.at({psi_id, mathutils::dirac_operator{}, psi_id}) == {{}});
+	const auto &kinetic_coefficient = lagrangian_monomial_map.at( { psi_id, mathutils::dirac_operator{}, psi_id } );
+
+BOOST_TEST( kinetic_coefficient == mathutils::polynomial_expression::monomial{{}, number{}} );
 	/*
 	"monomial": "\\bar{\\psi} \\DiracOperator \\psi",
 			"coefficient": "Z_\\psi",

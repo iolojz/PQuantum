@@ -47,7 +47,7 @@ std::vector<Symbol> parse_symbols( const std::string &string, Context &&context 
 	return symbols;
 }
 
-mathutils::polynomial_expression parse_polynomial_expression( const std::string & );
+mathutils::number parse_number( const std::string & );
 }
 }
 

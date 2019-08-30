@@ -211,7 +211,7 @@ model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::
 											 std::make_move_iterator( symbols.begin()), std::make_move_iterator( symbols.end()) };
 		
 		if( constant_factor )
-			term *= model::lagrangian{ io::parse_polynomial_expression( *constant_factor ) };
+			term *= model::lagrangian{ mathutils::polynomial_expression{ io::parse_number( *constant_factor ) }};
 		
 		terms += std::move( term );
 	} );

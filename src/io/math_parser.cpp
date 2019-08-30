@@ -9,7 +9,7 @@ namespace PQuantum
 namespace io
 {
 
-mathutils::polynomial_expression parse_polynomial_expression( const std::string & )
+mathutils::number parse_number( const std::string & )
 {
 	return {};
 }

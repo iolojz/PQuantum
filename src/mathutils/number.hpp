@@ -20,15 +20,17 @@ class number
 public:
 	static number one(void) noexcept { return {}; }
 	
-	constexpr number &operator+=(const number &)
+	number &operator+=( const number & )
 	{ return *this; };
 	
-	constexpr number &operator-=(const number &) { return *this; };
-	
-	constexpr number &operator*=(const number &)
+	number &operator-=( const number & )
 	{ return *this; };
 	
-	constexpr number operator-(void) const { return *this; };
+	number &operator*=( const number & )
+	{ return *this; };
+	
+	number operator-( void ) const
+	{ return *this; };
 	
 	PQUANTUM_COMMUTATIVE_BINARY_OPERATOR_OVERLOAD(number, +)
 	
@@ -36,34 +38,47 @@ public:
 	
 	PQUANTUM_BINARY_OPERATOR_OVERLOAD(number, -, -)
 	
-	constexpr bool operator==(const number &) const { return true; }
+	bool operator==( const number & ) const
+	{ return true; }
 };
 
 namespace abstract_algebra {
+// set of numbers
+template<>
+struct set_impl<number>
+{
+	static bool equal( const number &a, const number &b )
+	{ return ( a == b ); }
+};
+
 // group of numbers under addition (no overflow detection)
 template<>
-struct group<number, void> {
+struct group_impl<number>
+{
 	static constexpr bool is_abelian = true;
 	
-	static constexpr number compose(const number &a, const number &b) noexcept { return a + b; }
+	template<class Number1, class Number2>
+	static decltype( auto ) compose_assign( Number1 &&a, Number2 &&b ) noexcept
+	{ return ( std::forward<Number1>( a ) += std::forward<Number2>( b )); }
 	
-	static constexpr number inverse(const number &a) noexcept { return -a; }
+	template<class Number>
+	static number inverse( Number &&a ) noexcept
+	{ return -std::forward<Number>( a ); }
 	
-	static constexpr number neutral_element(void) noexcept { return number{}; }
+	static number neutral_element( void ) noexcept
+	{ return number{}; }
 };
 
 // ring of numbers under addition and multiplication (no overflow detection)
 template<>
-struct ring<number, void> {
-	static constexpr number add(const number &a, const number &b) noexcept { return group<number>::compose(a, b); }
+struct ring_impl<number>
+{
+	template<class Number1, class Number2>
+	static decltype( auto ) multiply_assign( Number1 &&a, Number2 &&b ) noexcept
+	{ return ( std::forward<Number1>( a ) *= std::forward<Number2>( b )); }
 	
-	static constexpr number multiply(const number &a, const number &b) noexcept { return a * b; }
-	
-	static constexpr number negate(const number &a) noexcept { return group<number>::inverse(a); }
-	
-	static constexpr number zero(void) noexcept { return group<number>::neutral_element(); }
-	
-	static constexpr number one(void) noexcept { return group<number>::neutral_element(); }
+	static number one( void ) noexcept
+	{ return group<number>::neutral_element(); }
 };
 }
 }
