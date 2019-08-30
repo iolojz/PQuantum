@@ -7,6 +7,7 @@
 
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <variant>
 
 namespace PQuantum
@@ -57,6 +58,19 @@ static constexpr bool operator<(const spacetime_index &si1, const spacetime_inde
 	return std::visit(detail::less_spacetime_index_ids{}, si1.id, si2.id);
 }
 
+static inline std::ostream &operator<<( std::ostream &os, const spacetime_index &si )
+{
+	if( si.variance == spacetime_index::index_variance::upper )
+		os << "^";
+	else
+		os << "_";
+	
+	if( std::holds_alternative<int>( si.id ))
+		return os << std::get<int>( si.id );
+	
+	return os << "{\\index{" << std::get<boost::uuids::uuid>( si.id ) << "}}";
+}
+
 struct gamma_matrix
 {
 	spacetime_index index;
@@ -66,6 +80,11 @@ struct gamma_matrix
 		return index < gm.index;
 	}
 };
+
+static inline std::ostream &operator<<( std::ostream &os, const gamma_matrix &gm )
+{
+	return os << "\\gamma" << gm.index;
+}
 
 struct sigma_matrix
 {

@@ -70,7 +70,8 @@ public:
 	
 	explicit free_polynomial(coefficient &&c) : monomial_map{{{}, std::move(c)}} { strip_zeros(); }
 	
-	free_polynomial &operator+=(const free_polynomial &p) &{
+	free_polynomial &operator+=( const free_polynomial &p )
+	{
 		if(&p == this) {
 			for(auto &term : monomial_map)
 				coefficient_ring::add_assign(term.second, term.second);
@@ -122,7 +123,7 @@ public:
 			auto insertion_result = monomial_map.insert(term);
 			if(insertion_result.second == false) {
 				coefficient_ring::subtract_assign(insertion_result.first->second, term.second);
-				if(coefficient_ring::equal(insertion_result.first->second == coefficient_ring::zero()))
+				if( coefficient_ring::equal( insertion_result.first->second, coefficient_ring::zero()))
 					monomial_map.erase(insertion_result.first);
 			} else
 				insertion_result.first->second = -insertion_result.first->second;
@@ -215,8 +216,24 @@ public:
 		return true;
 	}
 	
+	bool operator!=( const free_polynomial &p ) const
+	{ return !( *this == p ); }
+	
 	auto monomials(void) const { return monomial_map; }
 };
+
+template<class Variable, class Coefficient, class LessVariables, class CoefficientRingTag>
+static std::ostream &
+operator<<( std::ostream &os, const free_polynomial<Variable, Coefficient, LessVariables, CoefficientRingTag> &p )
+{
+	for( const auto &map_entry : p.monomials()) {
+		os << map_entry.second;
+		for( const auto &v : map_entry.first )
+			os << " " << v;
+	}
+	
+	return os;
+}
 
 namespace abstract_algebra {
 template<class Variable, class Coefficient, class LessVariables, class CoefficientRingTag>
@@ -342,8 +359,21 @@ public:
 	PQUANTUM_BINARY_OPERATOR_OVERLOAD(free_polynomial_quotient, -, -)
 	
 	using base::operator==;
+	using base::operator!=;
 	using base::monomials;
+	
+	template<class Var, class Coeff, template<class V, class C, class Less, class CRTag> class Quot, class LessV, class CoeffRTag>
+	friend std::ostream &
+	operator<<( std::ostream &os, const free_polynomial_quotient<Var, Coeff, Quot, LessV, CoeffRTag> &p );
 };
+
+template<class Variable, class Coefficient, template<class V, class C, class Less, class CRTag> class Quotient, class LessVariables, class CoefficientRingTag>
+static std::ostream &operator<<( std::ostream &os,
+								 const free_polynomial_quotient<Variable, Coefficient, Quotient, LessVariables, CoefficientRingTag> &p )
+{
+	using polynomial = typename free_polynomial_quotient<Variable, Coefficient, Quotient, LessVariables, CoefficientRingTag>::underlying_polynomial;
+	return os << static_cast<const polynomial &>( p );
+}
 
 #undef PQUANTUM_QUOTIENT_BOUND_OPERATOR_OVERLOAD
 

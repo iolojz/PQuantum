@@ -42,8 +42,10 @@ public:
 	PQUANTUM_DEFINE_FORWARDING_STATIC_FUNCTION( negate, base, inverse )
 	
 	template<class T1, class T2>
-	static decltype( auto ) subtract( T1 &&t1, T2 &&t2 )
-	{ return add( std::forward<T1>( t1 ), negate( std::forward<T2>( t2 ))); }
+	static decltype( auto ) subtract_assign( T1 &&t1, T2 &&t2 )
+	{ return add_assign( std::forward<T1>( t1 ), negate( std::forward<T2>( t2 ))); }
+	
+	PQUANTUM_DEFINE_COPYMOVE_STATIC_FUNCTION( subtract, RingElementType, ring, subtract_assign )
 	
 	PQUANTUM_DEFINE_FORWARDING_STATIC_FUNCTION( multiply_assign, impl, multiply_assign )
 	

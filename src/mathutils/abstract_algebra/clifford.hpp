@@ -14,6 +14,8 @@ namespace PQuantum {
 namespace mathutils {
 template<class Variable, class Coefficient, class BilinearForm, class LessVariables = std::less<Variable>, class CoefficientRingTag = void>
 class clifford_quotient {
+// FIXME: Due to the gcc bug #91609, these things have to be public...
+public:
 	using variable = Variable;
 	using coefficient = Coefficient;
 	using less_variables = LessVariables;
