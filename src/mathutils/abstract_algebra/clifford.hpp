@@ -44,7 +44,7 @@ public:
 		auto clifford_coefficient = BilinearForm{}(*last_ordered, *(last_ordered + 1));
 		if( template_helpers::equal( *last_ordered, *( last_ordered + 1 ), less_variables{} )) {
 			auto shortened_coefficient = std::move( m.coeff ) * std::move( clifford_coefficient );
-			variables.erase(last_ordered, last_ordered + 1);
+			variables.erase( last_ordered, last_ordered + 2 );
 			
 			return canonicalize({std::move(variables), std::move(shortened_coefficient)});
 		}
@@ -55,7 +55,7 @@ public:
 		
 		auto two = coefficient_ring::one() + coefficient_ring::one();
 		auto shortened_coefficient = two * std::move( m.coeff ) * std::move( clifford_coefficient );
-		variables.erase(last_ordered, last_ordered + 1);
+		variables.erase( last_ordered, last_ordered + 2 );
 		canonicalized_polynomial += canonicalize(
 		monomial{ std::move( variables ), std::move( shortened_coefficient ) } );
 		

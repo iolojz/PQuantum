@@ -51,10 +51,20 @@ BOOST_AUTO_TEST_CASE( clifford_algebra_int )
 	const auto gamma_3 = clifford_int{ polynomial{ monomial{{ gamma_3_symbol }, 1 }}};
 	const auto gamma_4 = clifford_int{ polynomial{ monomial{{ gamma_4_symbol }, 1 }}};
 	
-	std::cout << gamma_1 * gamma_1 << std::endl;
-	
 	BOOST_TEST( gamma_1 * gamma_1 == one );
 	BOOST_TEST( gamma_2 * gamma_2 == one );
 	BOOST_TEST( gamma_3 * gamma_3 == one );
-	BOOST_TEST( gamma_4 * gamma_4 == one );
+	
+	std::cout << -gamma_1 * gamma_2 << std::endl;
+	std::cout << gamma_2 * gamma_1 << std::endl;
+	
+	BOOST_TEST( gamma_1 * gamma_2 != -gamma_1 * gamma_2 );
+	BOOST_TEST( gamma_1 * gamma_2 != gamma_2 * gamma_1 );
+	
+	BOOST_TEST( gamma_1 * gamma_2 == -gamma_2 * gamma_1 );
+	BOOST_TEST( gamma_1 * gamma_4 == -gamma_4 * gamma_1 );
+	
+	BOOST_TEST( gamma_1 * gamma_2 * gamma_3 == gamma_2 * gamma_3 * gamma_1 );
+	BOOST_TEST( gamma_2 * gamma_1 * gamma_3 == -gamma_2 * gamma_3 * gamma_1 );
+	BOOST_TEST( gamma_1 * gamma_2 * gamma_1 == -gamma_2 );
 }

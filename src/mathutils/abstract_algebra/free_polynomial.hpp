@@ -155,7 +155,7 @@ public:
 	
 	free_polynomial operator-(void) &&{
 		for(auto &term : monomial_map)
-			coefficient_ring::negate_in_place(term.second);
+			coefficient_ring::negate( std::move( term.second ));
 		
 		return std::move(*this);
 	}
@@ -295,7 +295,7 @@ free_polynomial_quotient &operator op ## =( const free_polynomial_quotient &c ) 
     return *this; \
 } \
 \
-free_polynomial_quotient &&operator op ## =( const free_polynomial_quotient &c ) && \
+free_polynomial_quotient operator op ## =( const free_polynomial_quotient &c ) && \
 { \
     std::move( *static_cast<base *>( this ) ) op ## = c; \
     quotient::canonicalize( *this ); \
@@ -308,7 +308,7 @@ free_polynomial_quotient &operator op ## =( free_polynomial_quotient &&c ) & \
     return *this; \
 } \
 \
-free_polynomial_quotient &&operator op ## =( free_polynomial_quotient &&c ) && \
+free_polynomial_quotient operator op ## =( free_polynomial_quotient &&c ) && \
 { \
     std::move( *static_cast<base *>( this ) ) op ## = std::move( c ); \
     quotient::canonicalize( *this ); \
@@ -325,7 +325,8 @@ public:
 	using variable = typename base::variable;
 	using less_variables = typename base::less_variables;
 	using coefficient = typename base::coefficient;
-	using coefficient_ring_tag = typename base::coefficient_ring::tag;
+	using coefficient_ring = typename base::coefficient_ring;
+	using coefficient_ring_tag = typename coefficient_ring::tag;
 	using underlying_polynomial = base;
 	
 	free_polynomial_quotient(void) = default;
@@ -358,8 +359,18 @@ public:
 	
 	PQUANTUM_BINARY_OPERATOR_OVERLOAD(free_polynomial_quotient, -, -)
 	
-	using base::operator==;
-	using base::operator!=;
+	auto operator-( void ) const &
+	{ return free_polynomial_quotient{ -static_cast<const base &>( *this ) }; }
+	
+	auto operator-( void ) &&
+	{ return free_polynomial_quotient{ -std::move( static_cast<base &&>( *this )) }; }
+	
+	bool operator==( const free_polynomial_quotient &p ) const
+	{ return ( static_cast<const base &>( *this ) == static_cast<const base &>( p )); }
+	
+	bool operator!=( const free_polynomial_quotient &p ) const
+	{ return !( *this == p ); }
+	
 	using base::monomials;
 	
 	template<class Var, class Coeff, template<class V, class C, class Less, class CRTag> class Quot, class LessV, class CoeffRTag>
@@ -375,7 +386,7 @@ static std::ostream &operator<<( std::ostream &os,
 	return os << static_cast<const polynomial &>( p );
 }
 
-#undef PQUANTUM_QUOTIENT_BOUND_OPERATOR_OVERLOAD
+#undef PQUANTUM_QUOTIENT_OPERATORASSIGN_OVERLOAD
 
 namespace abstract_algebra
 {
@@ -383,38 +394,48 @@ template<class Variable, class Coefficient, template<class V, class C, class Les
 struct set_impl<free_polynomial_quotient<Variable, Coefficient, Quotient, LessVariables, CoefficientRingTag>, Tag>
 {
 private:
-	using polynomial = typename free_polynomial_quotient<Variable, Coefficient, Quotient, LessVariables, CoefficientRingTag>::underlying_polynomial;
-	using polynomial_set = set<polynomial, Tag>;
+	using quotient = free_polynomial_quotient<Variable, Coefficient, Quotient, LessVariables, CoefficientRingTag>;
 public:
-	PQUANTUM_DEFINE_FORWARDING_STATIC_FUNCTION( equal, polynomial_set, equal )
+	template<class PQuotient1, class PQuotient2>
+	static bool equal( PQuotient1 &&q1, PQuotient2 &&q2 )
+	{
+		return ( std::forward<PQuotient1>( q1 ) == std::forward<PQuotient2>( q2 ));
+	}
 };
 
 template<class Variable, class Coefficient, template<class V, class C, class Less, class CRTag> class Quotient, class LessVariables, class CoefficientRingTag, class Tag>
 struct group_impl<free_polynomial_quotient<Variable, Coefficient, Quotient, LessVariables, CoefficientRingTag>, Tag>
 {
 private:
-	using polynomial = typename free_polynomial_quotient<Variable, Coefficient, Quotient, LessVariables, CoefficientRingTag>::underlying_polynomial;
-	using polynomial_group = group<polynomial, Tag>;
+	using quotient = free_polynomial_quotient<Variable, Coefficient, Quotient, LessVariables, CoefficientRingTag>;
+	using polynomial = typename quotient::underlying_polynomial;
 public:
 	static constexpr bool is_abelian = group<polynomial, Tag>::is_abelian;
 	
-	PQUANTUM_DEFINE_FORWARDING_STATIC_FUNCTION( compose_assign, polynomial_group, compose_assign )
+	template<class PQuotient1, class PQuotient2>
+	static bool compose_assign( PQuotient1 &&q1, PQuotient2 &&q2 )
+	{ return ( std::forward<PQuotient1>( q1 ) += std::forward<PQuotient2>( q2 )); }
 	
-	PQUANTUM_DEFINE_FORWARDING_STATIC_FUNCTION( inverse, polynomial_group, inverse )
+	template<class PQuotient>
+	static decltype( auto ) inverse( PQuotient &&q )
+	{ return -std::forward<Quotient>( q ); }
 	
-	PQUANTUM_DEFINE_FORWARDING_STATIC_FUNCTION( neutral_element, polynomial_group, neutral_element )
+	static quotient neutral_element( void )
+	{ return {}; }
 };
 
 template<class Variable, class Coefficient, template<class V, class C, class Less, class CRTag> class Quotient, class LessVariables, class CoefficientRingTag, class Tag>
 struct ring_impl<free_polynomial_quotient<Variable, Coefficient, Quotient, LessVariables, CoefficientRingTag>, Tag>
 {
 private:
-	using polynomial = typename free_polynomial_quotient<Variable, Coefficient, Quotient, LessVariables, CoefficientRingTag>::underlying_polynomial;
-	using polynomial_ring = ring<polynomial, Tag>;
+	using quotient = free_polynomial_quotient<Variable, Coefficient, Quotient, LessVariables, CoefficientRingTag>;
 public:
-	PQUANTUM_DEFINE_FORWARDING_STATIC_FUNCTION( multiply_assign, polynomial_ring, multiply_assign )
+	template<class PQuotient1, class PQuotient2>
+	static bool multiply_assign( PQuotient1 &&q1, PQuotient2 &&q2 )
+	{ return ( std::forward<PQuotient1>( q1 ) *= std::forward<PQuotient2>( q2 )); }
 	
-	PQUANTUM_DEFINE_FORWARDING_STATIC_FUNCTION( one, polynomial_ring, one )
+	static auto one( void )
+	{ return quotient{ quotient::coefficient_ring::one() }; }
 };
 }
 }
