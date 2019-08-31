@@ -37,6 +37,11 @@ BOOST_AUTO_TEST_CASE( polynomial_int )
 	BOOST_TEST( aa != ab );
 	BOOST_TEST( aa != bb );
 	
+	BOOST_TEST( zero == -zero );
+	BOOST_TEST( a != -a );
+	
+	std::cout << a << " and " << -a << std::endl;
+	
 	BOOST_TEST( a * a == aa );
 	BOOST_TEST( a * b == ab );
 	BOOST_TEST( b * a == ba );

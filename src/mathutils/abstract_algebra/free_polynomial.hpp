@@ -155,7 +155,7 @@ public:
 	
 	free_polynomial operator-(void) &&{
 		for(auto &term : monomial_map)
-			coefficient_ring::negate( std::move( term.second ));
+			term.second = coefficient_ring::negate( std::move( term.second ));
 		
 		return std::move(*this);
 	}
@@ -209,7 +209,7 @@ public:
 					return false;
 			}
 			
-			if( !coefficient_ring::equal( boost::get<0>( map_entries ).second, boost::get<0>( map_entries ).second ))
+			if( !coefficient_ring::equal( boost::get<0>( map_entries ).second, boost::get<1>( map_entries ).second ))
 				return false;
 		}
 		

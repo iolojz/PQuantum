@@ -55,9 +55,6 @@ BOOST_AUTO_TEST_CASE( clifford_algebra_int )
 	BOOST_TEST( gamma_2 * gamma_2 == one );
 	BOOST_TEST( gamma_3 * gamma_3 == one );
 	
-	std::cout << -gamma_1 * gamma_2 << std::endl;
-	std::cout << gamma_2 * gamma_1 << std::endl;
-	
 	BOOST_TEST( gamma_1 * gamma_2 != -gamma_1 * gamma_2 );
 	BOOST_TEST( gamma_1 * gamma_2 != gamma_2 * gamma_1 );
 	
