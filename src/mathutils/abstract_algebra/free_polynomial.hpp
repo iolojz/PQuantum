@@ -366,7 +366,7 @@ public:
 	{ return free_polynomial_quotient{ -std::move( static_cast<base &&>( *this )) }; }
 	
 	bool operator==( const free_polynomial_quotient &p ) const
-	{ return ( static_cast<const base &>( *this ) == static_cast<const base &>( p )); }
+	{ return quotient::equal( *this, p ); }
 	
 	bool operator!=( const free_polynomial_quotient &p ) const
 	{ return !( *this == p ); }

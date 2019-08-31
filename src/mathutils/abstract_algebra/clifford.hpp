@@ -78,7 +78,12 @@ public:
 		for(auto &c : canonicalized)
 			static_cast<underlying_polynomial &>( p ) += std::move( c.second );
 	}
-
+	
+	static bool equal( const clifford &c1, const clifford &c2 )
+	{
+		return ( static_cast<const underlying_polynomial &>( *this ) ==
+				 static_cast<const underlying_polynomial &>( p ));
+	}
 public:
 	using type = clifford;
 };
