@@ -7,94 +7,147 @@
 
 #include "mathutils/abstract_algebra/free_polynomial.hpp"
 
+#include "template_helpers/iterator.hpp"
+
 namespace PQuantum
 {
 namespace mathutils
 {
-template<class Variable, class Coefficient, class IndexContractor, class LessVariables = std::less<Variable>, class CoefficientRingTag = void>
+template<class UnderlyingPolynomial, class IndexHandler>
 class abstract_index_quotient
 {
+	static constexpr index_handler = IndexHandler{};
 // FIXME: Due to the gcc bug #91609, these things have to be public...
 public:
-	using variable = Variable;
-	using coefficient = Coefficient;
-	using less_variables = LessVariables;
-	using coefficient_ring_tag = CoefficientRingTag;
-	using coefficient_ring = abstract_algebra::ring<coefficient, coefficient_ring_tag>;
+	using abstract_index_polynomial;
+	using underlying_polynomial = UnderlyingPolynomial;
+	using coefficient_ring = typename underlying_polynomial::coefficient_ring;
 	
-	template<class V, class C, class Less, class CRTag> using quotient_alias = clifford_quotient<V, C, IndexContractor, Less, CRTag>;
-	using abstract_index_polynomial = free_polynomial_quotient<variable, coefficient, quotient_alias, less_variables>;
-	friend abstract_index_polynomial;
-	using underlying_polynomial = typename abstract_index_polynomial::underlying_polynomial;
-	
-	static std::pair<underlying_polynomial, bool>
-	operator()( const coefficient &c, const std::vector<variable> &variables )
-	{
-		const auto index_getter = IndexContractor::index_getter{};
-		const auto less_indices = IndexGetter::less_indices{};
-		IndexContractor index_contractor;
+	template<class SortedIndexSet1, class SortedIndexSet2>
+	static auto index_intersection(SortedIndexSet1 &&si1, SortedIndexSet2 &&si2) {
+		using template_helpers::begin;
+		using template_helpers::end;
+		std::vector<std::decay_t<SortedIndexSet1>::value_type> common_indices;
 		
-		underlying_polynomial contracted;
-		auto it = std::adjacent_find( variables.begin(), variables.end(),
-									  [&contracted]( const auto &v1, const auto &v2 ) {
-										  auto v1_indices = std::sort( index_getter( v1 ), less_indices );
-										  auto v2_indices = std::sort( index_getter( v2 ), less_indices );
-			
-										  decltype( v1_indices ) common_indices;
-										  std::set_intersection( v1_indices.begin(), v1_indices.end(),
-																 v2_indices.begin(), v2_indices.end(),
-																 std::back_inserter( intersection ));
-			
-										  if( common_indices.empty() == false ) {
-											  contracted = index_contractor( v1, v2, std::move( common_indices ));
-											  return true;
-										  }
-			
-										  return false;
-									  } );
-		
-		if( it != variables.end()) {
-			contracted = ( underlying_polynomial{ c, { variables.begin(), it }} * std::move( contracted ) *
-						   underlying_polynomial{ coefficient_ring::one(), { it + 2, variables.end() }} );
-			return std::make_pair( canonicalize( std::move( contracted )), true );
-		}
-		
-		auto c_indices = std::sort( index_getter( c ), less_indices );
-		for( auto v_it = variables.begin(); v_it != variables.end(); ++v_it ) {
-			auto v_indices = std::sort( index_getter( *v_it ), less_indices );
-			decltype( v_indices ) common_indices;
-			std::set_intersection( c_indices.begin(), c_indices.end(), v_indices.begin(), v_indices.end(),
-								   std::back_inserter( intersection ));
-			
-			if( common_indices.empty() == false ) {
-				contracted = index_contractor( c, *v_it, std::move( common_indices ));
-				contracted = ( underlying_polynomial{ coefficient_ring::one(), { variables.begin(), v_it }} *
-							   std::move( contracted ) *
-							   underlying_polynomial{ coefficient_ring::one(), { ++v_it, variables.end() }} );
-				return std::make_pair( canonicalize( std::move( contracted )), true );
-			}
-		}
+		std::set_intersection(begin(c_indices), end(c_indices), begin(v_indices), end(v_indices),
+							  std::back_inserter(common_indices),
+							  template_helpers::less_to_equal(index_handler.less_indices));
+		return common_indices;
 	}
 	
-	static void canonicalize( abstract_index_polynomial &p )
-	{
-		std::vector<std::pair<typename decltype(p.monomial_map)::iterator, underlying_polynomial>> canonicalized;
-		
-		for( auto it = p.monomial_map.begin(); it != p.monomial_map.end(); ++it ) {
-			auto contraction_pair = IndexContractor{}( it->second, it->first );
-			if( contraction_pair.second == false )
-				canonicalized.emplace_back( it, std::move( contraction_pair.first ));
+	template<class Range1, class Range2>
+	static auto find_index_coincidence(Range1 &&range1, Range2 &&range2, bool disjoint) {
+		for(auto r1_it = std::begin(range1); r1_it !=; ++r1_it) {
+			auto r1_indices = index_handler.get_indices(*r1_it);
+			std::sort(r1_indices.begin(), r1_indices.end(), index_handler.less_indices);
+			
+			for(auto r2_it = disjoint ? std::begin(range2) : r1_it + 1; r2_it != std::end(range2); ++r2_it) {
+				auto r2_indices = index_handler.get_indices(*r2_it);
+				std::sort(r2_indices.begin(), r2_indices.end(), index_handler.less_indices);
+				
+				auto common_indices = index_intersection(std::move(r1_indices), std::move(r2_indices));
+				
+				if(std::size(common_indices) != 0)
+					return std::make_tuple(r1_it, r2_it, std::move(common_indices));
+			}
 		}
 		
-		for( const auto &c : canonicalized )
-			p.monomial_map.erase( c.first );
-		for( auto &c : canonicalized )
-			static_cast<underlying_polynomial &>( p ) += std::move( c.second );
+		using indices_type = decltype(index_handler.get_indices(*std::end(range1)));
+		using common_indices_type = std::decay_t<decltype(index_intersection(std::declval<indices_type>(),
+																			 std::declval<indices_type>()))>;
+		return std::make_tuple(std::end(range1), std::end(range2), common_indices_type{});
+	}
+	
+	template<class Function, class CPart, class Variables>
+	static underlying_polynomial
+	apply_to_cpartv_contractions(Function &&function, CPart &&cpart, Variables &&variables) {
+		static_assert(std::is_rvalue_reference_v<CPart>, "cpart is not an rvalue reference.");
+		static_assert(std::is_rvalue_reference_v<Variables>, "variables is not an rvalue reference.");
+		
+		auto index_coincidence = find_index_coincidence(cpart, variables, true);
+		auto common_indices = std::get<2>(index_coincidence);
+		
+		if(std::size(common_indices) == 0)
+			return underlying_polynomial{index_handler.compose_coefficient_part(std::move(cpart)),
+										 std::move(variables)};
+		
+		auto c_it = std::get<0>(index_coincidence);
+		auto v_it = std::get<1>(index_coincidence);
+		
+		auto c_pre = boost::make_iterator_range(std::begin(cpart), c_it);
+		auto c_post = boost::make_iterator_range(c_it + 1), std::end(cpart));
+		
+		underlying_polynomial result = function(std::move(c_pre), std::move(*c_it), std::move(c_post), std::move(*v_it),
+												std::move(common_indices));
+		return (underlying_polynomial{coefficient_ring::one(),
+									  {std::make_move_iterator(std::cbegin(variables)), std::make_move_iterator(v_it)} *
+				std::move(result) *
+				underlying_polynomial{
+					coefficient_ring::one(), {std::make_move_iterator(v_it + 1),
+											  std::make_move_iterator(std::end(variables))}
+				});}
+		
+		template<class Function, class Coefficient, class Variables>
+		static underlying_polynomial
+		canonicalize_cv_contractions(Function &&function, Coefficient &&c, Variables &&variables) {
+			auto c_decomposed = index_handler.decompose_coefficient(c);
+			
+			underlying_polynomial result;
+			std::for_each(c_decomposed.begin(), c_decomposed.end(), [&variables](auto &&c_part) {
+				result += apply_to_cpartv_contractions(std::forward<Function>(f), std::move(c_part), variables);
+				);
+			}
+			
+			template<class Function, class Coefficient, class Variables>
+			static underlying_polynomial
+			apply_to_vv_contractions(Function &&function, Coefficient &&c, Variables &&variables) {
+				static_assert(std::is_rvalue_reference_v<Coefficient>, "c is not an rvalue reference.");
+				static_assert(std::is_rvalue_reference_v<Variables>, "variables is not an rvalue reference.");
+				
+				auto index_coincidence = find_index_coincidence(cpart, variables, true);
+				auto common_indices = std::get<2>(index_coincidence);
+				
+				if(std::size(common_indices) == 0)
+					return underlying_polynomial{std::move(c), std::move(variables)};
+				
+				auto v1_it = std::get<0>(index_coincidence);
+				auto v2_it = std::get<1>(index_coincidence);
+				
+				underlying_polynomial result = index_handler.function(v1, boost::make_iterator_range(v1_it + 1, v2_it),
+																	  v2, std::move(common_indices));
+				return (underlying_polynomial{std::move(c), {std::make_move_iterator(std::begin(variables)),
+															 std::make_move_iterator(v1_it)}} * std::move(result) *
+						underlying_polynomial{coefficient_ring::one(), {std::make_move_iterator(v1_it + 1),
+																		std::make_move_iterator(std::end(variables))}});
+	}
+			
+			void canonicalize(abstract_index_polynomial &p) {
+				underlying_polynomial contracted = std::move(p);
+				std::for_each(p.monomials.begin(), p.monomials.end(), [](auto &&monomial) {
+					contracted += apply_to_vv_contractions(index_handler.contract, std::move(monomial.coefficient),
+														   std::move(monomial.variables));
+				});
+				
+				p = ring<abstract_index_polynomial>::zero();
+				std::for_each(contracted.monomials.begin(), contracted.monomials.end(), [](auto &&monomial) {
+					p += apply_to_cv_contractions(index_handler.contract, std::move(monomial.coefficient),
+												  std::move(monomial.variables));
+				});
 	}
 	
 	static underlying_polynomial expand_all_summations( const abstract_index_polynomial &p )
 	{
-	
+		underlying_polynomial expanded = std::move(p);
+		std::for_each(p.monomials.begin(), p.monomials.end(), [](auto &&monomial) {
+			expanded += apply_to_vv_contractions(index_handler.expand, std::move(monomial.coefficient),
+												 std::move(monomial.variables));
+		});
+		
+		p = ring<abstract_index_polynomial>::zero();
+		std::for_each(expanded.monomials.begin(), expanded.monomials.end(), [](auto &&monomial) {
+			p += apply_to_cv_contractions(index_handler.expand, std::move(monomial.coefficient),
+										  std::move(monomial.variables));
+		});
 	}
 	
 	static bool equal( const abstract_index_polynomial &p1, const abstract_index_polynomial &p2 )
@@ -102,38 +155,6 @@ public:
 
 public:
 	using type = abstract_index_polynomial;
-};
-
-template<class BilinearForm, class IndexGetter, class UnderlyingPolynomial = void>
-class gamma_index_contractor
-{
-	using index_getter = IndexGetter;
-	using less_indices = LessIndices;
-	
-	// Note that Variable1/2 will in general __not__ be gamma_matrix!
-	template<class Variable1, class Variable2>
-	auto operator()( Variable1 &&, Variable2 &&, const std::vector<spacetime_index> &indices ) const
-	{
-		BOOST_LOG_NAMED_SCOPE( "gamma_index_contractor::operator()()" );
-		io::severity_logger logger;
-		
-		if( indices.size() != 1 ) {
-			BOOST_LOG_SEV( logger, io::severity_level::internal_error ) << "Can only contract one index. Attempted: "
-																		<< indices.size();
-			error::exit_upon_error();
-		}
-		
-		static_assert( std::is_same_v<std::decay_t<Variable1>, std::decay_t<Variable2>>,
-					   "Different types of variables encountered." );
-		using variable = std::decay_t<Variable1>;
-		
-		using underlying_polynomial = std::conditional_t<std::is_void_v<UnderlyingPolynomial>, UnderlyingPolynomial, free_polynomial<variable, decltype( coefficient )> >;
-		
-		auto coefficient = BilinearForm{}( gamma_matrix{ indices.front() }, gamma_matrix{ indices.front() } );
-		return underlying_polynomial{ std::move( c ) };
-	}
-	
-	static underlying_polynomial expand_all_summations( const coefficient &c, const std::vector<variable> &v );
 };
 }
 
