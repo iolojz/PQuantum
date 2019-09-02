@@ -79,83 +79,83 @@ public:
 		
 		underlying_polynomial result = function(std::move(c_pre), std::move(*c_it), std::move(c_post), std::move(*v_it),
 												std::move(common_indices));
-		return (underlying_polynomial{coefficient_ring::one(),
-									  {std::make_move_iterator(std::cbegin(variables)), std::make_move_iterator(v_it)} *
+		return (underlying_polynomial{coefficient_ring::one(), {std::make_move_iterator(std::cbegin(variables)),
+																std::make_move_iterator(v_it)}} *
 				std::move(result) *
-				underlying_polynomial{
-					coefficient_ring::one(), {std::make_move_iterator(v_it + 1),
-											  std::make_move_iterator(std::end(variables))}
-				});}
+				underlying_polynomial{coefficient_ring::one(), {std::make_move_iterator(v_it + 1),
+																std::make_move_iterator(std::end(variables))}});
+	}
+	
+	template<class Function, class Coefficient, class Variables>
+	static underlying_polynomial
+	canonicalize_cv_contractions(Function &&function, Coefficient &&c, Variables &&variables) {
+		auto c_decomposed = index_handler.decompose_coefficient(c);
+		
+		underlying_polynomial result;
+		std::for_each(c_decomposed.begin(), c_decomposed.end(), [&variables](auto &&c_part) {
+			result += apply_to_cpartv_contractions(std::forward<Function>(f), std::move(c_part), variables);
+			);
+		}
 		
 		template<class Function, class Coefficient, class Variables>
 		static underlying_polynomial
-		canonicalize_cv_contractions(Function &&function, Coefficient &&c, Variables &&variables) {
-			auto c_decomposed = index_handler.decompose_coefficient(c);
+		apply_to_vv_contractions(Function &&function, Coefficient &&c, Variables &&variables) {
+			static_assert(std::is_rvalue_reference_v<Coefficient>, "c is not an rvalue reference.");
+			static_assert(std::is_rvalue_reference_v<Variables>, "variables is not an rvalue reference.");
 			
-			underlying_polynomial result;
-			std::for_each(c_decomposed.begin(), c_decomposed.end(), [&variables](auto &&c_part) {
-				result += apply_to_cpartv_contractions(std::forward<Function>(f), std::move(c_part), variables);
-				);
-			}
+			auto index_coincidence = find_index_coincidence(cpart, variables, true);
+			auto common_indices = std::get<2>(index_coincidence);
 			
-			template<class Function, class Coefficient, class Variables>
-			static underlying_polynomial
-			apply_to_vv_contractions(Function &&function, Coefficient &&c, Variables &&variables) {
-				static_assert(std::is_rvalue_reference_v<Coefficient>, "c is not an rvalue reference.");
-				static_assert(std::is_rvalue_reference_v<Variables>, "variables is not an rvalue reference.");
-				
-				auto index_coincidence = find_index_coincidence(cpart, variables, true);
-				auto common_indices = std::get<2>(index_coincidence);
-				
-				if(std::size(common_indices) == 0)
-					return underlying_polynomial{std::move(c), std::move(variables)};
-				
-				auto v1_it = std::get<0>(index_coincidence);
-				auto v2_it = std::get<1>(index_coincidence);
-				
-				underlying_polynomial result = index_handler.function(v1, boost::make_iterator_range(v1_it + 1, v2_it),
-																	  v2, std::move(common_indices));
-				return (underlying_polynomial{std::move(c), {std::make_move_iterator(std::begin(variables)),
-															 std::make_move_iterator(v1_it)}} * std::move(result) *
-						underlying_polynomial{coefficient_ring::one(), {std::make_move_iterator(v1_it + 1),
-																		std::make_move_iterator(std::end(variables))}});
-	}
+			if(std::size(common_indices) == 0)
+				return underlying_polynomial{std::move(c), std::move(variables)};
 			
-			void canonicalize(abstract_index_polynomial &p) {
-				underlying_polynomial contracted = std::move(p);
-				std::for_each(p.monomials.begin(), p.monomials.end(), [](auto &&monomial) {
-					contracted += apply_to_vv_contractions(index_handler.contract, std::move(monomial.coefficient),
-														   std::move(monomial.variables));
-				});
-				
-				p = ring<abstract_index_polynomial>::zero();
-				std::for_each(contracted.monomials.begin(), contracted.monomials.end(), [](auto &&monomial) {
-					p += apply_to_cv_contractions(index_handler.contract, std::move(monomial.coefficient),
-												  std::move(monomial.variables));
-				});
-	}
-	
-	static underlying_polynomial expand_all_summations( const abstract_index_polynomial &p )
-	{
-		underlying_polynomial expanded = std::move(p);
-		std::for_each(p.monomials.begin(), p.monomials.end(), [](auto &&monomial) {
-			expanded += apply_to_vv_contractions(index_handler.expand, std::move(monomial.coefficient),
-												 std::move(monomial.variables));
-		});
+			auto v1_it = std::get<0>(index_coincidence);
+			auto v2_it = std::get<1>(index_coincidence);
+			
+			underlying_polynomial result = index_handler.function(v1, boost::make_iterator_range(v1_it + 1, v2_it), v2,
+																  std::move(common_indices));
+			return (underlying_polynomial{std::move(c), {std::make_move_iterator(std::begin(variables)),
+														 std::make_move_iterator(v1_it)}} * std::move(result) *
+					underlying_polynomial{coefficient_ring::one(), {std::make_move_iterator(v1_it + 1),
+																	std::make_move_iterator(std::end(variables))}});
+		}
 		
-		p = ring<abstract_index_polynomial>::zero();
-		std::for_each(expanded.monomials.begin(), expanded.monomials.end(), [](auto &&monomial) {
-			p += apply_to_cv_contractions(index_handler.expand, std::move(monomial.coefficient),
-										  std::move(monomial.variables));
-		});
-	}
-	
-	static bool equal( const abstract_index_polynomial &p1, const abstract_index_polynomial &p2 )
-	{ return ( expand_all_summations( p1 ) == expand_all_summations( p2 ); }
-
-public:
-	using type = abstract_index_polynomial;
-};
+		void canonicalize(abstract_index_polynomial &p) {
+			underlying_polynomial contracted = std::move(p);
+			std::for_each(p.monomials.begin(), p.monomials.end(), [](auto &&monomial) {
+				contracted += apply_to_vv_contractions(index_handler.contract, std::move(monomial.coefficient),
+													   std::move(monomial.variables));
+			});
+			
+			p = ring<abstract_index_polynomial>::zero();
+			std::for_each(contracted.monomials.begin(), contracted.monomials.end(), [](auto &&monomial) {
+				p += apply_to_cv_contractions(index_handler.contract, std::move(monomial.coefficient),
+											  std::move(monomial.variables));
+			});
+		}
+		
+		static underlying_polynomial expand_all_summations(const abstract_index_polynomial &p) {
+			underlying_polynomial expanded = std::move(p);
+			std::for_each(p.monomials.begin(), p.monomials.end(), [](auto &&monomial) {
+				expanded += apply_to_vv_contractions(index_handler.expand, std::move(monomial.coefficient),
+													 std::move(monomial.variables));
+			});
+			
+			p = ring<abstract_index_polynomial>::zero();
+			std::for_each(expanded.monomials.begin(), expanded.monomials.end(), [](auto &&monomial) {
+				p += apply_to_cv_contractions(index_handler.expand, std::move(monomial.coefficient),
+											  std::move(monomial.variables));
+			});
+		}
+		
+		static bool equal(const abstract_index_polynomial &p1, const abstract_index_polynomial &p2) {
+			return (expand_all_summations(p1) == expand_all_summations(p2);
+		}
+		
+		public:
+		using type = abstract_index_polynomial;
+	};
+}
 }
 
 #endif //PQUANTUM_ABSTRACT_INDEX_NOTATION_HPP
