@@ -157,5 +157,6 @@ public:
 	};
 }
 }
+}
 
 #endif //PQUANTUM_ABSTRACT_INDEX_NOTATION_HPP
