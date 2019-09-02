@@ -155,7 +155,9 @@ public:
 		public:
 		using type = abstract_index_polynomial;
 	};
-}
+};
+
+
 }
 }
 
