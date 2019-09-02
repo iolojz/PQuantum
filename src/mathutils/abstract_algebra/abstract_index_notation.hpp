@@ -112,8 +112,8 @@ public:
 			auto v1_it = std::get<0>(index_coincidence);
 			auto v2_it = std::get<1>(index_coincidence);
 			
-			underlying_polynomial result = index_handler.function(v1, boost::make_iterator_range(v1_it + 1, v2_it), v2,
-																  std::move(common_indices));
+			underlying_polynomial result = function(v1, boost::make_iterator_range(v1_it + 1, v2_it), v2,
+													std::move(common_indices));
 			return (underlying_polynomial{std::move(c), {std::make_move_iterator(std::begin(variables)),
 														 std::make_move_iterator(v1_it)}} * std::move(result) *
 					underlying_polynomial{coefficient_ring::one(), {std::make_move_iterator(v1_it + 1),
@@ -156,8 +156,6 @@ public:
 		using type = abstract_index_polynomial;
 	};
 };
-
-
 }
 }
 
