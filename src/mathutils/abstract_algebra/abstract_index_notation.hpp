@@ -13,6 +13,82 @@ namespace PQuantum
 {
 namespace mathutils
 {
+namespace detail
+{
+struct default_coefficient_decomposer
+{
+	template<class IndecomposableCoefficient>
+	auto operator()( IndecomposableCoefficient &&c ) const
+	{ return c; }
+	
+	template<class Coefficient, class Variable>
+	auto operator()( const free_polynomial<Coefficient, Variable> &c ) const
+	{
+		using atom = typename decltype(( *this )( std::declval<Coefficient>()))::value_type::value_type;
+		std::vector<std::vector<std::variant<atom, Variable>>> result;
+		
+		for( const auto &monomial : c.monomials()) {
+			auto decomposed_coefficient = ( *this )( monomial.coefficient );
+			result.emplace_back( std::make_move_iterator( std::begin( decomposed_coefficient )),
+								 std::make_move_iterator( std::end( decomposed_coefficient )));
+			result.back().insert( std::end( result.back()), std::begin( monomial.variables ),
+								  std::end( monomial.variables ));
+		}
+	}
+};
+
+template<class Coefficient>
+struct default_coefficient_composer
+{
+	Coefficient operator()( const Coefficient &part ) const
+	{ return part; }
+	
+	Coefficient operator()( Coefficient &&part ) const
+	{ return part; }
+	
+	template<class ...Alternatives>
+	Coefficient operator()( const std::variant<Alternatives...> &v ) const
+	{
+		if( std::holds_alternative<Coefficient>( v ))
+			return std::get<Coefficient>( v );
+		
+		BOOST_LOG_NAMED_SCOPE( "default_coefficient_composer::operator()()" );
+		io::severity_logger logger;
+		
+		BOOST_LOG_SEV( logger, io::severity_level::internal_error )
+			<< "Unknown how to turn given variant into requested coefficient.";
+		error::exit_upon_error();
+	}
+};
+
+template<class Coefficient, class Variable, class CoefficientRingTag>
+struct default_coefficient_composer<free_polynomial<Coefficient, Variable, CoefficientRingTag>>
+{
+	using polynomial = free_polynomial<Coefficient, Variable, CoefficientRingTag>;
+	using coefficient_ring = abstract_algebra::ring<Coefficient, CoefficientRingTag>;
+	
+	polynomial operator()( const Coefficient &part ) const
+	{ return polynomial{ part }; }
+	
+	template<class CPart, class = std::enable_if_t<std::is_constructible_v<Variable, CPart &&>
+	>>
+	polynomial operator()( CPart &&part ) const
+	{ return { coefficient_ring::one(), { std::forward<CPart>( part ) }}; }
+	
+	template<class CPart, class = std::enable_if_t<
+	!std::is_constructible_v<Variable, CPart &&> && std::is_constructible_v<Coefficient, CPart &&>
+	>>
+	polynomial operator()( CPart &&part ) const
+	{ return polynomial{ Coefficient{ std::forward<CPart>( part ) }}; }
+	
+	template<class CPart, class = std::enable_if_t<
+	!std::is_constructible_v<Variable, CPart &&> && !std::is_constructible_v<Coefficient, CPart &&>
+	>>
+	polynomial operator()( CPart &&part ) const
+	{ return polynomial{ default_coefficient_composer<Coefficient>{}( std::forward<CPart>( part )) }; }
+};
+}
+
 template<class UnderlyingPolynomial, class IndexHandler>
 class abstract_index_quotient
 {
