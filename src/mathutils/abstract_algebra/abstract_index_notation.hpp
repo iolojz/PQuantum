@@ -121,7 +121,7 @@ public:
 		}
 		
 		void canonicalize(abstract_index_polynomial &p) {
-			underlying_polynomial contracted = std::move(p);
+			underlying_polynomial contracted;
 			std::for_each(p.monomials.begin(), p.monomials.end(), [](auto &&monomial) {
 				contracted += apply_to_vv_contractions(index_handler.contract, std::move(monomial.coefficient),
 													   std::move(monomial.variables));

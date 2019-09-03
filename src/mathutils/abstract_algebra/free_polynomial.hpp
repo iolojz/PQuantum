@@ -5,38 +5,58 @@
 #ifndef PQUANTUM_FREE_POLYNOMIAL_HPP
 #define PQUANTUM_FREE_POLYNOMIAL_HPP
 
-#include <map>
 #include <vector>
+
+#include <boost/container/flat_map.hpp>
 #include <boost/range/combine.hpp>
 
 #include "template_helpers/erase_if.hpp"
 #include "template_helpers/comparisons.hpp"
 #include "operator_helpers.hpp"
 #include "ring.hpp"
+#include "tag_dispatch/tag_dispatch.hpp"
 
-namespace PQuantum {
-namespace mathutils {
-template<class Variable, class Coefficient, class LessVariables = std::less<Variable>, class CoefficientRingTag = void>
+namespace PQuantum::mathutils {
+struct monomial_tag {
+};
+struct free_polynomial_tag {
+};
+
+template<class Coefficient, class Variable>
+struct monomial {
+	using dispatch_tag = monomial_tag;
+	
+	Coefficient coefficient;
+	std::vector<Variable> variables;
+	
+	using coefficient_ring = abstract_algebra::ring<coefficient>;
+};
+
+namespace PQuantum::mathutils {
+template<class Coefficient, class Variable, class SecondaryDispatchTag = void>
 class free_polynomial {
 public:
+	using dispatch_tag = std::conditional_t<std::is_void_v<SecondaryDispatchTag>, free_polynomial_tag, std::tuple<free_polynomial_tag, SecondaryDispatchTag> >;
+	
+	// TODO: Use SecondaryDispatchTag for "non-default" tag-dispatched stuff
+	
 	using coefficient = Coefficient;
-	using coefficient_ring = abstract_algebra::ring<coefficient, CoefficientRingTag>;
 	using variable = Variable;
-	using less_variables = LessVariables;
+	using coefficient_ring = abstract_algebra::ring<coefficient>;
+	
+	using monomial = monomial<coefficient, variable>;
 protected:
-	struct less_variable_vectors
-	{
-		template<class Vector1, class Vector2>
-		bool operator()( Vector1 &&v1, Vector2 &&v2 ) const
-		{
-			return std::lexicographical_compare( v1.begin(), v1.end(), v2.begin(), v2.end(), less_variables{} );
+	struct less_variable_ranges {
+		template<class Range1, class Range2>
+		bool operator()(Range1 &&r1, Range2 &&r2) const {
+			return std::lexicographical_compare(std::begin(r1), std::end(r1), std::begin(r2), std::end(r2),
+												less_variables{});
 		}
 	};
 	
-	std::map<std::vector<Variable>, Coefficient, less_variable_vectors> monomial_map;
-	
-	free_polynomial( decltype( monomial_map ) &&m ) : monomial_map{ std::move( m ) }
-	{}
+	// FIXME: Should we enable runtime switching of this type?
+	using monomial_container = boost::flat_map<decltype(std::declval<monomial>().variables), coefficient, less_variable_ranges>;
+	monomial_container monomial_map;
 private:
 	void strip_zeros(void) {
 		template_helpers::erase_if(monomial_map, [](auto &&map_entry) {
@@ -44,31 +64,16 @@ private:
 		});
 	}
 public:
-	struct monomial
-	{
-		std::vector<variable> variables;
-		coefficient coeff;
-	};
-	
 	free_polynomial(void) = default;
 	
-	free_polynomial( const monomial &m ) : monomial_map{{ m.variables, m.coefficient }}
+	template<class Monomial, PQUANTUM_ENABLE_IF_TAG_IS(Monomial, monomial_tag)>
+	free_polynomial(Monomial &&m) : monomial_map{std::forward<Monomial>(m)}
 	{ strip_zeros(); }
 	
-	free_polynomial( monomial &&m ) : monomial_map{{ std::move( m.variables ), std::move( m.coeff ) }}
+	template<class MonomialRange>
+	free_polynomial(MonomialRange &&range)
+			: monomial_map{std::begin(range), std::end(range)}
 	{ strip_zeros(); }
-	
-	template<class InputIterator>
-	free_polynomial(const coefficient &c, InputIterator begin, InputIterator end)
-			: monomial_map{{{begin, end}, c}} { strip_zeros(); }
-	
-	template<class InputIterator>
-	free_polynomial(coefficient &&c, InputIterator begin, InputIterator end)
-			: monomial_map{{{begin, end}, std::move(c)}} { strip_zeros(); }
-	
-	explicit free_polynomial(const coefficient &c) : monomial_map{{{}, c}} { strip_zeros(); }
-	
-	explicit free_polynomial(coefficient &&c) : monomial_map{{{}, std::move(c)}} { strip_zeros(); }
 	
 	free_polynomial &operator+=( const free_polynomial &p )
 	{
@@ -79,7 +84,7 @@ public:
 			return *this;
 		}
 		
-		for(const auto &term : p.monomial_map) {
+		for(const auto &term : p.terms) {
 			auto insertion_result = monomial_map.insert(term);
 			if(insertion_result.second == false) {
 				coefficient_ring::add_assign(insertion_result.first->second, term.second);
@@ -222,9 +227,8 @@ public:
 	auto monomials(void) const { return monomial_map; }
 };
 
-template<class Variable, class Coefficient, class LessVariables, class CoefficientRingTag>
-static std::ostream &
-operator<<( std::ostream &os, const free_polynomial<Variable, Coefficient, LessVariables, CoefficientRingTag> &p )
+template<class FreePolynomial, PQUANTUM_ENABLE_IF_TAG_IS(FreePolynomial, free_polynomial_tag)>
+static std::ostream &operator<<(std::ostream &os, const FreePolynomial &p)
 {
 	for( const auto &map_entry : p.monomials()) {
 		os << map_entry.second;
@@ -235,9 +239,9 @@ operator<<( std::ostream &os, const free_polynomial<Variable, Coefficient, LessV
 	return os;
 }
 
-namespace abstract_algebra {
-template<class Variable, class Coefficient, class LessVariables, class CoefficientRingTag>
-struct set_impl<free_polynomial<Variable, Coefficient, LessVariables, CoefficientRingTag>>
+namespace abstract_algebra::impl {
+template<>
+struct set_impl<free_polynomial_tag>
 {
 	template<class Polynomial1, class Polynomial2>
 	static bool equal( Polynomial1 &&p1, Polynomial2 &&p2 )
@@ -246,8 +250,8 @@ struct set_impl<free_polynomial<Variable, Coefficient, LessVariables, Coefficien
 	}
 };
 
-template<class Variable, class Coefficient, class LessVariables, class CoefficientRingTag>
-struct group_impl<free_polynomial<Variable, Coefficient, LessVariables, CoefficientRingTag>>
+template<class Coefficient, class Variable, class LessVariables, class CoefficientRingTag>
+struct group_impl<free_polynomial<Coefficient, Variable, LessVariables, CoefficientRingTag>>
 {
 private:
 	using polynomial = free_polynomial<Variable, Coefficient, LessVariables, CoefficientRingTag>;
@@ -315,19 +319,16 @@ free_polynomial_quotient operator op ## =( free_polynomial_quotient &&c ) && \
     return std::move( *this ); \
 }
 
-template<class Variable, class Coefficient, template<class V, class C, class Less, class CRTag> class Quotient, class LessVariables = std::less<Variable>, class CoefficientRingTag = void>
-class free_polynomial_quotient
-		: protected free_polynomial<typename Quotient<Variable, Coefficient, LessVariables, CoefficientRingTag>::variable, typename Quotient<Variable, Coefficient, LessVariables, CoefficientRingTag>::coefficient, typename Quotient<Variable, Coefficient, LessVariables, CoefficientRingTag>::less_variables, typename Quotient<Variable, Coefficient, LessVariables, CoefficientRingTag>::coefficient_ring_tag> {
-	using quotient = Quotient<Variable, Coefficient, LessVariables, CoefficientRingTag>;
-	using base = free_polynomial<typename quotient::variable, typename quotient::coefficient, typename quotient::less_variables, typename quotient::coefficient_ring_tag>;
-	friend quotient;
+template<class QuotientTraits>
+class free_polynomial_quotient {
 public:
-	using variable = typename base::variable;
-	using less_variables = typename base::less_variables;
-	using coefficient = typename base::coefficient;
-	using coefficient_ring = typename base::coefficient_ring;
-	using coefficient_ring_tag = typename coefficient_ring::tag;
-	using underlying_polynomial = base;
+	using quotient_traits = QuotientTraits;
+	using underlying_polynomial = typename quotient_traits::underlying_polynomial;
+	
+	using variable = typename underlying_polynomial::variable;
+	using less_variables = typename underlying_polynomial::less_variables;
+	using coefficient = typename underlying_polynomial::coefficient;
+	using coefficient_ring = typename underlying_polynomial::coefficient_ring;
 	
 	free_polynomial_quotient(void) = default;
 	
@@ -438,6 +439,13 @@ public:
 	{ return quotient{ quotient::coefficient_ring::one() }; }
 };
 }
+}
+
+namespace tag_dispatch {
+template<class Coefficient, class Variable, class CoefficientRingTag>
+struct tag_of_impl<free_polynomial < Coefficient, Variable, CoefficientRingTag>> {
+using type = mathutils::polynomial_tag;
+};
 }
 }
 

@@ -64,25 +64,17 @@ public:
 	
 	static void canonicalize( clifford &p )
 	{
-		std::vector<std::pair<typename decltype(p.monomial_map)::iterator, underlying_polynomial>> canonicalized;
-		
-		for( auto it = p.monomial_map.begin(); it != p.monomial_map.end(); ++it ) {
-			if(is_canonical(it->first) == false)
-				canonicalized.emplace_back( it, canonicalize(
-				monomial{{ std::make_move_iterator( it->first.begin()), std::make_move_iterator( it->first.end()) },
-						 std::move( it->second ) } ));
-		}
-		
-		for(const auto &c : canonicalized)
-			p.monomial_map.erase(c.first);
-		for(auto &c : canonicalized)
-			static_cast<underlying_polynomial &>( p ) += std::move( c.second );
+		underlying_polynomial canonicalized;
+		for(const auto &map_entry : p.monomials())
+			canonicalized += canonicalize(
+					{{std::make_move_iterator(map_entry.first.begin()), std::make_move_iterator(map_entry.first.end())},
+					 std::move(map_entry.second)});
+		p = std::move(canonicalized);
 	}
 	
 	static bool equal( const clifford &c1, const clifford &c2 )
 	{
-		return ( static_cast<const underlying_polynomial &>( *this ) ==
-				 static_cast<const underlying_polynomial &>( p ));
+		return (static_cast<const underlying_polynomial &>( &c1 ) == static_cast<const underlying_polynomial &>( &c2 ));
 	}
 public:
 	using type = clifford;
