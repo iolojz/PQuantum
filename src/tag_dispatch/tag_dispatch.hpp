@@ -6,17 +6,14 @@
 #define PQUANTUM_TAG_DISPATCH_HPP
 
 #include <type_traits>
-#include <tuple>
-
-#include "std_tags.hpp"
 
 namespace PQuantum::tag_dispatch {
 namespace detail {
 template<class T>
 struct has_type_dispatch_tag {
 private:
-	template<class T>
-	static constexpr void test(decltype(typename V::type(), int{}));
+	template<class V>
+	static constexpr void test( decltype( std::declval<V::type>(), std::declval<int>()));
 	
 	template<typename V>
 	static constexpr int test(char);
@@ -37,26 +34,12 @@ template<class T>
 struct tag_of<T, false> {
 	using type = std::decay_t<T>;
 };
-
-// Single tag
-template<template<class ...> class Template, class Tag>
-struct dispatch {
-	using type = Template<Tag>;
-};
-
-// Multiple tags
-template<template<class ...> class Template, class ...Tags>
-struct dispatch<Template, std::tuple<Tags...>> {
-	using type = Template<Tags...>;
-};
-
-template<template<class ...> class Template, class Tag> using dispatch_t = typename dispatch<Template, Tag>::type;
 }
 
 namespace impl {
 template<class T>
-class tag_of {
-public:
+struct tag_of
+{
 	using type = typename detail::tag_of<T, detail::has_type_dispatch_tag<T>::value>::type;
 };
 }
@@ -72,8 +55,26 @@ template<class T> using tag_of_t = typename tag_of<T>::type;
 #error "PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION is already defined."
 #endif
 
-#define PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION(name)
-template<class ...Args> static constexpr auto name = PQuantum::tag_dispatch::detail::dispatch_t<PQuantum::tag_dispatch::impl::name, PQuantum::tag_dispatch::tag_of_t<std::common_type_t<Args...>>>{}
+#define PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION( function_name ) \
+namespace PQuantum::tag_dispatch \
+{ \
+namespace functions { \
+struct function_name { \
+    template<class FunctionTag = void, class ...Args> \
+    decltype(auto) apply( Args &&... args ) const \
+    { \
+        using dispatch_tag = PQuantum::tag_dispatch::tag_of_t<std::common_type_t<Args...>>; \
+        return PQuantum::tag_dispatch::impl::function_name<dispatch_tag>::template apply<FunctionTag>( std::forward<Args>( args )... ); \
+    } \
+    \
+    template<class ...Args> \
+    decltype(auto) operator()( Args &&... args ) const \
+    { return apply( std::forward<Args>( args )... ); } \
+}; \
+} \
+\
+static constexpr functions::function_name function_name; \
+}
 
 #ifdef PQUANTUM_ENABLE_IF_TAG_IS
 #error "PQUANTUM_ENABLE_IF_TAG_IS is already defined."
