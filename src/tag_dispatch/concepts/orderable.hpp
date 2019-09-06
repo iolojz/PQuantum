@@ -10,69 +10,36 @@
 
 #include <functional>
 
+PQUANTUM_DEFINE_DEFAULT_TAG_DISPATCHED_FUNCTION(less)
+
 namespace PQuantum::tag_dispatch {
-namespace impl {
-template<class Tag>
-struct less : std::false_type {
-};
-
-template<class Tag>
-struct equal : std::false_type {
-};
-template<class Tag>
-struct less : std::false_type {
-};
-}
-
 namespace concepts {
 template<class Tag>
 struct orderable {
-	static constexpr bool value = impl::less::value;
-};
-
-template<class Tag>
-struct is_synthesized {
-	template<>
-	static constexpr bool value(void) { return false; }
+	static constexpr bool value = std::is_base_of_v<impl::detail::no_impl, impl::less<Tag>>;
 };
 }
+
+namespace synthesized {
+// FIXME: This will not work for multiple concepts synthesizing things...
+template<class Tag, class Arg1, class Arg2, PQUANTUM_ENABLE_IF_TAG_IMPLEMENTS_CONCEPT(Tag, concepts::orderable) >
+static decltype(auto) equal(const Arg1 &arg1, const Arg2 &arg2) {
+	// FIXME: should be "not"
+	return !(less(arg1, arg2) || less(arg2, arg1));
 }
-
-namespace impl {
-#ifdef PQUANTUM_DEFAULT_IMPL_TAG_DISPATCHED_COMPARISON
-#error "PQUANTUM_DEFAULT_IMPL_TAG_DISPATCHED_COMPARISON is already defined."
-#endif
-
-#define PQUANTUM_DEFAULT_IMPL_TAG_DISPATCHED_COMPARISON(name, std_name) \
-template<class Tag> \
-struct name \
-{ \
-    template<class Arg1, class Arg2> static decltype(auto) apply( Arg1 &&arg1, Arg2 &&arg2 ) \
-    { return std::std_name<>{}( std::forward<Arg1>( arg1 ), std::forward<Arg2>( arg2 ) ); } \
-}
-
-PQUANTUM_DEFAULT_IMPL_TAG_DISPATCHED_COMPARISON(less, less);
-
-PQUANTUM_DEFAULT_IMPL_TAG_DISPATCHED_COMPARISON(less_equal, less_equal);
-
-PQUANTUM_DEFAULT_IMPL_TAG_DISPATCHED_COMPARISON(unequal, not_equal_to);
-
-PQUANTUM_DEFAULT_IMPL_TAG_DISPATCHED_COMPARISON(equal, equal_to);
-
-PQUANTUM_DEFAULT_IMPL_TAG_DISPATCHED_COMPARISON(greater_equal, greater_equal);
-
-PQUANTUM_DEFAULT_IMPL_TAG_DISPATCHED_COMPARISON(greater, greater);
-
-#undef PQUANTUM_DEFAULT_IMPL_TAG_DISPATCHED_COMPARISON
 }
 }
 
 PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION(less)
+		
+		PQUANTUM_TAG_DISPATCH_CONCEPT_REFINES_CONCEPT(orderable, comparable)
+
+/*
 PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION(less_equal)
 PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION(greater_equal)
 PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION(greater)
 
 PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION(equal, comparable)
-PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION(unequal)
+PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION(unequal)*/
 
 #endif //PQUANTUM_TAG_DISPATCH_COMPARABLE_HPP

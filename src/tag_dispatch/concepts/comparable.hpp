@@ -9,17 +9,16 @@
 
 #include <functional>
 
+PQUANTUM_DEFINE_DEFAULT_TAG_DISPATCHED_FUNCTION(equal)
+
 namespace PQuantum::tag_dispatch {
 namespace impl {
-template<class Tag>
-struct equal : std::false_type {
-};
-
 template<class Tag>
 struct not_equal {
 	template<class FunctionTag = void, class ...Args>
 	static decltype(auto) apply(Args &&...args) {
-		return equal<Tag>::template apply<FunctionTag>(std::forward<Args>(args)...);
+		// FIXME: should be not
+		return !equal<Tag>::template apply<FunctionTag>(std::forward<Args>(args)...);
 	}
 };
 }
@@ -27,12 +26,12 @@ struct not_equal {
 namespace concepts {
 template<class Tag>
 struct comparable {
-	static constexpr bool value = std::conditional_t<synthesized<comparable, Tag>::value, true, impl::equal<Tag>::value>;
+	static constexpr bool value = std::is_base_of_v<impl::detail::no_impl, impl::equal<Tag>>;
 };
 }
 }
 
 PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION(equal, comparable)
-PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION( unequal )
+		PQUANTUM_DEFINE_TAG_DISPATCHED_FUNCTION(not_equal)
 
 #endif //PQUANTUM_TAG_DISPATCH_COMPARABLE_HPP

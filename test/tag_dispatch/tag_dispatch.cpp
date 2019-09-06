@@ -12,7 +12,7 @@
 
 #include "tag_dispatch/make.hpp"
 #include "tag_dispatch/std_tags.hpp"
-#include "tag_dispatch/concepts/comparable.hpp"
+#include "tag_dispatch/concepts/orderable.hpp"
 
 using namespace PQuantum::tag_dispatch;
 
@@ -51,6 +51,16 @@ std::ostream &operator<<(std::ostream &os, const std::vector<T, Alloc> &v) {
 }
 }
 
+namespace PQuantum::tag_dispatch::impl {
+template<>
+struct less<std_vector_tag> {
+	template<class V1, class V2>
+	static decltype(auto) apply(V1 &&v1, V2 &&v2) {
+		return std::forward<V1>(v1) < std::forward<V2>(v2);
+	}
+};
+}
+
 BOOST_AUTO_TEST_CASE(make_std_types)
 {
 	auto tuple = make_tuple( 42, 3.5, test_type{} );
@@ -72,4 +82,5 @@ BOOST_AUTO_TEST_CASE(make_std_types)
 
 BOOST_AUTO_TEST_CASE(comparisons) {
 	auto vector = make_vector(42, 35L, 44LL);
+	equal(vector, vector);
 }
