@@ -18,6 +18,26 @@ template<>
 struct less<int, concepts::total_order<int, void>> {
 	static constexpr bool apply(int a, int b) { return (a < b); }
 };
+
+template<>
+struct less_equal<int, concepts::total_preorder<int, void>>
+{
+	static constexpr bool apply( int a, int b )
+	{
+		if( a < 0 )
+			return true;
+		if( b < 0 )
+			return false;
+		
+		return (( a % 5 ) <= ( b % 5 ));
+	}
+};
+}
+
+namespace
+{
+using int_total_preorder = tag_dispatch::concepts::total_preorder<int, void>;
+using int_total_order = tag_dispatch::concepts::total_order<int, void>;
 }
 
 BOOST_AUTO_TEST_CASE(boolean_lattice_bool) {
@@ -68,7 +88,8 @@ BOOST_AUTO_TEST_CASE(boolean_lattice_std_bool_constant) {
 	static_assert(equal<>(no, no).value);
 }
 
-BOOST_AUTO_TEST_CASE(orderings) {
+BOOST_AUTO_TEST_CASE( total_order )
+{
 	using namespace tag_dispatch;
 	static_assert(tag_dispatch::concepts::set<int, tag_dispatch::concepts::total_order<int, void>>::value,
 				  "int does not model the 'set' concept.");
@@ -77,19 +98,39 @@ BOOST_AUTO_TEST_CASE(orderings) {
 	int b = 42;
 	int c = b;
 	
-	BOOST_TEST(less<>(a, b));
-	BOOST_TEST(less<>(a, c));
+	BOOST_TEST( less<int_total_order>( a, b ));
+	BOOST_TEST( less<int_total_order>( a, c ));
 	
-	BOOST_TEST(less_equal<>(a, b));
-	BOOST_TEST(less_equal<>(b, c));
+	BOOST_TEST( less_equal<int_total_order>( a, b ));
+	BOOST_TEST( less_equal<int_total_order>( b, c ));
 	
-	BOOST_TEST(greater_equal<>(b, a));
-	BOOST_TEST(greater_equal<>(b, c));
+	BOOST_TEST( greater_equal<int_total_order>( b, a ));
+	BOOST_TEST( greater_equal<int_total_order>( b, c ));
 	
-	BOOST_TEST(greater<>(b, a));
-	BOOST_TEST(greater<>(c, a));
+	BOOST_TEST( greater<int_total_order>( b, a ));
+	BOOST_TEST( greater<int_total_order>( c, a ));
 	
-	BOOST_TEST(equal<>(b, c));
+	BOOST_TEST( equal<int_total_order>( b, c ));
+}
+
+BOOST_AUTO_TEST_CASE( total_preorder )
+{
+	using namespace tag_dispatch;
+	
+	int a = -23;
+	int b = 50;
+	int c = 41;
+	
+	BOOST_TEST( less_equal<int_total_preorder>( a, a ));
+	BOOST_TEST( less_equal<int_total_preorder>( a, b ));
+	BOOST_TEST( less_equal<int_total_preorder>( b, c ));
+	BOOST_TEST( less_equal<int_total_preorder>( b, b ));
+	BOOST_TEST( less_equal<int_total_preorder>( b, c ));
+	BOOST_TEST( less_equal<int_total_preorder>( c, c ));
+	
+	BOOST_TEST( greater<int_total_preorder>( c, b ));
+	BOOST_TEST( greater<int_total_preorder>( c, a ));
+	BOOST_TEST( greater<int_total_preorder>( b, a ));
 }
 
 /*

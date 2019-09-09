@@ -32,11 +32,16 @@ struct set {
 }
 
 template<class DispatchTag> static constexpr std::enable_if_t<concepts::set<DispatchTag>::value, concepts::set<DispatchTag, void>> default_structure_tag(
-		impl_tag < impl::equal > );
+impl_tag <impl::equal> )
+{
+	return {};
+}
 
-template<class DispatchTag> static constexpr decltype(default_structure_tag<DispatchTag>(
-		std::declval<impl_tag < impl::equal>>()))
-default_structure_tag( impl_tag<impl::not_equal> );
+template<class DispatchTag>
+static constexpr auto default_structure_tag( impl_tag <impl::not_equal> )
+{
+	return default_structure_tag<DispatchTag>( impl_tag < impl::equal > {} );
+}
 }
 
 TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(equal)

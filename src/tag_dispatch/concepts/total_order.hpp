@@ -51,8 +51,8 @@ private:
 public:
 	template<class Arg1, class Arg2>
 	static decltype(auto) apply(const Arg1 &arg1, const Arg2 &arg2) {
-		return tag_dispatch::and_<>(less<DispatchTag, structure_tag>::apply(arg1, arg2),
-									less<DispatchTag, structure_tag>::apply(arg2, arg1));
+		return tag_dispatch::and_<>( tag_dispatch::not_<>( less<DispatchTag, structure_tag>::apply( arg1, arg2 )),
+									 tag_dispatch::not_<>( less<DispatchTag, structure_tag>::apply( arg2, arg1 )));
 	}
 };
 
@@ -61,7 +61,6 @@ struct less_equal<DispatchTag, concepts::total_order<DispatchTag, void>> {
 private:
 	using structure_tag = concepts::total_order<DispatchTag, void>;
 public:
-	
 	template<class Arg1, class Arg2>
 	static decltype(auto) apply(const Arg1 &arg1, const Arg2 &arg2) {
 		return tag_dispatch::or_<>(less<DispatchTag, structure_tag>::apply(arg1, arg2),
@@ -72,19 +71,30 @@ public:
 
 template<class DispatchTag>
 static constexpr std::enable_if_t<concepts::total_order<DispatchTag>::value, concepts::total_order<DispatchTag, void>>
-default_structure_tag(impl_tag<impl::less>);
+default_structure_tag( impl_tag<impl::less> )
+{
+	return {};
+}
 
 template<class DispatchTag>
-static constexpr decltype(default_structure_tag<DispatchTag>(std::declval<impl_tag<impl::less>>()))
-default_structure_tag(impl_tag<impl::greater_equal>);
+static constexpr auto default_structure_tag( impl_tag<impl::greater_equal> )
+{
+	return default_structure_tag<DispatchTag>( impl_tag<impl::less>{} );
+}
 
 template<class DispatchTag>
 static constexpr std::enable_if_t<concepts::total_order<DispatchTag>::value, concepts::total_order<DispatchTag, void>>
-default_structure_tag(impl_tag<impl::less_equal>);
+default_structure_tag( impl_tag<impl::less_equal> )
+{
+	return {};
+}
 
 template<class DispatchTag>
 static constexpr std::enable_if_t<concepts::total_order<DispatchTag>::value, concepts::total_order<DispatchTag, void>>
-default_structure_tag(impl_tag<impl::equal>);
+default_structure_tag( impl_tag<impl::equal> )
+{
+	return {};
+}
 }
 
 TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(less)

@@ -96,10 +96,13 @@ struct if_<std_bool_constant_tag, concepts::boolean_lattice<std_bool_constant_ta
 template<> constexpr concepts::boolean_lattice<bool, void> default_structure_tag<bool>(impl_tag < impl::if_ > );
 
 template<> constexpr concepts::boolean_lattice<std_bool_constant_tag, void> default_structure_tag<std_bool_constant_tag>(
-		impl_tag < impl::if_ > );
+impl_tag <impl::if_> )
+{
+	return {};
+}
 
 template<class DispatchTag> static constexpr std::enable_if_t<concepts::boolean_lattice<DispatchTag>::value, concepts::boolean_lattice<DispatchTag, void>> default_structure_tag(
-		impl_tag < impl::equal > );
+impl_tag<impl::equal> ) { return {}; }
 }
 
 TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(if_)
