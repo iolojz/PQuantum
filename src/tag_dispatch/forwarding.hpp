@@ -2,25 +2,25 @@
 // Created by jayz on 30.08.19.
 //
 
-#ifndef PQUANTUM_FORWARDING_HPP
-#define PQUANTUM_FORWARDING_HPP
+#ifndef TAG_DISPATCH_FORWARDING_HPP
+#define TAG_DISPATCH_FORWARDING_HPP
 
 #include <type_traits>
 
-#ifdef PQUANTUM_DEFINE_FORWARDING_STATIC_FUNCTION
-#error "PQUANTUM_DEFINE_FORWARDING_STATIC_FUNCTION already defined"
+#ifdef TAG_DISPATCH_DEFINE_FORWARDING_STATIC_FUNCTION
+#error "TAG_DISPATCH_DEFINE_FORWARDING_STATIC_FUNCTION already defined"
 #endif
 
-#define PQUANTUM_DEFINE_FORWARDING_STATIC_FUNCTION( name, impl, impl_name ) \
+#define TAG_DISPATCH_DEFINE_FORWARDING_STATIC_FUNCTION(name, impl, impl_name) \
 template<class ...Args> \
 static decltype(auto) name( Args &&...args ) \
 { return impl::impl_name( std::forward<Args>( args )... ); }
 
-#ifdef PQUANTUM_DEFINE_COPYMOVE_STATIC_FUNCTION
-#error "PQUANTUM_DEFINE_COPYMOVE_STATIC_FUNCTION already defined"
+#ifdef TAG_DISPATCH_DEFINE_COPYMOVE_STATIC_FUNCTION
+#error "TAG_DISPATCH_DEFINE_COPYMOVE_STATIC_FUNCTION already defined"
 #endif
 
-#define PQUANTUM_DEFINE_COPYMOVE_STATIC_FUNCTION( function_name, classname, impl, impl_name ) \
+#define TAG_DISPATCH_DEFINE_COPYMOVE_STATIC_FUNCTION(function_name, classname, impl, impl_name) \
 template<class ...Args> \
 static auto function_name( Args &&...args ) \
 { \
@@ -35,4 +35,4 @@ static auto function_name( Args &&...args ) \
     ); \
 }
 
-#endif //PQUANTUM_FORWARD_HPP
+#endif //TAG_DISPATCH_FORWARDING_HPP

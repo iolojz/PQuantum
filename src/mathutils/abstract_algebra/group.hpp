@@ -5,7 +5,7 @@
 #ifndef PQUANTUM_GROUP_HPP
 #define PQUANTUM_GROUP_HPP
 
-#include "set.hpp"
+#include "tag_dispatch/concepts/set.hpp"
 
 namespace PQuantum {
 namespace mathutils {
