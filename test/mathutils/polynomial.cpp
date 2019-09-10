@@ -7,7 +7,7 @@
 #include <boost/test/included/unit_test.hpp>
 
 #include "io/logging.hpp"
-#include "mathutils/abstract_algebra/free_polynomial.hpp"
+#include "tag_dispatch/models/free_polynomial.hpp"
 
 using namespace PQuantum;
 

@@ -5,7 +5,6 @@
 #ifndef TAGD_CONCEPTS_RING_HPP
 #define TAGD_CONCEPTS_RING_HPP
 
-#include "set.hpp"
 #include "group.hpp"
 #include "tag_dispatch/forwarding.hpp"
 

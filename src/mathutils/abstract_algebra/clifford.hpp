@@ -5,7 +5,7 @@
 #ifndef PQUANTUM_CLIFFORD_HPP
 #define PQUANTUM_CLIFFORD_HPP
 
-#include "mathutils/abstract_algebra/free_polynomial.hpp"
+#include "tag_dispatch/models/free_polynomial.hpp"
 
 #include <algorithm>
 #include <functional>

@@ -128,14 +128,26 @@ template<class DispatchTag> static constexpr std::enable_if_t< \
 #error "TAGD_ENABLE_IF_TAG_IS is already defined."
 #endif
 #define TAGD_ENABLE_IF_TAG_IS(type, tag) \
-class = std::enable_if_t<std::is_same_v<PQuantum::tag_dispatch::tag_of_t<type>, tag>>
+class = std::enable_if_t<std::is_same_v<::tag_dispatch::tag_of_t<type>, tag>>
+
+#ifdef TAGD_DISABLE_IF_TAG_IS
+#error "TAGD_DISABLE_IF_TAG_IS is already defined."
+#endif
+#define TAGD_DISABLE_IF_TAG_IS(type, tag) \
+class = std::enable_if_t<!std::is_same_v<::tag_dispatch::tag_of_t<type>, tag>>
 
 #include "concepts/boolean_lattice.hpp"
+#include "concepts/group.hpp"
 #include "concepts/makeable.hpp"
+#include "concepts/monoid.hpp"
+#include "concepts/ring.hpp"
 #include "concepts/set.hpp"
 #include "concepts/total_order.hpp"
 #include "concepts/total_preorder.hpp"
 
 #include "models/bool.hpp"
+#include "models/int.hpp"
+#include "models/free_monomial.hpp"
+#include "models/free_polynomial.hpp"
 
 #endif //TAGD_TAG_DISPATCH_HPP

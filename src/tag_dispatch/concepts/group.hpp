@@ -5,31 +5,31 @@
 #ifndef TAGD_CONCEPTS_GROUP_HPP
 #define TAGD_CONCEPTS_GROUP_HPP
 
-#include "set.hpp"
+#include "monoid.hpp"
+#include "tag_dispatch/forwarding.hpp"
 
 namespace tag_dispatch {
+namespace concepts {
+template<class DispatchTag, class StructureTag>
+struct group;
+}
+
 namespace impl {
 template<class DispatchTag, class StructureTag>
-struct is_abelian : no_impl {
-};
-
+struct underlying_monoid;
 template<class DispatchTag, class StructureTag>
-struct compose_assign : no_impl {
+struct underlying_monoid<DispatchTag, concepts::group<DispatchTag, StructureTag>> {
+	using type = concepts::monoid<DispatchTag, StructureTag>;
 };
+template<class DispatchTag, class StructureTag> using underlying_monoid_t = typename underlying_monoid<DispatchTag, StructureTag>::type;
 
-template<class DispatchTag, class StructureTag>
-struct compose {
-	template<class Arg1, class Arg2>
-	static auto apply(Arg1 &&arg1, Arg2 &&arg2) {
-		if constexpr(std::is_rvalue_reference_v<Arg1>)
-			return compose_assign<DispatchTag, StructureTag>::apply(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));
-		else if(is_abelian<DispatchTag, StructureTag>::apply() && std::is_rvalue_reference_v<Arg2>)
-			return compose_assign<DispatchTag, StructureTag>::apply(std::forward<Arg2>(arg2), std::forward<Arg1>(arg1));
-		else
-			return compose_assign<DispatchTag, StructureTag>::apply(
-					tag_dispatch::make<DispatchTag>(std::forward<Arg1>(arg1)), std::forward<Arg2>(arg2));
-	}
-};
+TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(is_abelian, group, is_abelian, underlying_monoid_t)
+
+TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(compose_assign, group, compose_assign, underlying_monoid_t)
+
+TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(compose, group, compose, underlying_monoid_t)
+
+TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(neutral_element, group, neutral_element, underlying_monoid_t)
 
 template<class DispatchTag, class StructureTag>
 struct inverse_in_place : no_impl {
@@ -46,37 +46,21 @@ struct inverse {
 					tag_dispatch::make<DispatchTag>(std::forward<Arg>(arg)));
 	}
 };
-
-template<class DispatchTag, class StructureTag>
-struct neutral_element : no_impl {
-};
 }
 
 namespace concepts {
-template<class DispatchTag, class StructureTag>
-struct group;
 template<class DispatchTag, class StructureTag = group<DispatchTag, void>>
 struct group {
-	static constexpr bool value = !(std::is_base_of_v<impl::no_impl, impl::is_abelian<DispatchTag, StructureTag>> ||
-									std::is_base_of_v<impl::no_impl, impl::compose_assign<DispatchTag, StructureTag>> ||
-									std::is_base_of_v<impl::no_impl, impl::inverse_in_place<DispatchTag, StructureTag>> ||
-									std::is_base_of_v<impl::no_impl, impl::neutral_element<DispatchTag, StructureTag>>);
+	static constexpr bool value = (monoid<DispatchTag, impl::underlying_monoid_t<DispatchTag, StructureTag>>::value &&
+								   !std::is_base_of_v<impl::no_impl, impl::inverse_in_place<DispatchTag, StructureTag>>);
 };
 }
 }
 
-TAGD_CONCEPT_IMPLEMENTS_FUNCTION(group, is_abelian)
-TAGD_CONCEPT_IMPLEMENTS_FUNCTION(group, compose_assign)
-TAGD_CONCEPT_IMPLEMENTS_FUNCTION(group, compose)
 TAGD_CONCEPT_IMPLEMENTS_FUNCTION(group, inverse_in_place)
 TAGD_CONCEPT_IMPLEMENTS_FUNCTION(group, inverse)
-TAGD_CONCEPT_IMPLEMENTS_FUNCTION(group, neutral_element)
 
-TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(is_abelian)
-TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(compose_assign)
-TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(compose)
 TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(inverse_in_place)
 TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(inverse)
-TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(neutral_element)
 
 #endif //TAGD_CONCEPTS_GROUP_HPP

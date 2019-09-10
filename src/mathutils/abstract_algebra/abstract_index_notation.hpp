@@ -5,7 +5,7 @@
 #ifndef PQUANTUM_ABSTRACT_INDEX_NOTATION_HPP
 #define PQUANTUM_ABSTRACT_INDEX_NOTATION_HPP
 
-#include "mathutils/abstract_algebra/free_polynomial.hpp"
+#include "tag_dispatch/models/free_polynomial.hpp"
 
 #include "template_helpers/iterator.hpp"
 

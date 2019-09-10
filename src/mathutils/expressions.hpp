@@ -5,7 +5,7 @@
 #ifndef PQUANTUM_EXPRESSIONS_HPP
 #define PQUANTUM_EXPRESSIONS_HPP
 
-#include "mathutils/abstract_algebra/free_polynomial.hpp"
+#include "tag_dispatch/models/free_polynomial.hpp"
 #include "manifold_specification.hpp"
 #include "number.hpp"
 
