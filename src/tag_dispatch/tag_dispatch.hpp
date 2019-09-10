@@ -7,11 +7,6 @@
 
 #include <type_traits>
 
-#include <boost/preprocessor/seq/seq.hpp>
-#include <boost/preprocessor/seq/pop_front.hpp>
-#include <boost/preprocessor/seq/for_each.hpp>
-#include <boost/preprocessor/stringize.hpp>
-
 namespace tag_dispatch {
 namespace detail {
 template<class, class = std::void_t<>>
@@ -60,23 +55,37 @@ template<class DispatchTag, class StructureTag, template<class, class> class Imp
 static constexpr StructureTag default_structure_tag(impl_tag<Implementation>);
 
 namespace detail {
-template<class StructureTag, template<class, class> class Implementation>
+template<class DispatchTag, class StructureTag, template<class, class> class Implementation>
 struct function_object {
 	template<class ...Args>
-	decltype(auto) operator()(Args &&... args) const {
+	decltype(auto) constexpr operator()(Args &&... args) const {
+		return Implementation<DispatchTag, StructureTag>::apply(std::forward<Args>(args)...);
+	}
+};
+
+template<class DispatchTag, template<class, class> class Implementation>
+struct function_object<DispatchTag, void, Implementation> {
+	template<class ...Args>
+	decltype(auto) constexpr operator()(Args &&... args) const {
+		using structure_tag = std::decay_t<decltype(default_structure_tag<DispatchTag>(impl_tag<Implementation>{}))>;
+		return Implementation<DispatchTag, structure_tag>::apply(std::forward<Args>(args)...);
+	}
+};
+
+template<class StructureTag, template<class, class> class Implementation>
+struct tag_inferring_function_object {
+	template<class ...Args>
+	decltype(auto) constexpr operator()(Args &&... args) const {
 		using dispatch_tag = tag_of_t<std::common_type_t<Args...>>;
 		return Implementation<dispatch_tag, StructureTag>::apply(std::forward<Args>(args)...);
 	}
 };
 
 template<template<class, class> class Implementation>
-struct function_object<void, Implementation> {
+struct tag_inferring_function_object<void, Implementation> {
 	template<class ...Args>
 	constexpr decltype(auto) operator()(Args &&... args) const {
 		using dispatch_tag = std::common_type_t<tag_of_t<Args>...>;
-		static_assert(
-				std::is_void_v<std::void_t<decltype(default_structure_tag<dispatch_tag>(impl_tag<Implementation>{}))>>,
-				"Call to tag-dispatched function \"equal\" is ambiguous: Cannot determine structure tag.");
 		using structure_tag = std::decay_t<decltype(default_structure_tag<dispatch_tag>(impl_tag<Implementation>{}))>;
 		
 		return Implementation<dispatch_tag, structure_tag>::apply(std::forward<Args>(args)...);
@@ -85,13 +94,34 @@ struct function_object<void, Implementation> {
 }
 }
 
+#ifdef TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION
+#error "TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION is already defined."
+#endif
+#define TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(function_name) \
+namespace tag_dispatch \
+{ \
+template<class StructureTag = void> static constexpr detail::tag_inferring_function_object<StructureTag, impl::function_name> function_name; \
+}
+
 #ifdef TAGD_DEFINE_TAG_DISPATCHED_FUNCTION
 #error "TAGD_DEFINE_TAG_DISPATCHED_FUNCTION is already defined."
 #endif
 #define TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(function_name) \
 namespace tag_dispatch \
 { \
-template<class StructureTag = void> static constexpr detail::function_object<StructureTag, impl::function_name> function_name; \
+template<class DispatchTag, class StructureTag = void> static constexpr detail::function_object<DispatchTag, StructureTag, impl::function_name> function_name; \
+}
+
+#ifdef TAGD_CONCEPT_IMPLEMENTS_FUNCTION
+#error "TAGD_CONCEPT_IMPLEMENTS_FUNCTION is already defined."
+#endif
+#define TAGD_CONCEPT_IMPLEMENTS_FUNCTION(concept, function) \
+namespace tag_dispatch \
+{ \
+template<class DispatchTag> static constexpr std::enable_if_t< \
+    concepts::concept<DispatchTag>::value, \
+    concepts::concept<DispatchTag, void> \
+> default_structure_tag( impl_tag<impl::function> ) { return {}; } \
 }
 
 #ifdef TAGD_ENABLE_IF_TAG_IS
@@ -99,5 +129,13 @@ template<class StructureTag = void> static constexpr detail::function_object<Str
 #endif
 #define TAGD_ENABLE_IF_TAG_IS(type, tag) \
 class = std::enable_if_t<std::is_same_v<PQuantum::tag_dispatch::tag_of_t<type>, tag>>
+
+#include "concepts/boolean_lattice.hpp"
+#include "concepts/makeable.hpp"
+#include "concepts/set.hpp"
+#include "concepts/total_order.hpp"
+#include "concepts/total_preorder.hpp"
+
+#include "models/bool.hpp"
 
 #endif //TAGD_TAG_DISPATCH_HPP

@@ -44,7 +44,7 @@ static constexpr auto default_structure_tag( impl_tag <impl::not_equal> )
 }
 }
 
-TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(equal)
-TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(not_equal)
+TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(equal)
+TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(not_equal)
 
 #endif // TAG_DISPATCH_CONCEPTS_SET_HPP

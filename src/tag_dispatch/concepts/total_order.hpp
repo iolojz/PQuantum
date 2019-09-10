@@ -51,8 +51,8 @@ private:
 public:
 	template<class Arg1, class Arg2>
 	static decltype(auto) apply(const Arg1 &arg1, const Arg2 &arg2) {
-		return tag_dispatch::and_<>( tag_dispatch::not_<>( less<DispatchTag, structure_tag>::apply( arg1, arg2 )),
-									 tag_dispatch::not_<>( less<DispatchTag, structure_tag>::apply( arg2, arg1 )));
+		return tag_dispatch::and_<>(tag_dispatch::not_<>(less<DispatchTag, structure_tag>::apply(arg1, arg2)),
+									tag_dispatch::not_<>(less<DispatchTag, structure_tag>::apply(arg2, arg1)));
 	}
 };
 
@@ -68,36 +68,16 @@ public:
 	}
 };
 }
-
-template<class DispatchTag>
-static constexpr std::enable_if_t<concepts::total_order<DispatchTag>::value, concepts::total_order<DispatchTag, void>>
-default_structure_tag( impl_tag<impl::less> )
-{
-	return {};
 }
 
-template<class DispatchTag>
-static constexpr auto default_structure_tag( impl_tag<impl::greater_equal> )
-{
-	return default_structure_tag<DispatchTag>( impl_tag<impl::less>{} );
-}
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION(total_order, less)
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION(total_order, less_equal)
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION(total_order, equal)
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION(total_order, greater_equal)
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION(total_order, greater)
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION(total_order, not_equal)
 
-template<class DispatchTag>
-static constexpr std::enable_if_t<concepts::total_order<DispatchTag>::value, concepts::total_order<DispatchTag, void>>
-default_structure_tag( impl_tag<impl::less_equal> )
-{
-	return {};
-}
-
-template<class DispatchTag>
-static constexpr std::enable_if_t<concepts::total_order<DispatchTag>::value, concepts::total_order<DispatchTag, void>>
-default_structure_tag( impl_tag<impl::equal> )
-{
-	return {};
-}
-}
-
-TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(less)
-TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(greater_equal)
+TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(less)
+TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(greater_equal)
 
 #endif // TAG_DISPATCH_CONCEPTS_TOTAL_ORDER_HPP

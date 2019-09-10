@@ -11,14 +11,11 @@
 #include "tag_dispatch/concepts/set.hpp"
 #include "tag_dispatch/concepts/total_order.hpp"
 #include "tag_dispatch/concepts/total_preorder.hpp"
+#include "tag_dispatch/concepts/ring.hpp"
 #include "tag_dispatch/models/bool.hpp"
+#include "tag_dispatch/models/int.hpp"
 
 namespace tag_dispatch::impl {
-template<>
-struct less<int, concepts::total_order<int, void>> {
-	static constexpr bool apply(int a, int b) { return (a < b); }
-};
-
 template<>
 struct less_equal<int, concepts::total_preorder<int, void>>
 {
@@ -133,14 +130,23 @@ BOOST_AUTO_TEST_CASE( total_preorder )
 	BOOST_TEST( greater<int_total_preorder>( b, a ));
 }
 
-/*
-#include <boost/fusion/adapted/std_pair.hpp>
-#include <boost/fusion/adapted/std_tuple.hpp>
-#include <boost/fusion/sequence/io.hpp>
+BOOST_AUTO_TEST_CASE(ring_int) {
+	using namespace tag_dispatch;
+	static_assert(concepts::ring<int>::value);
+	
+	int a = 42;
+	int b = 33;
+	int zero = tag_dispatch::zero<int>();
+	int one = tag_dispatch::one<int>();
+	
+	BOOST_TEST(add<>(a, b) == 42 + 33);
+	BOOST_TEST(subtract<>(a, b) == 42 - 33);
+	BOOST_TEST(multiply<>(a, b) == 42 * 33);
+	BOOST_TEST(zero == 0);
+	BOOST_TEST(one == 1);
+}
 
-#include "tag_dispatch/make.hpp"
-#include "tag_dispatch/std_tags.hpp"
-#include "tag_dispatch/concepts/orderable.hpp"
+/*
 
 using namespace PQuantum::tag_dispatch;
 
