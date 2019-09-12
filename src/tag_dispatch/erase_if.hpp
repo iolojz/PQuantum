@@ -2,11 +2,21 @@
 // Created by jayz on 29.08.19.
 //
 
-#ifndef PQUANTUM_ERASE_IF_HPP
-#define PQUANTUM_ERASE_IF_HPP
+#ifndef TAGD_ERASE_IF_HPP
+#define TAGD_ERASE_IF_HPP
 
-namespace PQuantum {
-namespace template_helpers {
+#ifndef __has_cpp_attribute
+#define TAGD_USE_CXX20_ERASE_IF 0
+#elif __has_cpp_attribute(__cpp_lib_erase_if)
+#define TAGD_USE_CXX20_ERASE_IF 1
+#else
+#define TAGD_USE_CXX20_ERASE_IF 0
+#endif
+
+namespace tag_dispatch {
+#if TAGD_USE_CXX20_ERASE_IF
+using std::erase_if;
+#else
 // This is equivalent to std::erase_if() in c++20
 template<class Key, class T, class Compare, class Alloc, class Predicate>
 void erase_if(std::map<Key, T, Compare, Alloc> &c, Predicate predicate) {
@@ -20,7 +30,8 @@ void erase_if(std::map<Key, T, Compare, Alloc> &c, Predicate predicate) {
 			++it;
 	}
 }
-}
+
+#endif
 }
 
-#endif //PQUANTUM_ERASE_IF_HPP
+#endif //TAGD_ERASE_IF_HPP

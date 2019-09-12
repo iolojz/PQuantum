@@ -6,10 +6,28 @@
 #define TAGD_CONCEPTS_MONOID_HPP
 
 #include "tag_dispatch/tag_dispatch.hpp"
-#include "tag_dispatch/concepts/makeable.hpp"
+#include "set.hpp"
+#include "makeable.hpp"
+#include "tag_dispatch/forwarding.hpp"
 
 namespace tag_dispatch {
+namespace concepts {
+template<class DispatchTag, class StructureTag>
+struct monoid;
+}
+
 namespace impl {
+template<class DispatchTag, class StructureTag>
+struct underlying_monoid;
+template<class DispatchTag, class StructureTag> using underlying_monoid_t = typename underlying_monoid<DispatchTag, StructureTag>::type;
+
+template<class DispatchTag, class StructureTag>
+struct underlying_set<DispatchTag, concepts::monoid<DispatchTag, StructureTag>> {
+	using type = rebind_concept_t<concepts::set, concepts::monoid<DispatchTag, StructureTag>>;
+};
+
+TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(equal, monoid, equal, underlying_set_t)
+
 template<class DispatchTag, class StructureTag>
 struct is_abelian : no_impl {
 };
@@ -22,13 +40,15 @@ template<class DispatchTag, class StructureTag>
 struct compose {
 	template<class Arg1, class Arg2>
 	static auto apply(Arg1 &&arg1, Arg2 &&arg2) {
+		static constexpr auto make_copy = tag_dispatch::make<DispatchTag, rebind_concept_t<concepts::makeable, StructureTag>>;
+		
 		if constexpr(std::is_rvalue_reference_v<Arg1>)
 			return compose_assign<DispatchTag, StructureTag>::apply(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));
 		else if(is_abelian<DispatchTag, StructureTag>::apply() && std::is_rvalue_reference_v<Arg2>)
 			return compose_assign<DispatchTag, StructureTag>::apply(std::forward<Arg2>(arg2), std::forward<Arg1>(arg1));
 		else
-			return compose_assign<DispatchTag, StructureTag>::apply(
-					tag_dispatch::make<DispatchTag>(std::forward<Arg1>(arg1)), std::forward<Arg2>(arg2));
+			return compose_assign<DispatchTag, StructureTag>::apply(make_copy(std::forward<Arg1>(arg1)),
+																	std::forward<Arg2>(arg2));
 	}
 };
 
@@ -38,11 +58,12 @@ struct neutral_element : no_impl {
 }
 
 namespace concepts {
-template<class DispatchTag, class StructureTag>
-struct monoid;
 template<class DispatchTag, class StructureTag = monoid<DispatchTag, void>>
 struct monoid {
-	static constexpr bool value = !(std::is_base_of_v<impl::no_impl, impl::is_abelian<DispatchTag, StructureTag>> ||
+	static constexpr bool value = makeable<DispatchTag, rebind_concept_t<concepts::makeable, StructureTag>>::value &&
+								  // FIXME: This leads to undefined instantiations of underlying_set<>! Use SFINAE to avoid this...
+								  set<DispatchTag, impl::underlying_set_t<DispatchTag, StructureTag>>::value &&
+								  !(std::is_base_of_v<impl::no_impl, impl::is_abelian<DispatchTag, StructureTag>> ||
 									std::is_base_of_v<impl::no_impl, impl::compose_assign<DispatchTag, StructureTag>> ||
 									std::is_base_of_v<impl::no_impl, impl::neutral_element<DispatchTag, StructureTag>>);
 };

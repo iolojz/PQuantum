@@ -92,6 +92,20 @@ struct tag_inferring_function_object<void, Implementation> {
 	}
 };
 }
+
+template<class DispatchTag, class StructureTag>
+struct quotient_tag;
+
+template<template<class, class> class Concept, class StructureTag>
+struct rebind_concept;
+
+template<template<class, class> class NewConcept,
+		template<class, class> class OldConcept, class DispatchTag, class StructureTag>
+struct rebind_concept<NewConcept, OldConcept<DispatchTag, StructureTag>> {
+	using type = NewConcept<DispatchTag, StructureTag>;
+};
+
+template<template<class, class> class Concept, class StructureTag> using rebind_concept_t = typename rebind_concept<Concept, StructureTag>::type;
 }
 
 #ifdef TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION

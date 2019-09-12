@@ -10,6 +10,10 @@
 namespace tag_dispatch {
 namespace impl {
 template<class DispatchTag, class StructureTag>
+struct underlying_set;
+template<class DispatchTag, class StructureTag> using underlying_set_t = typename underlying_set<DispatchTag, StructureTag>::type;
+
+template<class DispatchTag, class StructureTag>
 struct equal : no_impl {
 };
 

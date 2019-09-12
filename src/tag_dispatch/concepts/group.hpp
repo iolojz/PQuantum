@@ -16,19 +16,18 @@ struct group;
 
 namespace impl {
 template<class DispatchTag, class StructureTag>
-struct underlying_monoid;
+struct underlying_group;
+template<class DispatchTag, class StructureTag> using underlying_group_t = typename underlying_group<DispatchTag, StructureTag>::type;
+
 template<class DispatchTag, class StructureTag>
 struct underlying_monoid<DispatchTag, concepts::group<DispatchTag, StructureTag>> {
-	using type = concepts::monoid<DispatchTag, StructureTag>;
+	using type = rebind_concept_t<concepts::monoid, concepts::group<DispatchTag, StructureTag>>;
 };
-template<class DispatchTag, class StructureTag> using underlying_monoid_t = typename underlying_monoid<DispatchTag, StructureTag>::type;
 
+TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(equal, group, equal, underlying_monoid_t)
 TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(is_abelian, group, is_abelian, underlying_monoid_t)
-
 TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(compose_assign, group, compose_assign, underlying_monoid_t)
-
 TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(compose, group, compose, underlying_monoid_t)
-
 TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(neutral_element, group, neutral_element, underlying_monoid_t)
 
 template<class DispatchTag, class StructureTag>

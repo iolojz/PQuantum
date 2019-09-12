@@ -16,21 +16,20 @@ struct ring;
 
 namespace impl {
 template<class DispatchTag, class StructureTag>
-struct underlying_group;
+struct underlying_ring;
+template<class DispatchTag, class StructureTag> using underlying_ring_t = underlying_ring<DispatchTag, StructureTag>;
+
 template<class DispatchTag, class StructureTag>
 struct underlying_group<DispatchTag, concepts::ring<DispatchTag, StructureTag>> {
-	using type = concepts::group<DispatchTag, StructureTag>;
+	using type = rebind_concept_t<concepts::ring, concepts::ring<DispatchTag, StructureTag>>;
 };
-template<class DispatchTag, class StructureTag> using underlying_group_t = typename underlying_group<DispatchTag, StructureTag>::type;
+
+TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(equal, ring, equal, underlying_group_t)
 
 TAGD_DEFINE_FORWARDING_FUNCTION(add_assign, compose_assign, underlying_group_t)
-
 TAGD_DEFINE_FORWARDING_FUNCTION(add, compose, underlying_group_t)
-
 TAGD_DEFINE_FORWARDING_FUNCTION(negate_in_place, inverse_in_place, underlying_group_t)
-
 TAGD_DEFINE_FORWARDING_FUNCTION(negate, inverse, underlying_group_t)
-
 TAGD_DEFINE_FORWARDING_FUNCTION(zero, neutral_element, underlying_group_t)
 
 template<class DispatchTag, class StructureTag>
