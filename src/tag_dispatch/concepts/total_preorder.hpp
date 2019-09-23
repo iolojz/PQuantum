@@ -6,6 +6,7 @@
 #define TAG_DISPATCH_CONCEPTS_TOTAL_PREORDER_HPP
 
 #include "set.hpp"
+#include "tag_dispatch/models/quotient.hpp"
 
 namespace tag_dispatch {
 namespace concepts {
@@ -28,8 +29,7 @@ struct greater {
 };
 
 template<class DispatchTag, class StructureTag>
-struct equal<DispatchTag, concepts::set<DispatchTag,
-		quotient_tag < DispatchTag, concepts::total_preorder<DispatchTag, StructureTag>>>
+struct equal<DispatchTag, concepts::set<DispatchTag, models::quotient_tag<DispatchTag, concepts::total_preorder<DispatchTag, StructureTag>>>
 > {
 static_assert(concepts::total_preorder<DispatchTag, StructureTag>::value);
 

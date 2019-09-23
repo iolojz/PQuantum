@@ -21,7 +21,7 @@ template<class DispatchTag, class StructureTag> using underlying_ring_t = underl
 
 template<class DispatchTag, class StructureTag>
 struct underlying_group<DispatchTag, concepts::ring<DispatchTag, StructureTag>> {
-	using type = rebind_concept_t<concepts::ring, concepts::ring<DispatchTag, StructureTag>>;
+	using type = rebind_concept_t<concepts::group, concepts::ring<DispatchTag, StructureTag>>;
 };
 
 TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(equal, ring, equal, underlying_group_t)
@@ -35,19 +35,15 @@ TAGD_DEFINE_FORWARDING_FUNCTION(zero, neutral_element, underlying_group_t)
 template<class DispatchTag, class StructureTag>
 struct subtract_assign {
 	template<class Arg1, class Arg2>
-	static auto apply(Arg1 &&arg1, Arg2 &&arg2) {
+	static decltype( auto ) apply( Arg1 &arg1, Arg2 &&arg2 )
+	{
 		if constexpr(std::is_rvalue_reference_v<Arg2>)
-			return add_assign<DispatchTag, StructureTag>::apply(std::forward<Arg1>(arg1),
-																negate_in_place<DispatchTag, StructureTag>::apply(
-																		std::forward<Arg2>(arg2)));
-		else if(std::is_rvalue_reference_v<Arg1>)
-			return negate_in_place<DispatchTag, StructureTag>::apply(add_assign<DispatchTag, StructureTag>::apply(
-					negate_in_place<DispatchTag, StructureTag>::apply(std::forward<Arg1>(arg1)),
-					std::forward<Arg2>(arg2)));
+			return add_assign<DispatchTag, StructureTag>::apply( arg1,
+																 negate_in_place<DispatchTag, StructureTag>::apply(
+																 arg2 ));
 		else
-			return add_assign<DispatchTag, StructureTag>::apply(std::forward<Arg1>(arg1),
-																negate<DispatchTag, StructureTag>::apply(
-																		std::forward<Arg2>(arg2)));
+			return add_assign<DispatchTag, StructureTag>::apply( arg1, negate<DispatchTag, StructureTag>::apply(
+			std::forward<Arg2>( arg2 )));
 	}
 };
 
@@ -56,15 +52,15 @@ struct subtract {
 	template<class Arg1, class Arg2>
 	static auto apply(Arg1 &&arg1, Arg2 &&arg2) {
 		if constexpr(std::is_rvalue_reference_v<Arg1>)
-			return subtract_assign<DispatchTag, StructureTag>::apply(std::forward<Arg1>(arg1),
-																	 std::forward<Arg2>(arg2));
+			return subtract_assign<DispatchTag, StructureTag>::apply( arg1, std::forward<Arg2>( arg2 ));
 		else if(std::is_rvalue_reference_v<Arg2>)
-			return add<DispatchTag, StructureTag>::apply(std::forward<Arg2>(arg1),
-														 negate_in_place<DispatchTag, StructureTag>::apply(
-																 std::forward<Arg1>(arg2)));
-		else
-			return subtract_assign<DispatchTag, StructureTag>::apply(
-					tag_dispatch::make<DispatchTag>(std::forward<Arg2>(arg1)), std::forward<Arg1>(arg2));
+			return add<DispatchTag, StructureTag>::apply( std::forward<Arg1>( arg1 ),
+														  negate_in_place<DispatchTag, StructureTag>::apply( arg2 ));
+		else {
+			static constexpr auto make_copy = tag_dispatch::make<DispatchTag, rebind_concept_t<concepts::makeable, StructureTag>>;
+			auto copy = make_copy( std::forward<Arg1>( arg1 ));
+			return subtract_assign<DispatchTag, StructureTag>::apply( copy, std::forward<Arg2>( arg2 ));
+		}
 	}
 };
 
@@ -77,14 +73,14 @@ struct multiply {
 	template<class Arg1, class Arg2>
 	static auto apply(Arg1 &&arg1, Arg2 &&arg2) {
 		if constexpr(std::is_rvalue_reference_v<Arg1>)
-			return multiply_assign<DispatchTag, StructureTag>::apply(std::forward<Arg1>(arg1),
-																	 std::forward<Arg2>(arg2));
+			return multiply_assign<DispatchTag, StructureTag>::apply( arg1, std::forward<Arg2>( arg2 ));
 		else if(is_abelian<DispatchTag, StructureTag>::apply() && std::is_rvalue_reference_v<Arg2>)
-			return multiply_assign<DispatchTag, StructureTag>::apply(std::forward<Arg2>(arg2),
-																	 std::forward<Arg1>(arg1));
-		else
-			return multiply_assign<DispatchTag, StructureTag>::apply(
-					tag_dispatch::make<DispatchTag>(std::forward<Arg1>(arg1)), std::forward<Arg2>(arg2));
+			return multiply_assign<DispatchTag, StructureTag>::apply( arg2, std::forward<Arg1>( arg1 ));
+		else {
+			static constexpr auto make_copy = tag_dispatch::make<DispatchTag, rebind_concept_t<concepts::makeable, StructureTag>>;
+			auto copy = make_copy( std::forward<Arg1>( arg1 ));
+			return multiply_assign<DispatchTag, StructureTag>::apply( copy, std::forward<Arg2>( arg2 ));
+		}
 	}
 };
 

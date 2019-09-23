@@ -39,10 +39,12 @@ struct inverse {
 	template<class Arg>
 	static auto apply(Arg &&arg) {
 		if constexpr(std::is_rvalue_reference_v<Arg>)
-			return inverse_in_place<DispatchTag, StructureTag>::apply(std::forward<Arg>(arg));
-		else
-			return inverse_in_place<DispatchTag, StructureTag>::apply(
-					tag_dispatch::make<DispatchTag>(std::forward<Arg>(arg)));
+			return inverse_in_place<DispatchTag, StructureTag>::apply( arg );
+		else {
+			static constexpr auto make_copy = tag_dispatch::make<DispatchTag, rebind_concept_t<concepts::makeable, StructureTag>>;
+			auto copy = make_copy( std::forward<Arg>( arg ));
+			return inverse_in_place<DispatchTag, StructureTag>::apply( copy );
+		}
 	}
 };
 }

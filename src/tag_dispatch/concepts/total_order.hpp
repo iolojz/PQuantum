@@ -50,7 +50,8 @@ private:
 	using structure_tag = concepts::total_order<DispatchTag, void>;
 public:
 	template<class Arg1, class Arg2>
-	static decltype(auto) apply(const Arg1 &arg1, const Arg2 &arg2) {
+	static decltype( auto ) constexpr apply( const Arg1 &arg1, const Arg2 &arg2 )
+	{
 		return tag_dispatch::and_<>(tag_dispatch::not_<>(less<DispatchTag, structure_tag>::apply(arg1, arg2)),
 									tag_dispatch::not_<>(less<DispatchTag, structure_tag>::apply(arg2, arg1)));
 	}

@@ -8,7 +8,8 @@
 
 #include "tag_dispatch/tag_dispatch.hpp"
 
-BOOST_AUTO_TEST_CASE(bool) {
+BOOST_AUTO_TEST_CASE( test_bool )
+{
 	using namespace tag_dispatch;
 	
 	static constexpr bool yes = true;
@@ -32,7 +33,8 @@ BOOST_AUTO_TEST_CASE(bool) {
 	BOOST_TEST(equal<>(no, no));
 }
 
-BOOST_AUTO_TEST_CASE(std_bool_constant) {
+BOOST_AUTO_TEST_CASE( test_std_bool_constant )
+{
 	using namespace tag_dispatch;
 	
 	static constexpr std::true_type yes;

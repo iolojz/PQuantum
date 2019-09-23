@@ -30,7 +30,7 @@ using total_preorder = tag_dispatch::concepts::total_preorder<int, void>;
 using total_order = tag_dispatch::concepts::total_order<int, void>;
 }
 
-BOOST_AUTO_TEST_CASE( total_order )
+BOOST_AUTO_TEST_CASE( test_total_order )
 {
 	using namespace tag_dispatch;
 	
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE( total_order )
 	BOOST_TEST(equal<total_order>(b, c));
 }
 
-BOOST_AUTO_TEST_CASE( total_preorder )
+BOOST_AUTO_TEST_CASE( test_total_preorder )
 {
 	using namespace tag_dispatch;
 	
@@ -73,7 +73,8 @@ BOOST_AUTO_TEST_CASE( total_preorder )
 	BOOST_TEST(greater<total_preorder>(b, a));
 }
 
-BOOST_AUTO_TEST_CASE(ring) {
+BOOST_AUTO_TEST_CASE( test_ring )
+{
 	using namespace tag_dispatch;
 	static_assert(concepts::ring<int>::value);
 	

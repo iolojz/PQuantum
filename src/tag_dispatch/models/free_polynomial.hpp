@@ -143,13 +143,13 @@ public:
 		
 		decltype(monomial_map) result;
 		for(auto &&monomial : monomials) {
-			if(coefficient_ring::equal(monomial.coeff, coefficient_ring::zero()))
+			if( equal_coefficients::apply( monomial.coeff, zero_coefficient::apply()))
 				continue;
 			
 			auto insertion_result = result.insert({monomial.variables, monomial.coeff});
 			if(insertion_result.second == false) {
-				coefficient_ring::add_assign(insertion_result.first->second, std::move(monomial.coeff));
-				if(coefficient_ring::equal(insertion_result.first->second, coefficient_ring::zero()))
+				add_assign_coefficients( insertion_result.first->second, std::move( monomial.coeff ));
+				if( equal_coefficients::apply( insertion_result.first->second, zero_coefficient::apply()))
 					result.erase(insertion_result.first);
 			}
 		}
@@ -178,7 +178,7 @@ public:
 					return false;
 			}
 			
-			if(!coefficient_ring::equal(boost::get<0>(map_entries).second, boost::get<1>(map_entries).second))
+			if( !equal_coefficients::apply( boost::get<0>( map_entries ).second, boost::get<1>( map_entries ).second ))
 				return false;
 		}
 		
@@ -262,8 +262,9 @@ struct is_abelian<models::free_polynomial_tag<Coefficient, Variable>, concepts::
 template<class Coefficient, class Variable>
 struct compose_assign<models::free_polynomial_tag<Coefficient, Variable>, concepts::monoid<models::free_polynomial_tag<Coefficient, Variable>, void>> {
 	template<class P1, class P2>
-	static decltype(auto) apply(P1 &&p1, P2 &&p2) {
-		return std::forward<P1>(p1) += std::forward<P2>(p2);
+	static decltype( auto ) apply( P1 &p1, P2 &&p2 )
+	{
+		return p1 += std::forward<P2>( p2 );
 	}
 };
 
@@ -291,8 +292,9 @@ struct is_abelian<models::free_polynomial_tag<Coefficient, Variable>, concepts::
 template<class Coefficient, class Variable>
 struct multiply_assign<models::free_polynomial_tag<Coefficient, Variable>, concepts::ring<models::free_polynomial_tag<Coefficient, Variable>, void>> {
 	template<class P1, class P2>
-	static decltype(auto) apply(P1 &&p1, P2 &&p2) {
-		return std::forward<P1>(p1) *= std::forward<P2>(p2);
+	static decltype( auto ) apply( P1 &p1, P2 &&p2 )
+	{
+		return p1 *= std::forward<P2>( p2 );
 	}
 };
 

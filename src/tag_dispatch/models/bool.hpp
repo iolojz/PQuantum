@@ -2,8 +2,8 @@
 // Created by jayz on 09.09.19.
 //
 
-#ifndef PQUANTUM_BOOL_HPP
-#define PQUANTUM_BOOL_HPP
+#ifndef TAGD_MODELS_BOOL_HPP
+#define TAGD_MODELS_BOOL_HPP
 
 #include "tag_dispatch/concepts/boolean_lattice.hpp"
 
@@ -30,8 +30,9 @@ struct or_<bool, concepts::boolean_lattice<bool, void>> {
 };
 
 template<>
-struct equal<bool, concepts::boolean_lattice<bool, void>> {
-	static bool apply(bool v1, bool v2) { return (v1 == v2); }
+struct equal<bool, concepts::set < bool, void>> {
+static bool apply( bool v1, bool v2 )
+{ return ( v1 == v2 ); }
 };
 
 template<class DispatchTag, class StructureTag>
@@ -73,7 +74,7 @@ struct or_<std_bool_constant_tag, concepts::boolean_lattice<std_bool_constant_ta
 };
 
 template<>
-struct equal<std_bool_constant_tag, concepts::boolean_lattice<std_bool_constant_tag, void>> {
+struct equal<std_bool_constant_tag, concepts::set < std_bool_constant_tag, void>> {
 	static constexpr std::true_type apply(std::true_type, std::true_type) { return {}; }
 	
 	static constexpr std::false_type apply(std::true_type, std::false_type) { return {}; }
@@ -92,19 +93,14 @@ struct if_<std_bool_constant_tag, concepts::boolean_lattice<std_bool_constant_ta
 	static constexpr auto apply(std::false_type, Then &&, Else &&else_) { return else_; }
 };
 }
-
-template<> constexpr concepts::boolean_lattice<bool, void> default_structure_tag<bool>(impl_tag < impl::if_ > );
-
-template<> constexpr concepts::boolean_lattice<std_bool_constant_tag, void> default_structure_tag<std_bool_constant_tag>(
-impl_tag <impl::if_> )
-{
-	return {};
 }
 
-template<class DispatchTag> static constexpr std::enable_if_t<concepts::boolean_lattice<DispatchTag>::value, concepts::boolean_lattice<DispatchTag, void>> default_structure_tag(
-impl_tag<impl::equal> ) { return {}; }
-}
+TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( bool, boolean_lattice, if_ )
+TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( bool, set, equal )
+
+TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( std_bool_constant_tag, boolean_lattice, if_ )
+TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( std_bool_constant_tag, set, equal )
 
 TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(if_)
 
-#endif //PQUANTUM_BOOL_HPP
+#endif //TAGD_MODELS_BOOL_HPP

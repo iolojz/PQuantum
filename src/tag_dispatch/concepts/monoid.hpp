@@ -40,15 +40,15 @@ template<class DispatchTag, class StructureTag>
 struct compose {
 	template<class Arg1, class Arg2>
 	static auto apply(Arg1 &&arg1, Arg2 &&arg2) {
-		static constexpr auto make_copy = tag_dispatch::make<DispatchTag, rebind_concept_t<concepts::makeable, StructureTag>>;
-		
 		if constexpr(std::is_rvalue_reference_v<Arg1>)
-			return compose_assign<DispatchTag, StructureTag>::apply(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2));
+			return compose_assign<DispatchTag, StructureTag>::apply( arg1, std::forward<Arg2>( arg2 ));
 		else if(is_abelian<DispatchTag, StructureTag>::apply() && std::is_rvalue_reference_v<Arg2>)
-			return compose_assign<DispatchTag, StructureTag>::apply(std::forward<Arg2>(arg2), std::forward<Arg1>(arg1));
-		else
-			return compose_assign<DispatchTag, StructureTag>::apply(make_copy(std::forward<Arg1>(arg1)),
-																	std::forward<Arg2>(arg2));
+			return compose_assign<DispatchTag, StructureTag>::apply( arg2, std::forward<Arg1>( arg1 ));
+		else {
+			static constexpr auto make_copy = tag_dispatch::make<DispatchTag, rebind_concept_t<concepts::makeable, StructureTag>>;
+			auto copy = make_copy( std::forward<Arg1>( arg1 ));
+			return compose_assign<DispatchTag, StructureTag>::apply( copy, std::forward<Arg2>( arg2 ));
+		}
 	}
 };
 

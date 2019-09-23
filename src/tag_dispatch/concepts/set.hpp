@@ -34,19 +34,10 @@ struct set {
 	static constexpr bool value = !std::is_base_of_v<impl::no_impl, impl::equal<DispatchTag, StructureTag>>;
 };
 }
-
-template<class DispatchTag> static constexpr std::enable_if_t<concepts::set<DispatchTag>::value, concepts::set<DispatchTag, void>> default_structure_tag(
-impl_tag <impl::equal> )
-{
-	return {};
 }
 
-template<class DispatchTag>
-static constexpr auto default_structure_tag( impl_tag <impl::not_equal> )
-{
-	return default_structure_tag<DispatchTag>( impl_tag < impl::equal > {} );
-}
-}
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION( set, equal )
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION( set, not_equal )
 
 TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(equal)
 TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(not_equal)

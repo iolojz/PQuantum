@@ -67,21 +67,6 @@ struct compose_assign<models::free_monomial_tag<Coefficient, Variable>, concepts
 							std::make_move_iterator(m2.variables.end()));
 		return m1;
 	}
-	
-	static constexpr models::free_monomial<Coefficient, Variable>
-	apply(models::free_monomial<Coefficient, Variable> &&m1, const models::free_monomial<Coefficient, Variable> &m2) {
-		tag_dispatch::multiply_assign<>(m1.coefficient, std::move(m2.coefficient));
-		m1.variables.insert(m1.variables.end(), m2.variables.begin(), m2.variables.end());
-		return m1;
-	}
-	
-	static constexpr models::free_monomial<Coefficient, Variable>
-	apply(models::free_monomial<Coefficient, Variable> &&m1, models::free_monomial<Coefficient, Variable> &&m2) {
-		tag_dispatch::multiply_assign<>(m1.coefficient, std::move(m2.coefficient));
-		m1.variables.insert(m1.variables.end(), std::make_move_iterator(m2.variables.begin()),
-							std::make_move_iterator(m2.variables.end()));
-		return m1;
-	}
 };
 
 template<class Coefficient, class Variable>
