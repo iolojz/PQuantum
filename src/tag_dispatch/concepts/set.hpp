@@ -10,10 +10,6 @@
 namespace tag_dispatch {
 namespace impl {
 template<class DispatchTag, class StructureTag>
-struct underlying_set;
-template<class DispatchTag, class StructureTag> using underlying_set_t = typename underlying_set<DispatchTag, StructureTag>::type;
-
-template<class DispatchTag, class StructureTag>
 struct equal : no_impl {
 };
 
@@ -36,10 +32,10 @@ struct set {
 }
 }
 
-TAGD_CONCEPT_IMPLEMENTS_FUNCTION( set, equal )
-TAGD_CONCEPT_IMPLEMENTS_FUNCTION( set, not_equal )
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION( set, void, equal )
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION( set, void, not_equal )
 
-TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(equal)
-TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(not_equal)
+TAGD_DEFINE_TRAITED_DISPATCHED_FUNCTION( equal )
+TAGD_DEFINE_TRAITED_DISPATCHED_FUNCTION( not_equal )
 
 #endif // TAG_DISPATCH_CONCEPTS_SET_HPP

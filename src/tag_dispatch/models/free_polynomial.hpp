@@ -6,8 +6,8 @@
 #define TAGD_MODELS_FREE_POLYNOMIAL_HPP
 
 #include "free_monomial.hpp"
-#include "tag_dispatch/erase_if.hpp"
-#include "tag_dispatch/operator_helpers.hpp"
+#include "tag_dispatch/core/erase_if.hpp"
+#include "tag_dispatch/core/operator_helpers.hpp"
 
 #include <boost/container/flat_map.hpp>
 #include <boost/range/combine.hpp>
@@ -20,7 +20,7 @@ struct free_polynomial_tag {
 	using variable = Variable;
 };
 
-template<class Coefficient, class Variable, class CoefficientRing, class TotalVariablePreorder>
+template<class Coefficient, class Variable, class CoefficientRing, class TotalVariableOrder>
 class free_polynomial {
 public:
 	using dispatch_tag = free_polynomial_tag<Coefficient, Variable>;
@@ -33,15 +33,15 @@ public:
 private:
 	using coefficient_tag = tag_of_t<coefficient>;
 	using add_assign_coefficients = impl::add_assign<coefficient_tag, coefficient_ring>;
-	using equal_coefficients = impl::add_assign<coefficient_tag, coefficient_ring>;
+	using equal_coefficients = impl::equal<coefficient_tag, coefficient_ring>;
 	using zero_coefficient = impl::zero<coefficient_tag, coefficient_ring>;
 	using negate_coefficient_in_place = impl::negate_in_place<coefficient_tag, coefficient_ring>;
 	
 	struct less_variables {
 		template<class V1, class V2>
 		decltype(auto) operator()(V1 &&v1, V2 &&v2) const {
-			return impl::less_equal<tag_of_t<Variable>, TotalVariablePreorder>::apply(std::forward<V1>(v1),
-																					  std::forward<V2>(v2));
+			using less = impl::less<tag_of_t<Variable>, TotalVariableOrder>;
+			return less::apply( std::forward<V1>( v1 ), std::forward<V2>( v2 ));
 		}
 	};
 	
@@ -61,8 +61,10 @@ private:
 	
 	// FIXME: Should we enable runtime switching of this type?
 	using monomial_container = boost::container::flat_map<decltype(std::declval<monomial>().variables), coefficient, less_variable_ranges>;
+	//using monomial_container = std::map<decltype(std::declval<monomial>().variables), coefficient, less_variable_ranges>;
 	monomial_container monomial_map;
 public:
+	free_polynomial( void ) = default;
 	free_polynomial(const free_polynomial &) = default;
 	
 	free_polynomial(free_polynomial &&) = default;
@@ -75,7 +77,7 @@ public:
 	
 	free_polynomial &operator+=(const free_polynomial &p) {
 		if(this == &p) {
-			for(auto &term : p.monomials())
+			for( auto &term : monomial_map )
 				add_assign_coefficients::apply(term.second, term.second);
 			
 			return *this;
@@ -95,7 +97,7 @@ public:
 	
 	free_polynomial &operator+=(free_polynomial &&p) {
 		if(this == &p) {
-			for(auto &term : p.monomials())
+			for( auto &term : monomial_map )
 				add_assign_coefficients::apply(term.second, term.second);
 			return *this;
 		}
@@ -119,7 +121,7 @@ public:
 	
 	TAGD_COMMUTATIVE_BINARY_OPERATOR_OVERLOAD(free_polynomial, +)
 	
-	TAGD_REVERSIBLE_BINARY_OPERATOR_OVERLOAD(free_polynomial, -, -)
+	TAGD_BINARY_OPERATOR_OVERLOAD( free_polynomial, - )
 	
 	free_polynomial operator-(void) &&{
 		for(auto &term : monomial_map)
@@ -137,18 +139,18 @@ public:
 				auto concatenated_variables = factor1.first;
 				concatenated_variables.insert(concatenated_variables.end(), factor2.first.begin(), factor2.first.end());
 				
-				monomials.push_back({std::move(concatenated_variables), factor1.second * factor2.second});
+				monomials.emplace_back( factor1.second * factor2.second, std::move( concatenated_variables ));
 			}
 		}
 		
 		decltype(monomial_map) result;
 		for(auto &&monomial : monomials) {
-			if( equal_coefficients::apply( monomial.coeff, zero_coefficient::apply()))
+			if( equal_coefficients::apply( monomial.coefficient, zero_coefficient::apply()))
 				continue;
 			
-			auto insertion_result = result.insert({monomial.variables, monomial.coeff});
+			auto insertion_result = result.insert( std::make_pair( monomial.variables, monomial.coefficient ));
 			if(insertion_result.second == false) {
-				add_assign_coefficients( insertion_result.first->second, std::move( monomial.coeff ));
+				add_assign_coefficients::apply( insertion_result.first->second, std::move( monomial.coefficient ));
 				if( equal_coefficients::apply( insertion_result.first->second, zero_coefficient::apply()))
 					result.erase(insertion_result.first);
 			}
@@ -173,8 +175,8 @@ public:
 				return false;
 			
 			for(const auto &variables : boost::combine(variables1, variables2)) {
-				using not_equal = impl::not_equal<tag_of_t<Variable>, quotient_tag<tag_of_t<Variable>, TotalVariablePreorder>>;
-				if(not_equal::apply(boost::get<0>(variables), boost::get<1>(variables)))
+				using not_equal_variables = impl::not_equal<tag_of_t<Variable>, TotalVariableOrder>;
+				if( not_equal_variables::apply( boost::get<0>( variables ), boost::get<1>( variables )))
 					return false;
 			}
 			
@@ -190,32 +192,39 @@ public:
 }
 
 namespace impl {
-template<class DispatchTag, class StructureTag>
-struct internal_total_preorder;
-template<class DispatchTag, class StructureTag> using internal_total_preorder_t = internal_total_preorder<DispatchTag, StructureTag>;
-
-template<class DispatchTag, class StructureTag>
-struct underlying_polynomial;
-template<class DispatchTag, class StructureTag> using underlying_polynomial_t = underlying_polynomial<DispatchTag, StructureTag>;
-
 template<class Coefficient, class Variable, class StructureTag>
-struct underlying_ring<models::free_polynomial_tag<Coefficient, Variable>, StructureTag> {
-	using type = concepts::ring<tag_of_t<Coefficient>, StructureTag>;
-	static_assert(type::value, "Underlying ring does not model the 'ring' concept.");
-};
-
-template<class Coefficient, class Variable, class StructureTag>
-struct underlying_polynomial<models::free_polynomial_tag<Coefficient, Variable>, StructureTag> {
-private:
-	using coefficient_ring = underlying_ring_t<models::free_polynomial_tag<Coefficient, Variable>, StructureTag>;
-	using preorder = internal_total_preorder_t<models::free_polynomial_tag<Coefficient, Variable>, StructureTag>;
-public:
-	using type = models::free_polynomial<Coefficient, Variable, coefficient_ring, preorder>;
-};
+struct variable_total_order_for_polynomial;
 
 template<class Coefficient, class Variable>
-struct internal_total_preorder<models::free_polynomial_tag<Coefficient, Variable>, concepts::ring<models::free_polynomial_tag<Coefficient, Variable>, void> > {
-	using type = std::decay_t<decltype(default_structure_tag<tag_of_t<Variable>>(impl_tag<less_equal>{}))>;
+struct variable_total_order_for_polynomial<Coefficient, Variable, void>
+{
+private:
+	using preliminary_structure_tag = typename tags_for_function_dispatch<less, Variable, Variable>::structure_tag;
+public:
+	using type = typename function_traits_for_dispatch<preliminary_structure_tag, less, Variable, Variable>::structure_tag;
+};
+
+template<class Coefficient, class Variable, class StructureTag>
+struct coefficient_ring_for_polynomial;
+
+template<class Coefficient, class Variable>
+struct coefficient_ring_for_polynomial<Coefficient, Variable, void>
+{
+	using type = concepts::ring<tag_of_t<Coefficient>, void>;
+};
+
+template<class DispatchTag, class StructureTag>
+struct polynomial_for_tag;
+template<class DispatchTag, class StructureTag> using polynomial_for_tag_t = typename polynomial_for_tag<DispatchTag, StructureTag>::type;
+
+template<class Coefficient, class Variable, class StructureTag>
+struct polynomial_for_tag<models::free_polynomial_tag<Coefficient, Variable>, concepts::ring<models::free_polynomial_tag<Coefficient, Variable>, StructureTag> >
+{
+private:
+	using coefficient_ring = typename coefficient_ring_for_polynomial<Coefficient, Variable, StructureTag>::type;
+	using total_order = typename variable_total_order_for_polynomial<Coefficient, Variable, StructureTag>::type;
+public:
+	using type = models::free_polynomial<Coefficient, Variable, coefficient_ring, total_order>;
 };
 
 template<class Coefficient, class Variable>
@@ -231,13 +240,13 @@ struct make<models::free_polynomial_tag<Coefficient, Variable>, concepts::makeab
 private:
 	using tag = models::free_polynomial_tag<Coefficient, Variable>;
 	using polynomial_ring = concepts::ring<models::free_polynomial_tag<Coefficient, Variable>, StructureTag>;
-	using polynomial = underlying_polynomial<tag, polynomial_ring>;
+	using polynomial = polynomial_for_tag_t<tag, polynomial_ring>;
 	
 	static constexpr void add_to(polynomial &) {}
 	
 	template<class FirstMonomial, class ...Monomials>
 	static void add_to(polynomial &p, FirstMonomial &&m, Monomials &&...monomials) {
-		p += polynomial{std::forward<FirstMonomial>(m)};
+		add_assign<tag, polynomial_ring>::apply( p, polynomial{ std::forward<FirstMonomial>( m ) } );
 		add_to(p, std::forward<Monomials>(monomials)...);
 	}
 
@@ -248,7 +257,7 @@ public:
 	
 	template<class ...Monomials>
 	static polynomial apply(Monomials &&...monomials) {
-		polynomial result = zero<tag, polynomial_ring>();
+		polynomial result = zero<tag, polynomial_ring>::apply();
 		add_to(result, std::forward<Monomials>(monomials)...);
 		return result;
 	}
@@ -271,9 +280,10 @@ struct compose_assign<models::free_polynomial_tag<Coefficient, Variable>, concep
 template<class Coefficient, class Variable>
 struct neutral_element<models::free_polynomial_tag<Coefficient, Variable>, concepts::monoid<models::free_polynomial_tag<Coefficient, Variable>, void>> {
 private:
-	using polynomial_ring = concepts::ring<models::free_polynomial_tag<Coefficient, Variable>>;
+	using polynomial_ring = concepts::ring<models::free_polynomial_tag<Coefficient, Variable>, void>;
 public:
-	static underlying_polynomial_t<models::free_polynomial_tag<Coefficient, Variable>, polynomial_ring> apply(void) {
+	static polynomial_for_tag_t<models::free_polynomial_tag<Coefficient, Variable>, polynomial_ring> apply( void )
+	{
 		return {};
 	}
 };
@@ -301,16 +311,18 @@ struct multiply_assign<models::free_polynomial_tag<Coefficient, Variable>, conce
 template<class Coefficient, class Variable>
 struct one<models::free_polynomial_tag<Coefficient, Variable>, concepts::ring<models::free_polynomial_tag<Coefficient, Variable>, void>> {
 private:
-	using polynomial_ring = concepts::ring<models::free_polynomial_tag<Coefficient, Variable>>;
-	using polynomial = underlying_polynomial_t<models::free_polynomial_tag<Coefficient, Variable>, polynomial_ring>;
+	using polynomial_ring = concepts::ring<models::free_polynomial_tag<Coefficient, Variable>, void>;
+	using polynomial = polynomial_for_tag_t<models::free_polynomial_tag<Coefficient, Variable>, polynomial_ring>;
 	using coefficient_ring = typename polynomial::coefficient_ring;
 	using monomial = typename polynomial::monomial;
 public:
 	static auto apply(void) {
-		return polynomial{monomial{one<tag_of_t<Coefficient>, coefficient_ring>::apply(), {}}};
+		return polynomial{ monomial{ one<tag_of_t<Coefficient>, coefficient_ring>::apply() }};
 	}
 };
 }
+
+template<class Coefficient, class Variable, class StructureTag = void> static constexpr auto make_free_polynomial = make<models::free_polynomial_tag<Coefficient, Variable>, StructureTag>;
 }
 
 /*

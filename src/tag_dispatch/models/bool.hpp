@@ -93,14 +93,31 @@ struct if_<std_bool_constant_tag, concepts::boolean_lattice<std_bool_constant_ta
 	static constexpr auto apply(std::false_type, Then &&, Else &&else_) { return else_; }
 };
 }
+
+template<class StructureTag, class If, class Then, class Else>
+struct function_traits_for_dispatch<concepts::boolean_lattice < bool, StructureTag>, impl::if_, If, Then, Else> {
+using dispatch_tag = bool;
+using structure_tag = concepts::boolean_lattice<bool, StructureTag>;
+using pre_action = impl::identity;
+using post_action = impl::identity;
+};
+
+template<class StructureTag, class If, class Then, class Else>
+struct function_traits_for_dispatch<
+concepts::boolean_lattice < std_bool_constant_tag, StructureTag>, impl::if_, If, Then, Else> {
+using dispatch_tag = std_bool_constant_tag;
+using structure_tag = concepts::boolean_lattice<std_bool_constant_tag, StructureTag>;
+using pre_action = impl::identity;
+using post_action = impl::identity;
+};
 }
 
-TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( bool, boolean_lattice, if_ )
-TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( bool, set, equal )
+TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( bool, void, boolean_lattice, if_ )
+TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( bool, void, set, equal )
 
-TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( std_bool_constant_tag, boolean_lattice, if_ )
-TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( std_bool_constant_tag, set, equal )
+TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( std_bool_constant_tag, void, boolean_lattice, if_ )
+TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( std_bool_constant_tag, void, set, equal )
 
-TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(if_)
+TAGD_DEFINE_TRAITED_DISPATCHED_FUNCTION( if_ )
 
 #endif //TAGD_MODELS_BOOL_HPP

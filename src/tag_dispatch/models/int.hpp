@@ -78,6 +78,6 @@ struct equal<int, concepts::set<int, void>> : equal<int, concepts::total_order<i
 };
 }
 
-TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( int, set, equal )
+TAGD_MODELLED_CONCEPT_IMPLEMENTS_FUNCTION( int, void, set, equal )
 
 #endif // TAGD_MODELS_INT_HPP

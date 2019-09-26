@@ -2,95 +2,62 @@
 // Created by jayz on 04.09.19.
 //
 
-#define BOOST_TEST_MODULE Tag Dispatch - Free Monomial
+#define BOOST_TEST_MODULE Tag Dispatch - Free Polynomial
 
 #include <boost/test/included/unit_test.hpp>
 
 #include "tag_dispatch/tag_dispatch.hpp"
 
-namespace tag_dispatch {
-namespace impl {
-
-}
-
-namespace models {
-
-}
-}
-
-
-
-/*
-
-using namespace PQuantum::tag_dispatch;
-
-namespace
+namespace tag_dispatch::models
 {
-struct test_type
+template<class Coefficient, class Variable>
+std::ostream &operator<<( std::ostream &os, const free_monomial<Coefficient, Variable> &m )
 {
-	bool operator==( const test_type & ) const
-	{ return true; }
-};
-
-std::ostream &operator<<(std::ostream &os, const test_type &) {
-	return os << "\"test\"";
+	os << m.coefficient;
+	for( const auto &v : m.variables )
+		os << " " << v;
+	return os;
 }
 
-template<class ...Args>
-std::ostream &operator<<(std::ostream &os, const std::tuple<Args...> &t) {
-	return boost::fusion::operators::operator<<(os, t);
-}
-
-template<class ...Args>
-std::ostream &operator<<(std::ostream &os, const std::pair<Args...> &t) {
-	return boost::fusion::operators::operator<<(os, t);
-}
-
-template<class T, class Alloc>
-std::ostream &operator<<(std::ostream &os, const std::vector<T, Alloc> &v) {
-	os << "{";
-	if(v.empty())
-		return os << "}";
-	
-	auto next_last = v.end() - 1;
-	for(auto it = v.begin(); it != next_last; ++it)
-		os << *it << ", ";
-	return os << *next_last << "}";
-}
-}
-
-namespace PQuantum::tag_dispatch::impl {
-template<>
-struct less<std_vector_tag> {
-	template<class V1, class V2>
-	static decltype(auto) apply(V1 &&v1, V2 &&v2) {
-		return std::forward<V1>(v1) < std::forward<V2>(v2);
-	}
-};
-}
-
-BOOST_AUTO_TEST_CASE(make_std_types)
+template<class Coefficient, class Variable, class CoefficientRing, class TotalVariablePreorder>
+std::ostream &
+operator<<( std::ostream &os, const free_polynomial<Coefficient, Variable, CoefficientRing, TotalVariablePreorder> &p )
 {
-	auto tuple = make_tuple( 42, 3.5, test_type{} );
-	auto vector = make_vector(42, 35L, 44LL);
-	auto pair = make_pair( 42, test_type{} );
+	using monomial = typename std::decay_t<decltype( p )>::monomial;
 	
-	auto reference_tuple = std::make_tuple( 42, 3.5, test_type{} );
-	std::vector<long long> reference_vector{42, 35, 44};
-	auto reference_pair = std::make_pair( 42, test_type{} );
+	const auto &monomials = p.monomials();
+	if( monomials.empty())
+		return os << "0";
 	
-	static_assert(std::is_same_v<decltype(tuple), decltype(reference_tuple)>);
-	static_assert(std::is_same_v<decltype(vector), decltype(reference_vector)>);
-	static_assert(std::is_same_v<decltype(pair), decltype(reference_pair)>);
-	
-	BOOST_TEST( tuple == reference_tuple );
-	BOOST_TEST( vector == reference_vector );
-	BOOST_TEST( pair == reference_pair );
+	auto it = monomials.begin();
+	os << monomial{ it->second, it->first };
+	for( ++it; it != monomials.end(); ++it )
+		os << " + " << monomial{ it->second, it->first };
+	return os;
+}
 }
 
-BOOST_AUTO_TEST_CASE(comparisons) {
-	auto vector = make_vector(42, 35L, 44LL);
-	equal(vector, vector);
+BOOST_AUTO_TEST_CASE( free_polynomial )
+{
+	using namespace tag_dispatch;
+	using polynomial_tag = models::free_polynomial_tag<int, std::string_view>;
+	
+	static constexpr auto make_monomial = make_free_monomial<int, std::string_view>;
+	static constexpr auto make_polynomial = make_free_polynomial<int, std::string_view>;
+	
+	auto ab42 = make_polynomial( make_monomial( 42, "a", "b" ));
+	auto ab84 = make_polynomial( make_monomial( 84, "a", "b" ));
+	auto abab1764 = make_polynomial( make_monomial( 42 * 42, "a", "b", "a", "b" ));
+	auto one_ = make_polynomial( make_monomial( 1 ));
+	
+	BOOST_TEST( make_polynomial( ab42 ) == ab42 );
+	BOOST_TEST( multiply<>( ab42, ab42 ) == abab1764 );
+	BOOST_TEST( add<>( ab42, ab42 ) == ab84 );
+	BOOST_TEST( multiply<>( one<polynomial_tag>(), ab42 ) == ab42 );
+	BOOST_TEST( multiply<>( ab42, one<polynomial_tag>()) == ab42 );
+	BOOST_TEST( multiply<>( ab42, one<polynomial_tag>()) == ab42 );
+	BOOST_TEST( one<polynomial_tag>() == one_ );
+	
+	BOOST_TEST( ab42 != one_ );
+	BOOST_TEST( abab1764 != one_ );
 }
-
-*/

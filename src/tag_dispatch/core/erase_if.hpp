@@ -2,8 +2,8 @@
 // Created by jayz on 29.08.19.
 //
 
-#ifndef TAGD_ERASE_IF_HPP
-#define TAGD_ERASE_IF_HPP
+#ifndef TAGD_CORE_ERASE_IF_HPP
+#define TAGD_CORE_ERASE_IF_HPP
 
 #ifndef __has_cpp_attribute
 #define TAGD_USE_CXX20_ERASE_IF 0
@@ -34,4 +34,4 @@ void erase_if(std::map<Key, T, Compare, Alloc> &c, Predicate predicate) {
 #endif
 }
 
-#endif //TAGD_ERASE_IF_HPP
+#endif //TAGD_CORE_ERASE_IF_HPP

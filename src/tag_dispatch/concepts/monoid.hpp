@@ -8,7 +8,7 @@
 #include "tag_dispatch/tag_dispatch.hpp"
 #include "set.hpp"
 #include "makeable.hpp"
-#include "tag_dispatch/forwarding.hpp"
+#include "tag_dispatch/core/forwarding.hpp"
 
 namespace tag_dispatch {
 namespace concepts {
@@ -18,15 +18,16 @@ struct monoid;
 
 namespace impl {
 template<class DispatchTag, class StructureTag>
-struct underlying_monoid;
-template<class DispatchTag, class StructureTag> using underlying_monoid_t = typename underlying_monoid<DispatchTag, StructureTag>::type;
+struct underlying_set_of_monoid;
+template<class DispatchTag, class StructureTag> using underlying_set_of_monoid_t = typename underlying_set_of_monoid<DispatchTag, StructureTag>::type;
 
 template<class DispatchTag, class StructureTag>
-struct underlying_set<DispatchTag, concepts::monoid<DispatchTag, StructureTag>> {
+struct underlying_set_of_monoid<DispatchTag, concepts::monoid<DispatchTag, StructureTag>>
+{
 	using type = rebind_concept_t<concepts::set, concepts::monoid<DispatchTag, StructureTag>>;
 };
 
-TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION(equal, monoid, equal, underlying_set_t)
+TAGD_DEFINE_CONCEPT_FORWARDING_FUNCTION( equal, monoid, equal, underlying_set_of_monoid_t )
 
 template<class DispatchTag, class StructureTag>
 struct is_abelian : no_impl {
@@ -45,8 +46,8 @@ struct compose {
 		else if(is_abelian<DispatchTag, StructureTag>::apply() && std::is_rvalue_reference_v<Arg2>)
 			return compose_assign<DispatchTag, StructureTag>::apply( arg2, std::forward<Arg1>( arg1 ));
 		else {
-			static constexpr auto make_copy = tag_dispatch::make<DispatchTag, rebind_concept_t<concepts::makeable, StructureTag>>;
-			auto copy = make_copy( std::forward<Arg1>( arg1 ));
+			auto copy = make<DispatchTag, rebind_concept_t<concepts::makeable, StructureTag>>::apply(
+			std::forward<Arg1>( arg1 ));
 			return compose_assign<DispatchTag, StructureTag>::apply( copy, std::forward<Arg2>( arg2 ));
 		}
 	}
@@ -62,7 +63,7 @@ template<class DispatchTag, class StructureTag = monoid<DispatchTag, void>>
 struct monoid {
 	static constexpr bool value = makeable<DispatchTag, rebind_concept_t<concepts::makeable, StructureTag>>::value &&
 								  // FIXME: This leads to undefined instantiations of underlying_set<>! Use SFINAE to avoid this...
-								  set<DispatchTag, impl::underlying_set_t<DispatchTag, StructureTag>>::value &&
+								  set<DispatchTag, impl::underlying_set_of_monoid_t<DispatchTag, StructureTag>>::value &&
 								  !(std::is_base_of_v<impl::no_impl, impl::is_abelian<DispatchTag, StructureTag>> ||
 									std::is_base_of_v<impl::no_impl, impl::compose_assign<DispatchTag, StructureTag>> ||
 									std::is_base_of_v<impl::no_impl, impl::neutral_element<DispatchTag, StructureTag>>);
@@ -70,14 +71,14 @@ struct monoid {
 }
 }
 
-TAGD_CONCEPT_IMPLEMENTS_FUNCTION(monoid, is_abelian)
-TAGD_CONCEPT_IMPLEMENTS_FUNCTION(monoid, compose_assign)
-TAGD_CONCEPT_IMPLEMENTS_FUNCTION(monoid, compose)
-TAGD_CONCEPT_IMPLEMENTS_FUNCTION(monoid, neutral_element)
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION( monoid, void, is_abelian )
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION( monoid, void, compose_assign )
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION( monoid, void, compose )
+TAGD_CONCEPT_IMPLEMENTS_FUNCTION( monoid, void, neutral_element )
 
 TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(is_abelian)
-TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(compose_assign)
-TAGD_DEFINE_TAG_INFERRING_DISPATCHED_FUNCTION(compose)
+TAGD_DEFINE_TRAITED_DISPATCHED_FUNCTION( compose_assign )
+TAGD_DEFINE_TRAITED_DISPATCHED_FUNCTION( compose )
 TAGD_DEFINE_TAG_DISPATCHED_FUNCTION(neutral_element)
 
 #endif //TAGD_CONCEPTS_MONOID_HPP

@@ -2,8 +2,8 @@
 // Created by jayz on 30.08.19.
 //
 
-#ifndef TAGD_FORWARDING_HPP
-#define TAGD_FORWARDING_HPP
+#ifndef TAGD_CORE_FORWARDING_HPP
+#define TAGD_CORE_FORWARDING_HPP
 
 #ifdef TAGD_DEFINE_FORWARDING_FUNCTION
 #error "TAGD_DEFINE_FORWARDING_FUNCTION already defined"
@@ -32,4 +32,4 @@ public: \
     { return underlying_implementation::apply( std::forward<Args>( args )... ); } \
 };
 
-#endif //TAGD_FORWARDING_HPP
+#endif //TAGD_CORE_FORWARDING_HPP

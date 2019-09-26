@@ -8,7 +8,7 @@
 #include <utility>
 
 #include "abstract_algebra/ring.hpp"
-#include "tag_dispatch/operator_helpers.hpp"
+#include "tag_dispatch/core/operator_helpers.hpp"
 
 namespace PQuantum
 {
