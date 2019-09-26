@@ -58,6 +58,7 @@ default_structure_tag( dispatch_tag, impl_tag<impl::function> ) { return {}; } \
 #include "concepts/total_preorder.hpp"
 
 #include "models/bool.hpp"
+#include "models/clifford.hpp"
 #include "models/free_monomial.hpp"
 #include "models/free_polynomial.hpp"
 #include "models/int.hpp"

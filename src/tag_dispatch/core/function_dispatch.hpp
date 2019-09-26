@@ -6,7 +6,6 @@
 #define TAGD_CORE_FUNCTION_DISPATCH_HPP
 
 #include "dispatch_tags.hpp"
-#include "identity.hpp"
 
 namespace tag_dispatch
 {
@@ -80,13 +79,17 @@ struct tags_for_function_dispatch
 	using structure_tag = typename structure_tag_for_function_dispatch<dispatch_tag, Implementation>::type;
 };
 
+struct nop_transformation
+{
+};
+
 template<class StructureTag, template<class, class> class Implementation, class ...Args>
 struct function_traits_for_dispatch
 {
 	using dispatch_tag = common_tag_t<tag_of_t <Args>...>;
 	using structure_tag = StructureTag;
 	using pre_action = impl::forward_or_convert<dispatch_tag>;
-	using post_action = impl::identity;
+	using post_action = nop_transformation;
 };
 
 namespace detail
@@ -124,8 +127,18 @@ struct traited_function_object
 		using pre_action = typename function_traits::pre_action;
 		using post_action = typename function_traits::post_action;
 		
-		return post_action::apply(
-		Implementation<dispatch_tag, structure_tag>::apply( pre_action::apply( std::forward<Args>( args ))... ));
+		if constexpr( std::is_same_v<pre_action, nop_transformation> ) {
+			if constexpr( std::is_same_v<post_action, nop_transformation> )
+				return Implementation<dispatch_tag, structure_tag>::apply( std::forward<Args>( args )... );
+			else
+				return post_action::apply(
+				Implementation<dispatch_tag, structure_tag>::apply( std::forward<Args>( args )... ));
+		} else if constexpr( std::is_same_v<post_action, nop_transformation> )
+			return Implementation<dispatch_tag, structure_tag>::apply(
+			pre_action::apply( std::forward<Args>( args ))... );
+		else
+			return post_action::apply(
+			Implementation<dispatch_tag, structure_tag>::apply( pre_action::apply( std::forward<Args>( args ))... ));
 	}
 };
 

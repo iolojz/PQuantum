@@ -15,3 +15,7 @@ add_test(free_monomial free_monomial)
 add_executable(free_polynomial free_polynomial.cpp)
 target_link_libraries(free_polynomial)
 add_test(free_polynomial free_polynomial)
+
+add_executable(clifford clifford.cpp)
+target_link_libraries(clifford)
+add_test(clifford clifford)

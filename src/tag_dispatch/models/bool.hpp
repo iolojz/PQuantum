@@ -98,8 +98,8 @@ template<class StructureTag, class If, class Then, class Else>
 struct function_traits_for_dispatch<concepts::boolean_lattice < bool, StructureTag>, impl::if_, If, Then, Else> {
 using dispatch_tag = bool;
 using structure_tag = concepts::boolean_lattice<bool, StructureTag>;
-using pre_action = impl::identity;
-using post_action = impl::identity;
+using pre_action = nop_transformation;
+using post_action = nop_transformation;
 };
 
 template<class StructureTag, class If, class Then, class Else>
@@ -107,8 +107,8 @@ struct function_traits_for_dispatch<
 concepts::boolean_lattice < std_bool_constant_tag, StructureTag>, impl::if_, If, Then, Else> {
 using dispatch_tag = std_bool_constant_tag;
 using structure_tag = concepts::boolean_lattice<std_bool_constant_tag, StructureTag>;
-using pre_action = impl::identity;
-using post_action = impl::identity;
+using pre_action = nop_transformation;
+using post_action = nop_transformation;
 };
 }
 

@@ -6,23 +6,14 @@
 
 #include <boost/test/included/unit_test.hpp>
 
-#include "io/logging.hpp"
-#include "mathutils/linear_operators.hpp"
-#include "mathutils/abstract_algebra/clifford.hpp"
+#include "tag_dispatch/tag_dispatch.hpp"
 
 using namespace PQuantum;
 
 namespace {
 struct euclidean_form_int {
-	int operator()(const mathutils::gamma_matrix &g1, const mathutils::gamma_matrix &g2) {
-		BOOST_LOG_NAMED_SCOPE("euclidean_form_int::operator()()");
-		io::severity_logger logger;
-		
-		if( !std::holds_alternative<int>( g1.index.id ) || !std::holds_alternative<int>( g2.index.id )) {
-			BOOST_LOG_SEV(logger, io::severity_level::internal_error)
-				<< "Non-integer indices of gamma matrices are not supported.";
-		}
-		
+	int operator()( const mathutils::gamma_matrix &g1, const mathutils::gamma_matrix &g2 ) const
+	{
 		if( std::get<int>( g1.index.id ) == std::get<int>( g2.index.id ))
 			return 1;
 		
@@ -30,7 +21,7 @@ struct euclidean_form_int {
 	}
 };
 
-using clifford_int = typename mathutils::clifford_quotient<mathutils::gamma_matrix, int, euclidean_form_int>::type;
+using clifford_int = clifford<mathutils::gamma_matrix, euclidean_form_int>;
 }
 
 BOOST_AUTO_TEST_CASE( clifford_algebra_int )

@@ -16,11 +16,25 @@ struct quotient_tag
 {
 };
 
+template<class UnderlyingType, class StructureTag, class Representative>
+static auto wrap_quotient_representative( Representative &&r );
+
 template<class UnderlyingType, class StructureTag>
 class quotient_wrapper
 {
+	template<class U, class S, class R>
+	friend auto wrap_quotient_representative( R &r );
+	
 	UnderlyingType object;
+	
+	quotient_wrapper( const UnderlyingType &u ) : object{ u }
+	{}
+	
+	quotient_wrapper( UnderlyingType &&u ) : object{ std::move( u ) }
+	{}
 public:
+	using underlying_type = UnderlyingType;
+	using structure_tag = StructureTag;
 	using dispatch_tag = quotient_tag<UnderlyingType, StructureTag>;
 	
 	const UnderlyingType &representative( void ) const &
@@ -32,6 +46,12 @@ public:
 	UnderlyingType &&representative( void ) &&
 	{ return std::move( object ); }
 };
+
+template<class UnderlyingType, class StructureTag, class Representative>
+static auto wrap_quotient_representative( Representative &&r )
+{
+	return quotient_wrapper{ std::forward<Representative>( r ) };
+}
 }
 
 template<class DispatchTag, class StructureTag, template<class, class> class Implementation>
@@ -50,7 +70,7 @@ private:
 	using result = decltype( implementation::apply( std::declval<Args>()... ));
 	static constexpr bool pass_to_quotient = std::is_same_v<tag_of_t < result>, DispatchTag>;
 public:
-	using type = std::conditional_t<pass_to_quotient, impl::to<models::quotient_tag<DispatchTag, StructureTag>, DispatchTag, StructureTag>, impl::identity>;
+	using type = std::conditional_t<pass_to_quotient, impl::to<models::quotient_tag<DispatchTag, StructureTag>, DispatchTag, StructureTag>, nop_transformation>;
 };
 }
 
