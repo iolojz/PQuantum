@@ -10,18 +10,33 @@
 
 namespace cxxmath
 {
-constexpr bool operator==( const product_monoid<int, int> &p1, const product_monoid<int, int> &p2 )
+template<class First, class Second>
+constexpr bool operator==( const product_monoid<First, Second> &p1, const product_monoid<First, Second> &p2 )
 {
 	return cxxmath::equal( p1, p2 );
 }
 
-std::ostream &operator<<( std::ostream &os, const product_monoid<int, int> &p )
+template<class First, class Second>
+std::ostream &operator<<( std::ostream &os, const product_monoid<First, Second> &p )
 {
 	return os << "{" << first( p ) << ", " << second( p ) << "}";
 }
+
+template<class Symbol, class Allocator>
+std::ostream &operator<<( std::ostream &os, const std::vector<Symbol, Allocator> &v )
+{
+	if( v.empty())
+		return os << "{}";
+	
+	auto it = v.begin();
+	os << "{ " << *it;
+	while( ++it != v.end())
+		os << ", " << *it;
+	return os << " }";
+}
 }
 
-BOOST_AUTO_TEST_CASE( test_product_monoid )
+BOOST_AUTO_TEST_CASE( test_product_monoid_int_int )
 {
 	using namespace cxxmath;
 	using int_product = product_monoid<int, int>;
@@ -57,4 +72,28 @@ BOOST_AUTO_TEST_CASE( test_product_monoid )
 	BOOST_TEST( mixed_int_pair_monoid::is_abelian_monoid() == true );
 	BOOST_TEST( mixed_int_pair_monoid::compose_assign( pair, pair ) == pair84_529 );
 	BOOST_TEST( pair == pair84_529 );
+}
+
+BOOST_AUTO_TEST_CASE( test_product_monoid_int_vector )
+{
+	using namespace cxxmath;
+	using vector = std::vector<std::string_view>;
+	using int_vector_product = product_monoid<int, vector>;
+	using default_int_vector_monoid = default_monoid_t<tag_of_t<int_vector_product>>;
+	
+	vector empty;
+	vector a = { std::string_view( "a" ) };
+	vector aa = { std::string_view( "a" ), std::string_view( "a" ) };
+	
+	auto pair1_empty = make_product_monoid( std::make_pair( 1, empty ));
+	auto pair42_a = make_product_monoid( std::make_pair( 42, a ));
+	auto pair1764_aa = make_product_monoid( std::make_pair( 42 * 42, aa ));
+	
+	auto pair = pair42_a;
+	
+	BOOST_TEST( compose( pair42_a, pair42_a ) == pair1764_aa );
+	BOOST_TEST( default_int_vector_monoid::neutral_element() == pair1_empty );
+	BOOST_TEST( default_int_vector_monoid::is_abelian_monoid() == false );
+	BOOST_TEST( compose_assign( pair, pair ) == pair1764_aa );
+	BOOST_TEST( pair == pair1764_aa );
 }
