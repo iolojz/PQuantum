@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.14)
 
 add_subdirectory(io)
-add_subdirectory(mathutils)
-add_subdirectory(tag_dispatch)
+add_subdirectory(cxxmath)

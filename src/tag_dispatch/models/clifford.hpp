@@ -10,7 +10,7 @@
 
 namespace tag_dispatch
 {
-namespace models
+namespace impl
 {
 template<class BilinearForm, class TotalVariableOrder, class StructureTag>
 struct clifford_quotient
@@ -24,13 +24,14 @@ struct coefficient_ring_for_polynomial<Coefficient, Variable, clifford_quotient<
 };
 
 template<class Coefficient, class Variable, class BilinearForm, class TotalVariableOrder>
-struct variable_total_order_for_polynomial<Coefficient, Variable, clifford_quotient<BilinearForm, TotalVariableOrder, StructureTag>>
+struct variable_total_order_for_polynomial<Coefficient, Variable, clifford_quotient<BilinearForm, TotalVariableOrder, void>>
 {
 	using type = TotalVariableOrder;
 };
 
 template<class PolynomialTag, class CliffordQuotient>
 struct underlying_polynomial_of_clifford;
+template<class PolynomialTag, class CliffordQuotient> using underlying_polynomial_of_clifford_t = underlying_polynomial_of_clifford<PolynomialTag, CliffordQuotient>;
 template<class PolynomialTag, class BilinearForm, class TotalVariableOrder, class StructureTag>
 struct underlying_polynomial_of_clifford<PolynomialTag, clifford_quotient<BilinearForm, TotalVariableOrder, StructureTag>>
 {
@@ -44,11 +45,14 @@ struct value_type_of_biinear_form
 																	  std::declval<Variable>()))>;
 };
 template<class Variable, class BilinearForm> using value_type_of_biinear_form_t = typename value_type_of_biinear_form<Variable, BilinearForm>::type;
+}
 
-template<class Variable, class BilinearForm, class TotalVariableOrder = concepts::total_order<tag_of_t<Variable>, void>, class CoefficientRing = concepts::ring<value_type_of_biinear_form_t<Variable, BilinearForm>, void>, class StructureTag = void> using clifford = quotient_wrapper<typename underlying_polynomial_of_clifford<
-polynomial_tag <
-value_type_of_biinear_form<Variable, BilinearForm>, Variable>, clifford_quotient<BilinearForm, TotalVariableOrder, StructureTag> >::type,
-clifford_quotient<BilinearForm, TotalVariableOrder, StructureTag>
+namespace models
+{
+template<class Variable, class BilinearForm, class TotalVariableOrder = concepts::total_order<tag_of_t<Variable>, void>, class CoefficientRing = concepts::ring<impl::value_type_of_biinear_form_t<Variable, BilinearForm>, void>, class StructureTag = void> using clifford = quotient_wrapper<typename impl::underlying_polynomial_of_clifford<
+free_polynomial_tag <
+impl::value_type_of_biinear_form<Variable, BilinearForm>, Variable>, impl::clifford_quotient<BilinearForm, TotalVariableOrder, StructureTag> >::type,
+impl::clifford_quotient<BilinearForm, TotalVariableOrder, StructureTag>
 >;
 }
 
@@ -124,7 +128,8 @@ public:
 }
 
 template<class Variable, class BilinearForm, class TotalVariableOrder, class CoefficientRing>
-struct to<tag_of_t<models::clifford<Variable, BilinearForm, TotalVariableOrder, CoefficientRing, void>>, tag_of_t<models::underlying_polynomial_of_clifford_t<models::clifford<Variable, BilinearForm, TotalVariableOrder, CoefficientRing, void>>,
+struct to<tag_of_t <
+		  models::clifford<Variable, BilinearForm, TotalVariableOrder, CoefficientRing, void>>, tag_of_t<typename models::clifford<Variable, BilinearForm, TotalVariableOrder, CoefficientRing, void>::underlying_type>,
 clifford_quotient < BilinearForm, TotalVariableOrder, void> >
 {
 private:
