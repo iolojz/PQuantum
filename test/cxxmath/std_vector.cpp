@@ -28,9 +28,9 @@ BOOST_AUTO_TEST_CASE( test_monoid_std_vector )
 	auto v = vempty;
 	
 	BOOST_TEST( compose_assign( v, vempty ) == vempty );
-	BOOST_TEST( v == vempty );
+	BOOST_TEST( equal( v, vempty ));
 	BOOST_TEST( compose_assign( v, v42_23 ) == v42_23 );
-	BOOST_TEST( v == v42_23 );
+	BOOST_TEST( equal( v, v42_23 ));
 	BOOST_TEST( compose_assign( v, v42_23 ) == v42_23_42_23 );
-	BOOST_TEST( v == v42_23_42_23 );
+	BOOST_TEST( equal( v, v42_23_42_23 ));
 }

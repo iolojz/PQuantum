@@ -11,182 +11,159 @@
 
 namespace cxxmath
 {
-template<class FirstTag, class SecondTag>
-struct product_monoid_tag;
-
-template<class First, class Second>
-struct product_monoid
-{
-	using dispatch_tag = product_monoid_tag<tag_of_t<First>, tag_of_t<Second>>;
-	std::pair<First, Second> pair;
-};
-
-template<class Product>
-static constexpr auto make_product_monoid( Product &&p )
-{
-	using first_ = std::decay_t<decltype( first( std::forward<Product>( p )))>;
-	using second_ = std::decay_t<decltype( second( std::forward<Product>( p )))>;
-	using product_monoid_ = product_monoid<first_, second_>;
-	
-	return product_monoid_{{ first( std::forward<Product>( p )), second( std::forward<Product>( p )), }};
-}
-
 namespace impl
 {
 namespace detail
 {
+template<class DispatchTag, class Monoid>
+struct choose_monoid
+{
+	using type = Monoid;
+};
 template<class DispatchTag>
-struct is_product_monoid_tag : std::false_type
+struct choose_monoid<DispatchTag, void>
 {
+	using type = default_monoid_t<DispatchTag>;
 };
-template<class FirstTag, class SecondTag>
-struct is_product_monoid_tag<product_monoid_tag<FirstTag, SecondTag>> : std::true_type
-{
-};
+template<class DispatchTag, class Monoid> using choose_monoid_t = typename choose_monoid<DispatchTag, Monoid>::type;
 }
 
-template<class FirstMonoid, class SecondMonoid>
-struct compose_assign_product
+template<class Product, class FirstMonoid = void, class SecondMonoid = void>
+struct is_abelian_monoid_product
 {
-	template<class DispatchTag>
-	static constexpr bool supports_tag( void )
+private:
+	static constexpr bool check_first( void )
 	{
-		return detail::is_product_monoid_tag<DispatchTag>::value;
+		if constexpr( std::is_void_v<FirstMonoid> ) {
+			static_assert( Product::has_unique_first_tag,
+						   "Cannot determine abelianness of defaulted first sub-monoid of product without unique first tag." );
+			
+			return default_monoid_t<typename Product::unique_first_tag>::is_abelian_monoid();
+		} else
+			return FirstMonoid::is_abelian_monoid();
 	}
 	
-	template<class Arg1, class Arg2>
-	static constexpr Arg1 &apply( Arg1 &arg1, Arg2 &&arg2 )
+	static constexpr bool check_second( void )
 	{
-		FirstMonoid::compose_assign( arg1.pair.first, std::forward<Arg2>( arg2 ).pair.first );
-		SecondMonoid::compose_assign( arg1.pair.second, std::forward<Arg2>( arg2 ).pair.second );
-		return arg1;
+		if constexpr( std::is_void_v<SecondMonoid> ) {
+			static_assert( Product::has_unique_second_tag,
+						   "Cannot determine abelianness of defaulted second sub-monoid of product without unique second tag." );
+			
+			return default_monoid_t<typename Product::unique_second_tag>::is_abelian_monoid();
+		} else
+			return SecondMonoid::is_abelian_monoid();
+	}
+
+public:
+	static constexpr bool apply( void )
+	{
+		return check_first() && check_second();
 	}
 };
 
-template<class FirstMonoid, class SecondMonoid>
+template<class Product, class FirstMonoid = void, class SecondMonoid = void>
+struct neutral_element_product
+{
+private:
+	static constexpr decltype( auto ) neutral_first( void )
+	{
+		if constexpr( std::is_void_v<FirstMonoid> ) {
+			static_assert( Product::has_unique_first_tag,
+						   "Cannot construct neutral element of defaulted first sub-monoid of product without unique first tag." );
+			
+			return default_monoid_t<typename Product::unique_first_tag>::neutral_element();
+		} else
+			return FirstMonoid::neutral_element();
+	}
+	
+	static constexpr decltype( auto ) neutral_second( void )
+	{
+		if constexpr( std::is_void_v<SecondMonoid> ) {
+			static_assert( Product::has_unique_second_tag,
+						   "Cannot determine abelianness of defaulted second sub-monoid of product without unique second tag." );
+			
+			return default_monoid_t<typename Product::unique_second_tag>::neutral_element();
+		} else
+			return SecondMonoid::neutral_element();
+	}
+
+public:
+	template<class T = void>
+	static constexpr auto apply( void )
+	{
+		static_assert( !std::is_void_v<FirstMonoid> && !std::is_void_v<SecondMonoid>,
+					   "Cannot construct neutral element of product monoid of defaulted sub-monoids." );
+		
+		return make_product<Product>::apply( FirstMonoid::neutral_element(), SecondMonoid::neutral_element());
+	}
+};
+
+template<class Product, class FirstMonoid = void, class SecondMonoid = void>
 struct compose_product
 {
 	template<class DispatchTag>
 	static constexpr bool supports_tag( void )
-	{
-		return detail::is_product_monoid_tag<DispatchTag>::value;
-	}
+	{ return true; }
 	
-	template<class Arg1, class Arg2>
-	static constexpr auto apply( Arg1 &&arg1, Arg2 &&arg2 )
+	template<class Product1, class Product2>
+	static constexpr auto apply( Product1 &&p1, Product2 &&p2 )
 	{
-		auto pair = std::make_pair(
-		FirstMonoid::compose( std::forward<Arg1>( arg1 ).pair.first, std::forward<Arg2>( arg2 ).pair.first ),
-		SecondMonoid::compose( std::forward<Arg1>( arg1 ).pair.second, std::forward<Arg2>( arg2 ).pair.second ));
-		return make_product_monoid( std::move( pair ));
+		using first1_tag = tag_of_t<decltype( Product::first( std::forward<Product1>( p1 )))>;
+		using first2_tag = tag_of_t<decltype( Product::first( std::forward<Product2>( p2 )))>;
+		
+		using second1_tag = tag_of_t<decltype( Product::second( std::forward<Product1>( p1 )))>;
+		using second2_tag = tag_of_t<decltype( Product::second( std::forward<Product2>( p2 )))>;
+		
+		static_assert( std::is_same_v<first1_tag, first2_tag>, "Cannot compose objects of different tags." );
+		static_assert( std::is_same_v<second1_tag, second2_tag>, "Cannot compose objects of different tags." );
+		
+		using first_monoid = detail::choose_monoid_t<first1_tag, FirstMonoid>;
+		using second_monoid = detail::choose_monoid_t<second1_tag, SecondMonoid>;
+		
+		return make_product<Product>::apply( first_monoid::compose( Product::first( std::forward<Product1>( p1 )),
+																	Product::first( std::forward<Product2>( p2 ))),
+											 second_monoid::compose( Product::second( std::forward<Product1>( p1 )),
+																	 Product::second( std::forward<Product2>( p2 ))));
 	}
 };
 
-template<class FirstMonoid, class SecondMonoid>
-struct neutral_element_product
+template<class Product, class FirstMonoid = void, class SecondMonoid = void>
+struct compose_assign_product
 {
 	template<class DispatchTag>
 	static constexpr bool supports_tag( void )
-	{
-		return detail::is_product_monoid_tag<DispatchTag>::value;
-	}
+	{ return true; }
 	
-	static constexpr auto apply( void )
+	template<class Product1, class Product2>
+	static constexpr auto apply( Product1 &&p1, Product2 &&p2 )
 	{
-		auto pair = std::make_pair( FirstMonoid::neutral_element(), SecondMonoid::neutral_element());
-		return make_product_monoid( std::move( pair ));
-	}
-};
-
-template<class FirstMonoid, class SecondMonoid>
-struct is_abelian_monoid_product
-{
-	template<class DispatchTag>
-	static constexpr bool supports_tag( void )
-	{
-		return detail::is_product_monoid_tag<DispatchTag>::value;
-	}
-	
-	static constexpr auto apply( void )
-	{
-		return and_( FirstMonoid::is_abelian_monoid(), SecondMonoid::is_abelian_monoid());
-	}
-};
-
-template<class FirstMonoid, class SecondMonoid>
-struct equal_product
-{
-	template<class DispatchTag>
-	static constexpr bool supports_tag( void )
-	{
-		return detail::is_product_monoid_tag<DispatchTag>::value;
-	}
-	
-	template<class Arg1, class Arg2>
-	static constexpr auto apply( Arg1 &&arg1, Arg2 &&arg2 )
-	{
-		return and_( equal( std::forward<Arg1>( arg1 ).pair.first, std::forward<Arg2>( arg2 ).pair.first ),
-					 equal( std::forward<Arg1>( arg1 ).pair.second, std::forward<Arg2>( arg2 ).pair.second ));
-	}
-};
-
-struct first_product
-{
-	template<class DispatchTag>
-	static constexpr bool supports_tag( void )
-	{
-		return detail::is_product_monoid_tag<DispatchTag>::value;
-	}
-	
-	template<class Arg>
-	static constexpr auto apply( Arg &&arg )
-	{
-		return first( std::forward<Arg>( arg ).pair );
-	}
-};
-
-struct second_product
-{
-	template<class DispatchTag>
-	static constexpr bool supports_tag( void )
-	{
-		return detail::is_product_monoid_tag<DispatchTag>::value;
-	}
-	
-	template<class Arg>
-	static constexpr auto apply( Arg &&arg )
-	{
-		return second( std::forward<Arg>( arg ).pair );
+		using first1_tag = tag_of_t<decltype( Product::first( std::forward<Product1>( p1 )))>;
+		using first2_tag = tag_of_t<decltype( Product::first( std::forward<Product2>( p2 )))>;
+		
+		using second1_tag = tag_of_t<decltype( Product::second( std::forward<Product1>( p1 )))>;
+		using second2_tag = tag_of_t<decltype( Product::second( std::forward<Product2>( p2 )))>;
+		
+		static_assert( std::is_same_v<first1_tag, first2_tag>, "Cannot compose_assign objects of different tags." );
+		static_assert( std::is_same_v<second1_tag, second2_tag>, "Cannot compose_assign objects of different tags." );
+		
+		using first_monoid = detail::choose_monoid_t<first1_tag, FirstMonoid>;
+		using second_monoid = detail::choose_monoid_t<second1_tag, SecondMonoid>;
+		
+		first_monoid::compose_assign( Product::first( std::forward<Product1>( p1 )),
+									  Product::first( std::forward<Product2>( p2 )));
+		second_monoid::compose_assign( Product::second( std::forward<Product1>( p1 )),
+									   Product::second( std::forward<Product2>( p2 )));
+		return p1;
 	}
 };
 }
 
-template<class FirstTag, class SecondTag>
-struct default_monoid<product_monoid_tag<FirstTag, SecondTag>>
-{
-private:
-	using default_first_monoid = default_monoid_t<FirstTag>;
-	using default_second_monoid = default_monoid_t<SecondTag>;
-	
-	static constexpr bool models_assignable = ( default_first_monoid::models_assignable &&
-												default_second_monoid::models_assignable );
-	using composition = std::conditional_t<models_assignable, impl::compose_assign_product<default_first_monoid, default_second_monoid>, impl::compose_product<default_first_monoid, default_second_monoid> >;
-	using neutral_element_ = impl::neutral_element_product<default_first_monoid, default_second_monoid>;
-	using is_abelian_ = impl::is_abelian_monoid_product<default_first_monoid, default_second_monoid>;
-public:
-	using type = concepts::monoid<composition, neutral_element_, is_abelian_, models_assignable>;
-};
+template<class Product> using product_monoid = concepts::monoid<impl::compose_assign_product<Product>, impl::compose_product<Product>, impl::neutral_element_product<Product>, impl::is_abelian_monoid_product<Product> >;
 
-template<class FirstTag, class SecondTag>
-struct default_set<product_monoid_tag<FirstTag, SecondTag>>
+template<class DispatchTag>
+struct default_monoid<DispatchTag, std::void_t<default_product_t<DispatchTag>>>
 {
-	using type = concepts::set<impl::equal_product<default_monoid_t<FirstTag>, default_monoid_t<SecondTag>>>;
-};
-
-template<class FirstTag, class SecondTag>
-struct default_product<product_monoid_tag<FirstTag, SecondTag>>
-{
-	using type = concepts::product<impl::first_product, impl::second_product>;
+	using type = product_monoid<default_product_t<DispatchTag>>;
 };
 }
 

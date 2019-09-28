@@ -11,37 +11,11 @@ namespace cxxmath
 {
 namespace concepts
 {
-template<class AbelianGroup, class Monoid, bool Assignable = false>
+template<class AbelianGroup, class Monoid>
 struct ring
 {
 	using abelian_group = AbelianGroup;
 	using monoid_ = Monoid;
-	
-	static constexpr bool models_assignable = false;
-	
-	static constexpr auto zero = abelian_group::neutral_element;
-	static constexpr auto add = abelian_group::compose;
-	static constexpr auto negate = abelian_group::inverse;
-	
-	static constexpr auto is_abelian_ring = monoid_::is_abelian_monoid;
-	static constexpr auto one = monoid_::neutral_element;
-	static constexpr auto multiply = monoid_::compose;
-private:
-	using add_impl = typename std::decay_t<decltype( add )>::implementation;
-	using negate_impl = typename std::decay_t<decltype( negate )>::implementation;
-public:
-	static constexpr auto subtract = binary_operator_invert_second_v<add_impl, negate_impl>;
-};
-
-template<class AssignableAbelianGroup, class AssignableMonoid>
-struct ring<AssignableAbelianGroup, AssignableMonoid, true>
-{
-	using abelian_group = AssignableAbelianGroup;
-	using monoid_ = AssignableMonoid;
-	
-	static_assert( abelian_group::models_assignable, "The given abelian_group does not model assignable." );
-	static_assert( monoid_::models_assignable, "The given monoid does not model assignable." );
-	static constexpr bool models_assignable = true;
 	
 	static constexpr auto zero = abelian_group::neutral_element;
 	static constexpr auto add = abelian_group::compose;
@@ -57,15 +31,17 @@ private:
 	using add_assign_impl = typename std::decay_t<decltype( add_assign )>::implementation;
 	using negate_impl = typename std::decay_t<decltype( negate )>::implementation;
 public:
-	static constexpr auto subtract_assign = binary_operator_invert_second_v<add_assign_impl, negate_impl>;
+	static constexpr auto subtract_assign = function_object_v <
+											std::conditional_t<std::is_same_v<add_assign_impl, impl::unsupported_implementation>, impl::unsupported_implementation,
+											impl::binary_operator_invert_second < add_assign_impl, negate_impl> >>;
 	static constexpr auto subtract = binary_operator_invert_second_v<add_impl, negate_impl>;
 };
 }
 
-template<class DispatchTag, class AbelianGroup, class Monoid, bool b>
-struct models_concept<DispatchTag, concepts::ring<AbelianGroup, Monoid, b>>
+template<class DispatchTag, class AbelianGroup, class Monoid>
+struct models_concept<DispatchTag, concepts::ring<AbelianGroup, Monoid>>
 {
-	using ring = concepts::ring<AbelianGroup, Monoid, b>;
+	using ring = concepts::ring<AbelianGroup, Monoid>;
 	static constexpr bool value = ( models_concept_v < DispatchTag, AbelianGroup > && models_concept_v < DispatchTag,
 	Monoid > );
 };

@@ -12,47 +12,30 @@ namespace cxxmath
 {
 namespace concepts
 {
-template<class Compose, class NeutralElement, class IsAbelian, bool Assignable>
+template<class ComposeAssign, class Compose, class NeutralElement, class IsAbelian>
 struct monoid
 {
-	static constexpr bool models_assignable = false;
-	
-	static constexpr auto compose = function_object_v<Compose>;
-	static constexpr auto neutral_element = function_object_v<NeutralElement>;
-	static constexpr auto is_abelian_monoid = function_object_v<IsAbelian>;
-};
-
-template<class ComposeAssign, class NeutralElement, class IsAbelian>
-struct monoid<ComposeAssign, NeutralElement, IsAbelian, true>
-{
-	static constexpr bool models_assignable = true;
-	
 	static constexpr auto compose_assign = function_object_v<ComposeAssign>;
-	static constexpr auto compose = binary_operator_v<ComposeAssign, IsAbelian>;
+	static constexpr auto compose = function_object_v<Compose>;
 	static constexpr auto neutral_element = function_object_v<NeutralElement>;
 	static constexpr auto is_abelian_monoid = function_object_v<IsAbelian>;
 };
 }
 
-template<class DispatchTag, class Compose, class NeutralElement, class IsAbelian>
-struct models_concept<DispatchTag, concepts::monoid<Compose, NeutralElement, IsAbelian, false>>
+template<class DispatchTag, class ComposeAssign, class Compose, class NeutralElement, class IsAbelian>
+struct models_concept<DispatchTag, concepts::monoid<ComposeAssign, Compose, NeutralElement, IsAbelian>>
 {
-	using boolean_lattice = concepts::monoid<Compose, NeutralElement, IsAbelian, false>;
-	static constexpr bool value = ( boolean_lattice::compose.template supports_tag<DispatchTag>() &&
-									boolean_lattice::neutral_element.template supports_tag<DispatchTag>() &&
-									boolean_lattice::is_abelian_monoid.template supports_tag<DispatchTag>());
+private:
+	using monoid = concepts::monoid<ComposeAssign, Compose, NeutralElement, IsAbelian>;
+	static constexpr bool compose_assign_valid = std::is_same_v<typename monoid::compose_assign::implementation, impl::unsupported_implementation>
+												 ? true : monoid::compose_assign.template supports_tag<DispatchTag>;
+public:
+	static constexpr bool value = ( compose_assign_valid && monoid::compose.template supports_tag<DispatchTag>() &&
+									monoid::neutral_element.template supports_tag<DispatchTag>() &&
+									monoid::is_abelian_monoid.template supports_tag<DispatchTag>());
 };
 
-template<class DispatchTag, class ComposeAssign, class NeutralElement, class IsAbelian>
-struct models_concept<DispatchTag, concepts::monoid<ComposeAssign, NeutralElement, IsAbelian, true>>
-{
-	using boolean_lattice = concepts::monoid<ComposeAssign, NeutralElement, IsAbelian, true>;
-	static constexpr bool value = ( boolean_lattice::compose_assign.template supports_tag<DispatchTag>() &&
-									boolean_lattice::neutral_element.template supports_tag<DispatchTag>() &&
-									boolean_lattice::is_abelian_monoid.template supports_tag<DispatchTag>());
-};
-
-template<class Tag>
+template<class Tag, class>
 struct default_monoid : no_default_concept<Tag>
 {
 };

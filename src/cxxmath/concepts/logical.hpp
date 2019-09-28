@@ -6,6 +6,7 @@
 #define CXXMATH_CONCEPTS_LOGICAL_HPP
 
 #include "boolean_lattice.hpp"
+#include "../models/function_object.hpp"
 
 namespace cxxmath
 {
@@ -47,7 +48,9 @@ struct default_if__dispatch
 		using dispatch_tag = tag_of_t<Cond>;
 		return default_logical_t<dispatch_tag>::if_( std::forward<Cond>( cond ), std::forward<Args>( args )... );
 	}
-} if_;
+};
+
+static constexpr default_if__dispatch if_;
 }
 
 #endif //CXXMATH_CONCEPTS_LOGICAL_HPP

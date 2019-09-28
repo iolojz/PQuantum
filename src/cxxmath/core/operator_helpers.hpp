@@ -9,11 +9,17 @@
 
 namespace cxxmath
 {
-namespace detail
+namespace impl
 {
 template<class BinaryOperatorAssign, class IsAbelian>
 struct binary_operator
 {
+	template<class Tag>
+	static constexpr bool supports_tag( void )
+	{
+		return BinaryOperatorAssign::template supports_tag<Tag>();
+	}
+	
 	template<class Arg1, class Arg2>
 	static constexpr auto apply( Arg1 &&arg1, Arg2 &&arg2 )
 	{
@@ -32,6 +38,12 @@ struct binary_operator
 template<class BinaryOperator, class Inverse>
 struct binary_operator_invert_second
 {
+	template<class Tag>
+	static constexpr bool supports_tag( void )
+	{
+		return ( Inverse::template supports_tag<Tag>() && BinaryOperator::template supports_tag<Tag>());
+	}
+	
 	template<class Arg1, class Arg2>
 	static constexpr decltype( auto ) apply( Arg1 &&arg1, Arg2 &&arg2 )
 	{
@@ -42,6 +54,12 @@ struct binary_operator_invert_second
 template<class UnaryOperatorAssign>
 struct unary_operator
 {
+	template<class Tag>
+	static constexpr bool supports_tag( void )
+	{
+		return UnaryOperatorAssign::template supports_tag<Tag>();
+	}
+	
 	template<class Arg>
 	static constexpr auto apply( Arg &&arg )
 	{
@@ -56,9 +74,9 @@ struct unary_operator
 };
 }
 
-template<class BinaryOperatorAssign, class IsAbelian> static constexpr auto binary_operator_v = function_object_v<detail::binary_operator<BinaryOperatorAssign, IsAbelian>>;
-template<class BinaryOperator, class Inverse> static constexpr auto binary_operator_invert_second_v = function_object_v<detail::binary_operator_invert_second<BinaryOperator, Inverse>>;
-template<class UnaryOperatorAssign> static constexpr auto unary_operator_v = function_object_v<detail::unary_operator<UnaryOperatorAssign>>;
+template<class BinaryOperatorAssign, class IsAbelian> static constexpr auto binary_operator_v = function_object_v<impl::binary_operator<BinaryOperatorAssign, IsAbelian>>;
+template<class BinaryOperator, class Inverse> static constexpr auto binary_operator_invert_second_v = function_object_v<impl::binary_operator_invert_second<BinaryOperator, Inverse>>;
+template<class UnaryOperatorAssign> static constexpr auto unary_operator_v = function_object_v<impl::unary_operator<UnaryOperatorAssign>>;
 }
 
 #endif //CXXMATH_CORE_OPERATOR_HELPERS_HPP

@@ -11,7 +11,7 @@ namespace cxxmath
 {
 namespace impl
 {
-struct is_abelian_ring_int : supports_tag_helper<int>
+struct is_abelian_ring_int
 {
 	static constexpr std::true_type apply( void )
 	{
@@ -19,7 +19,7 @@ struct is_abelian_ring_int : supports_tag_helper<int>
 	}
 };
 
-struct zero_int : supports_tag_helper<int>
+struct zero_int
 {
 	static constexpr int apply( void )
 	{
@@ -27,7 +27,7 @@ struct zero_int : supports_tag_helper<int>
 	}
 };
 
-struct one_int : supports_tag_helper<int>
+struct one_int
 {
 	static constexpr int apply( void )
 	{
@@ -71,18 +71,21 @@ struct equal_int : supports_tag_helper<int>
 template<>
 struct default_monoid<int>
 {
-	using type = concepts::monoid<impl::multiply_assign_int, impl::one_int, impl::is_abelian_ring_int, true>;
+	using type = concepts::assignable_monoid<impl::multiply_assign_int, impl::one_int, impl::is_abelian_ring_int>;
 };
+
 template<>
 struct default_group<int>
 {
-	using type = concepts::group<concepts::monoid<impl::add_assign_int, impl::zero_int, impl::is_abelian_ring_int, true>, impl::negate_in_place_int, true>;
+	using type = concepts::assignable_group <concepts::assignable_monoid<impl::add_assign_int, impl::zero_int, impl::is_abelian_ring_int>, impl::negate_in_place_int>;
 };
+
 template<>
 struct default_ring<int>
 {
-	using type = concepts::ring<default_group_t<int>, default_monoid_t<int>, true>;
+	using type = concepts::ring <default_group_t<int>, default_monoid_t<int>>;
 };
+
 template<>
 struct default_set<int>
 {

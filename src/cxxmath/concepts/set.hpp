@@ -27,7 +27,7 @@ struct models_concept<DispatchTag, concepts::set<Equal>>
 	static constexpr bool value = set::equal.template supports_tag<DispatchTag>();
 };
 
-template<class Tag>
+template<class Tag, class = std::void_t<>>
 struct default_set : no_default_concept<Tag>
 {
 };

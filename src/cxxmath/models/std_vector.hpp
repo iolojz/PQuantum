@@ -77,7 +77,7 @@ private:
 	using neutral_element_impl = impl::neutral_element_std_vector_tag<Symbol, Allocator>;
 	using is_abelian_impl = impl::is_abelian_std_vector_tag<Symbol, Allocator>;
 public:
-	using type = concepts::monoid<compose_assign_impl, neutral_element_impl, is_abelian_impl, true>;
+	using type = concepts::assignable_monoid<compose_assign_impl, neutral_element_impl, is_abelian_impl>;
 };
 
 template<class Symbol, class Allocator>

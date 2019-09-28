@@ -28,12 +28,14 @@ struct no_default_concept
 #define CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION( function, default_concept ) \
 struct default_ ## function ## _dispatch { \
     template<class DispatchTag> static constexpr bool supports_tag( void ) { \
-        return default_concept<DispatchTag>::function.template supports_tag<DispatchTag>(); \
+        return decltype(default_concept<DispatchTag>())::function.template supports_tag<DispatchTag>(); \
     }\
     \
     template<class ...Args> static constexpr decltype(auto) apply( Args &&... args ) { \
         using dispatch_tag = common_tag_t<tag_of_t<Args>...>; \
-        return default_concept<dispatch_tag>::function( std::forward<Args>( args )... ); \
+        static_assert( supports_tag<dispatch_tag>() ); \
+        \
+        return decltype(default_concept<dispatch_tag>())::function( std::forward<Args>( args )... ); \
     } \
 }; \
 static constexpr auto function = function_object_v<default_ ## function ## _dispatch>;

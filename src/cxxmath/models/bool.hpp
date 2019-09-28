@@ -34,7 +34,7 @@ struct not_bool : supports_tag_helper<bool>
 	}
 };
 
-struct if_bool : supports_tag_helper<bool>
+struct if_bool
 {
 	template<class Then, class Else>
 	static constexpr auto apply( bool b, Then &&then, Else &&else_ )
@@ -57,11 +57,13 @@ struct default_boolean_lattice<bool>
 {
 	using type = concepts::boolean_lattice<impl::and_bool, impl::or_bool, impl::not_bool>;
 };
+
 template<>
 struct default_logical<bool>
 {
 	using type = concepts::logical<default_boolean_lattice<bool>, impl::if_bool>;
 };
+
 template<>
 struct default_set<bool>
 {
@@ -71,6 +73,7 @@ struct default_set<bool>
 struct std_bool_constant_tag
 {
 };
+
 namespace impl
 {
 template<>
@@ -105,7 +108,7 @@ struct not_std_bool_constant : supports_tag_helper<std_bool_constant_tag>
 	{ return {}; }
 };
 
-struct if_std_bool_constant : supports_tag_helper<std_bool_constant_tag>
+struct if_std_bool_constant
 {
 	template<class Then, class Else>
 	static constexpr auto apply( std::true_type, Then &&then, Else && )
@@ -133,11 +136,13 @@ struct default_boolean_lattice<std_bool_constant_tag>
 {
 	using type = concepts::boolean_lattice<impl::and_std_bool_constant, impl::or_std_bool_constant, impl::not_std_bool_constant>;
 };
+
 template<>
 struct default_logical<std_bool_constant_tag>
 {
-	using type = concepts::logical<default_boolean_lattice<std_bool_constant_tag>, impl::if_std_bool_constant>;
+	using type = concepts::logical <default_boolean_lattice_t<std_bool_constant_tag>, impl::if_std_bool_constant>;
 };
+
 template<>
 struct default_set<std_bool_constant_tag>
 {

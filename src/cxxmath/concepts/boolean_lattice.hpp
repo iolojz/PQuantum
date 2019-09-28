@@ -30,7 +30,7 @@ struct models_concept<DispatchTag, concepts::boolean_lattice<And, Or, Not>>
 									boolean_lattice::not_.template supports_tag<DispatchTag>());
 };
 
-template<class Tag>
+template<class Tag, class = std::void_t<>>
 struct default_boolean_lattice : no_default_concept<Tag>
 {
 };

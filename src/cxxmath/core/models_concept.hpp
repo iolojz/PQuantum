@@ -5,7 +5,7 @@
 #ifndef CXXMATH_CORE_MODELS_CONCEPT_HPP
 #define CXXMATH_CORE_MODELS_CONCEPT_HPP
 
-#include "../models/function_object.hpp"
+#include "function_dispatch.hpp"
 
 namespace cxxmath
 {
@@ -14,6 +14,15 @@ struct models_concept : std::false_type
 {
 };
 template<class DispatchTag, class Concept> static constexpr bool models_concept_v = models_concept<DispatchTag, Concept>::value;
+
+namespace detail
+{
+template<class Tag>
+struct unsupported_tag
+{
+	static_assert( always_false_v < Tag > , "The requested function does not support the given tag." );
+};
+}
 
 template<class DispatchTag>
 struct supports_tag_helper
