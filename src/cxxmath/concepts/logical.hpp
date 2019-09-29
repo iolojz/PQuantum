@@ -34,11 +34,7 @@ struct models_concept<DispatchTag, concepts::logical<BooleanLattice, If>>
 																	logical::if_.template supports_tag<DispatchTag>());
 };
 
-template<class Tag>
-struct default_logical : no_default_concept<Tag>
-{
-};
-template<class Tag> using default_logical_t = typename default_logical<Tag>::type;
+CXXMATH_DEFINE_CONCEPT( logical )
 
 struct default_if__dispatch
 {

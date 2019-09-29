@@ -6,7 +6,7 @@
 #define CXXMATH_MODELS_FUNCTION_OBJECT_HPP
 
 #include "../concepts/monoid_fwd.hpp"
-#include "../core/models_concept.hpp"
+#include "cxxmath/core/concepts.hpp"
 
 namespace cxxmath
 {
@@ -108,13 +108,13 @@ struct neutral_element_function_object
 	static constexpr auto apply( void ) noexcept
 	{ return cxxmath::identity; }
 };
-}
 
 template<>
 struct default_monoid<function_object_tag>
 {
 	using type = concepts::non_assignable_monoid<impl::compose_function_object, impl::is_abelian_function_object, impl::neutral_element_function_object>;
 };
+}
 }
 
 #endif //CXXMATH_MODELS_FUNCTION_OBJECT_HPP

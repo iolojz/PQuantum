@@ -62,7 +62,6 @@ struct second_std_pair : supports_tag_helper<std_pair_tag>
 		return p.second;
 	}
 };
-}
 
 template<>
 struct default_product<std_pair_tag>
@@ -70,8 +69,6 @@ struct default_product<std_pair_tag>
 	using type = concepts::product<impl::first_std_pair, impl::second_std_pair>;
 };
 
-namespace impl
-{
 template<>
 struct make_product<default_product_t < std_pair_tag>>
 {

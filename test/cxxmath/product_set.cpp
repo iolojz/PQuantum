@@ -2,7 +2,7 @@
 // Created by jayz on 28.09.19.
 //
 
-#define BOOST_TEST_MODULE cxxmath - product_monoid
+#define BOOST_TEST_MODULE cxxmath - product_set
 
 #include <boost/test/included/unit_test.hpp>
 

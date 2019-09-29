@@ -11,7 +11,7 @@ namespace cxxmath
 {
 namespace detail
 {
-template<class, class = std::void_t<>>
+template<class, class = void>
 struct has_dispatch_tag : std::false_type
 {
 };

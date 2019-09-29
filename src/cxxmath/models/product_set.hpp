@@ -56,11 +56,14 @@ struct equal_product
 
 template<class Product> using product_set = concepts::set<impl::equal_product<Product>>;
 
+namespace impl
+{
 template<class DispatchTag>
-struct default_set<DispatchTag, std::void_t<default_product_t < DispatchTag>>>
+struct default_set<DispatchTag, std::enable_if_t<has_default_product < DispatchTag>>>
 {
 using type = product_set<default_product_t < DispatchTag>>;
 };
+}
 }
 
 #endif //CXXMATH_MODELS_PRODUCT_SET_HPP

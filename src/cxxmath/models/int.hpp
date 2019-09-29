@@ -66,7 +66,6 @@ struct equal_int : supports_tag_helper<int>
 		return a == b;
 	}
 };
-}
 
 template<>
 struct default_monoid<int>
@@ -91,6 +90,7 @@ struct default_set<int>
 {
 	using type = concepts::set<impl::equal_int>;
 };
+}
 }
 
 #endif //CXXMATH_MODELS_INT_HPP

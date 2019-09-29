@@ -27,11 +27,7 @@ struct models_concept<DispatchTag, concepts::set<Equal>>
 	static constexpr bool value = set::equal.template supports_tag<DispatchTag>();
 };
 
-template<class Tag, class = std::void_t<>>
-struct default_set : no_default_concept<Tag>
-{
-};
-template<class Tag> using default_set_t = typename default_set<Tag>::type;
+CXXMATH_DEFINE_CONCEPT( set )
 
 CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION( equal, default_set_t )
 

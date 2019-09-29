@@ -20,8 +20,7 @@ template<class Compose, class NeutralElement, class IsAbelian> using non_assigna
 template<class ComposeAssign, class NeutralElement, class IsAbelian> using assignable_monoid = monoid<ComposeAssign, impl::binary_operator<ComposeAssign, IsAbelian>, NeutralElement, IsAbelian>;
 }
 
-template<class Tag, class = std::void_t<>>
-struct default_monoid;
+CXXMATH_DEFINE_CONCEPT( monoid )
 }
 
 #endif //CXXMATH_CONCEPTS_MONOID_FWD_HPP

@@ -19,12 +19,9 @@ struct always_false
 template<class T> static constexpr bool always_false_v = always_false<T>::value;
 }
 
-template<class Tag>
-struct no_default_concept
-{
-	static_assert( detail::always_false_v<Tag>, "No default concept implemented." );
-};
-
+#ifdef CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION
+#error "CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION is already defined."
+#endif
 #define CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION( function, default_concept ) \
 struct default_ ## function ## _dispatch { \
     template<class DispatchTag> static constexpr bool supports_tag( void ) { \

@@ -42,11 +42,7 @@ public:
 									group::inverse.template supports_tag<DispatchTag>());
 };
 
-template<class Tag, class = std::void_t<>>
-struct default_group : no_default_concept<Tag>
-{
-};
-template<class Tag> using default_group_t = typename default_group<Tag>::type;
+CXXMATH_DEFINE_CONCEPT( group )
 
 CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION( inverse, default_group_t )
 

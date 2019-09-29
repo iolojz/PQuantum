@@ -9,7 +9,8 @@
 
 namespace cxxmath
 {
-namespace impl {
+namespace impl
+{
 struct and_bool : supports_tag_helper<bool>
 {
 	static constexpr bool apply( bool b1, bool b2 ) noexcept
@@ -50,7 +51,6 @@ struct equal_bool : supports_tag_helper<bool>
 		return b1 == b2;
 	}
 };
-}
 
 template<>
 struct default_boolean_lattice<bool>
@@ -61,7 +61,7 @@ struct default_boolean_lattice<bool>
 template<>
 struct default_logical<bool>
 {
-	using type = concepts::logical<default_boolean_lattice<bool>, impl::if_bool>;
+	using type = concepts::logical <default_boolean_lattice_t<bool>, impl::if_bool>;
 };
 
 template<>
@@ -69,6 +69,7 @@ struct default_set<bool>
 {
 	using type = concepts::set<impl::equal_bool>;
 };
+}
 
 struct std_bool_constant_tag
 {
@@ -129,7 +130,6 @@ struct equal_std_bool_constant : supports_tag_helper<std_bool_constant_tag>
 	static constexpr std::bool_constant<b1 == b2> apply( std::bool_constant<b1>, std::bool_constant<b2> ) noexcept
 	{ return {}; }
 };
-}
 
 template<>
 struct default_boolean_lattice<std_bool_constant_tag>
@@ -148,6 +148,7 @@ struct default_set<std_bool_constant_tag>
 {
 	using type = concepts::set<impl::equal_std_bool_constant>;
 };
+}
 }
 
 #endif //CXXMATH_MODELS_BOOL_HPP

@@ -25,20 +25,11 @@ struct product
 };
 }
 
-template<class DispatchTag, class First, class Second>
-struct models_concept<DispatchTag, concepts::product<First, Second>>
-{
-	using product = concepts::product<First, Second>;
-	static constexpr bool value = ( product::first.template supports_tag<DispatchTag>() &&
-									product::second.template supports_tag<DispatchTag>());
-};
-
 namespace impl
 {
 template<class Product>
-struct make_product
+struct make_product : unsupported_implementation
 {
-	static_assert( cxxmath::detail::always_false_v<Product>, "make_product not implemented for 'Product'." );
 };
 }
 
@@ -52,15 +43,18 @@ struct default_make_product_dispatch
 	}
 };
 
+template<class DispatchTag, class First, class Second>
+struct models_concept<DispatchTag, concepts::product<First, Second>>
+{
+	using product = concepts::product<First, Second>;
+	static constexpr bool value = ( product::first.template supports_tag<DispatchTag>() &&
+									product::second.template supports_tag<DispatchTag>() &&
+									!std::is_same_v<impl::make_product<product>, impl::unsupported_implementation> );
+};
+
 template<class Product> static constexpr default_make_product_dispatch<Product> make_product;
 
-template<class Tag>
-struct default_product : no_default_concept<Tag>
-{
-	using type = typename impl::default_product<Tag>::type;
-	
-};
-template<class Tag> using default_product_t = typename default_product<Tag>::type;
+CXXMATH_DEFINE_CONCEPT( product )
 
 CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION( first, default_product_t )
 

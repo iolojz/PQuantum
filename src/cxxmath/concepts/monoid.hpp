@@ -35,12 +35,6 @@ public:
 									monoid::is_abelian_monoid.template supports_tag<DispatchTag>());
 };
 
-template<class Tag, class>
-struct default_monoid : no_default_concept<Tag>
-{
-};
-template<class Tag> using default_monoid_t = typename default_monoid<Tag>::type;
-
 CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION( compose, default_monoid_t )
 
 CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION( compose_assign, default_monoid_t )

@@ -46,11 +46,7 @@ struct models_concept<DispatchTag, concepts::ring<AbelianGroup, Monoid>>
 	Monoid > );
 };
 
-template<class Tag>
-struct default_ring : no_default_concept<Tag>
-{
-};
-template<class Tag> using default_ring_t = typename default_ring<Tag>::type;
+CXXMATH_DEFINE_CONCEPT( ring )
 
 CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION( add, default_ring_t )
 

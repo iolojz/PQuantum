@@ -11,7 +11,7 @@
 
 namespace cxxmath
 {
-template<class Symbol, class Allocator>
+template<class Symbol, class Allocator = std::allocator<Symbol>>
 struct std_vector_tag;
 
 namespace impl
@@ -66,7 +66,6 @@ struct equal_std_vector_tag : supports_tag_helper<std_vector_tag<Symbol, Allocat
 		return v1 == v2;
 	}
 };
-}
 
 template<class Symbol, class Allocator>
 struct default_monoid<std_vector_tag<Symbol, Allocator>>
@@ -85,6 +84,7 @@ struct default_set<std_vector_tag<Symbol, Allocator>>
 {
 	using type = concepts::set<impl::equal_std_vector_tag<Symbol, Allocator>>;
 };
+}
 }
 
 #endif //CXXMATH_MODELS_FREE_MONOID_HPP
