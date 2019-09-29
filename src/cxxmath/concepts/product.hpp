@@ -57,6 +57,8 @@ template<class Product> static constexpr default_make_product_dispatch<Product> 
 template<class Tag>
 struct default_product : no_default_concept<Tag>
 {
+	using type = typename impl::default_product<Tag>::type;
+	
 };
 template<class Tag> using default_product_t = typename default_product<Tag>::type;
 

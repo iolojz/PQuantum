@@ -160,11 +160,14 @@ struct compose_assign_product
 
 template<class Product> using product_monoid = concepts::monoid<impl::compose_assign_product<Product>, impl::compose_product<Product>, impl::neutral_element_product<Product>, impl::is_abelian_monoid_product<Product> >;
 
-template<class DispatchTag>
-struct default_monoid<DispatchTag, std::void_t<default_product_t<DispatchTag>>>
+namespace impl
 {
-	using type = product_monoid<default_product_t<DispatchTag>>;
+template<class DispatchTag>
+struct default_monoid<DispatchTag, std::enable_if_t<has_default_product < DispatchTag>>>
+{
+using type = product_monoid<default_product_t<DispatchTag>>;
 };
+}
 }
 
 #endif //CXXMATH_MODELS_PRODUCT_MONOID_HPP
