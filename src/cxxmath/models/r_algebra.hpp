@@ -1,14 +1,16 @@
 //
-// Created by jayz on 27.09.19.
+// Created by jayz on 01.10.19.
 //
 
-#ifndef CXXMATH_MODELS_PRODUCT_MONOID_HPP
-#define CXXMATH_MODELS_PRODUCT_MONOID_HPP
+#ifndef CXXMATH_MODELS_R_ALGEBRA_HPP
+#define CXXMATH_MODELS_R_ALGEBRA_HPP
 
 #include "../concepts/monoid.hpp"
+#include "../concepts/ring.hpp"
 
 namespace cxxmath
 {
+
 namespace impl
 {
 namespace detail
@@ -163,9 +165,9 @@ namespace impl
 template<class DispatchTag>
 struct default_monoid<DispatchTag, std::enable_if_t<has_default_product < DispatchTag>>>
 {
-using type = product_monoid<default_product_t<DispatchTag>>;
+using type = product_monoid<default_product_t < DispatchTag>>;
 };
 }
 }
 
-#endif //CXXMATH_MODELS_PRODUCT_MONOID_HPP
+#endif //CXXMATH_MODELS_R_ALGEBRA_HPP
