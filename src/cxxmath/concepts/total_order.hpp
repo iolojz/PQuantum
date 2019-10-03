@@ -20,7 +20,7 @@ struct less_equal_total_order : forward_supports_tag<Less>
 	template<class Arg1, class Arg2>
 	static constexpr decltype( auto ) apply( const Arg1 &arg1, const Arg2 &arg2 )
 	{
-		return and_( Less::apply( arg1, arg2 ), not_( Less::apply( arg2, arg1 )));
+		return not_( Less::apply( arg2, arg1 ));
 	}
 };
 
@@ -28,9 +28,9 @@ template<class Less>
 struct equal_total_order : forward_supports_tag<Less>
 {
 	template<class Arg1, class Arg2>
-	static constexpr apply( const Arg1 &arg1, const Arg2 &arg2 )
+	static constexpr decltype( auto ) apply( const Arg1 &arg1, const Arg2 &arg2 )
 	{
-		return and_( Less::apply( arg1, arg2 ), Less::apply( arg2, arg1 ));
+		return and_( not_( Less::apply( arg1, arg2 )), not_( Less::apply( arg2, arg1 )));
 	}
 };
 
@@ -38,7 +38,7 @@ template<class Less>
 struct greater_equal_total_order : forward_supports_tag<Less>
 {
 	template<class Arg1, class Arg2>
-	static constexpr apply( const Arg1 &arg1, const Arg2 &arg2 )
+	static constexpr decltype( auto ) apply( const Arg1 &arg1, const Arg2 &arg2 )
 	{
 		return not_( Less::apply( arg1, arg2 ));
 	}
@@ -48,7 +48,7 @@ template<class Less>
 struct greater_total_order : forward_supports_tag<Less>
 {
 	template<class Arg1, class Arg2>
-	static constexpr apply( const Arg1 &arg1, const Arg2 &arg2 )
+	static constexpr decltype( auto ) apply( const Arg1 &arg1, const Arg2 &arg2 )
 	{
 		return Less::apply( arg2, arg1 );
 	}
@@ -60,10 +60,10 @@ struct total_order
 {
 	static constexpr auto less = function_object_v<Less>;
 	
-	static constexpr auto less_equal = detail::less_equal_total_order<Less>;
-	static constexpr auto equal = detail::equal_total_order<Less>;
-	static constexpr auto greater_equal = detail::greater_equal_total_order<Less>;
-	static constexpr auto greater = detail::greater_total_order<Less>;
+	static constexpr auto less_equal = function_object_v<detail::less_equal_total_order<Less>>;
+	static constexpr auto equal = function_object_v<detail::equal_total_order<Less>>;
+	static constexpr auto greater_equal = function_object_v<detail::greater_equal_total_order<Less>>;
+	static constexpr auto greater = function_object_v<detail::greater_total_order<Less>>;
 	
 	static constexpr auto not_equal = compose( not_, equal );
 };
@@ -86,7 +86,7 @@ CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION( greater, default_total_order_t )
 
 CXXMATH_DEFINE_DEFAULT_DISPATCHED_FUNCTION( greater_equal, default_total_order_t )
 
-template<class Less> using totally_ordered_set = concepts::set<detail::equal_total_order<Less>>;
+template<class Less> using totally_ordered_set = concepts::set<concepts::detail::equal_total_order<Less>>;
 
 namespace impl
 {

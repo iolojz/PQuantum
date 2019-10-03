@@ -35,7 +35,7 @@ struct one_int
 	}
 };
 
-struct add_assign_int : supports_tag<int>
+struct add_assign_int : supports_tag_helper<int>
 {
 	static constexpr int &apply( int &a, int b )
 	{
@@ -43,7 +43,7 @@ struct add_assign_int : supports_tag<int>
 	}
 };
 
-struct negate_in_place_int : supports_tag<int>
+struct negate_in_place_int : supports_tag_helper<int>
 {
 	static constexpr int &apply( int &a )
 	{
@@ -51,7 +51,7 @@ struct negate_in_place_int : supports_tag<int>
 	}
 };
 
-struct multiply_assign_int : supports_tag<int>
+struct multiply_assign_int : supports_tag_helper<int>
 {
 	static constexpr int &apply( int &a, int b )
 	{
@@ -59,7 +59,7 @@ struct multiply_assign_int : supports_tag<int>
 	}
 };
 
-struct equal_int : supports_tag<int>
+struct equal_int : supports_tag_helper<int>
 {
 	static constexpr bool apply( int a, int b )
 	{
@@ -67,16 +67,24 @@ struct equal_int : supports_tag<int>
 	}
 };
 
+struct less_int : supports_tag_helper<int>
+{
+	static constexpr bool apply( int a, int b )
+	{
+		return a < b;
+	}
+};
+
 template<>
 struct default_monoid<int>
 {
-	using type = concepts::assignable_monoid<impl::multiply_assign_int, impl::one_int, impl::is_abelian_ring_int>;
+	using type = concepts::assignable_monoid<multiply_assign_int, one_int, is_abelian_ring_int>;
 };
 
 template<>
 struct default_group<int>
 {
-	using type = concepts::assignable_group <concepts::assignable_monoid<impl::add_assign_int, impl::zero_int, impl::is_abelian_ring_int>, impl::negate_in_place_int>;
+	using type = concepts::assignable_group <concepts::assignable_monoid<add_assign_int, zero_int, is_abelian_ring_int>, negate_in_place_int>;
 };
 
 template<>
@@ -88,7 +96,13 @@ struct default_ring<int>
 template<>
 struct default_set<int>
 {
-	using type = concepts::set<impl::equal_int>;
+	using type = concepts::set<equal_int>;
+};
+
+template<>
+struct default_total_order<int>
+{
+	using type = concepts::total_order<less_int>;
 };
 }
 }

@@ -5,9 +5,6 @@
 #ifndef CXXMATH_CONCEPTS_R_ALGEBRA_HPP
 #define CXXMATH_CONCEPTS_R_ALGEBRA_HPP
 
-namespace cxxmath
-{
-
 #include "r_module.hpp"
 
 namespace cxxmath
@@ -35,7 +32,7 @@ struct r_algebra
 };
 }
 
-template<class RModule, class Monoid>
+template<class DispatchTag, class RModule, class Monoid>
 struct models_concept<DispatchTag, concepts::r_algebra<RModule, Monoid>>
 {
 	using r_module = concepts::r_algebra<RModule, Monoid>;

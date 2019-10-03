@@ -16,7 +16,7 @@ struct models_concept : std::false_type
 template<class DispatchTag, class Concept> static constexpr bool models_concept_v = models_concept<DispatchTag, Concept>::value;
 
 template<class DispatchTag>
-struct supports_tag
+struct supports_tag_helper
 {
 	template<class Tag>
 	static constexpr bool supports_tag( void )
@@ -31,7 +31,7 @@ struct forward_supports_tag
 	template<class Tag>
 	static constexpr decltype( auto ) supports_tag( void )
 	{
-		return Implementation::supports_tag<Tag>;
+		return Implementation::template supports_tag<Tag>();
 	}
 };
 

@@ -15,7 +15,6 @@ template<class AbelianGroup, class ScalarMultiplication>
 struct r_module
 {
 	using abelian_group = AbelianGroup;
-	using ring_ = Ring;
 	using scalar_multiplication = ScalarMultiplication;
 	
 	static constexpr auto zero = abelian_group::zero;
@@ -36,11 +35,10 @@ public:
 }
 
 template<class DispatchTag, class AbelianGroup, class ScalarMultiplication>
-struct models_concept<DispatchTag, concepts::r_module<AbelianGroup, ScalarMultiplication, Ring>>
+struct models_concept<DispatchTag, concepts::r_module<AbelianGroup, ScalarMultiplication>>
 {
-	using r_module = concepts::r_module<AbelianGroup, ScalarMultiplication, Ring>;
-	static constexpr bool value = ( models_concept_v<DispatchTag, AbelianGroup> &&
-									models_concept_v<DispatchTag, Ring> );
+	using r_module = concepts::r_module<AbelianGroup, ScalarMultiplication>;
+	static constexpr bool value = models_concept_v<DispatchTag, AbelianGroup>;
 };
 
 CXXMATH_DEFINE_CONCEPT( r_module )
@@ -52,7 +50,7 @@ struct default_scalar_multiply_dispatch
 	{
 		using dispatch_tag = tag_of_t<Object>;
 		return default_r_module<dispatch_tag>::scalar_multiply( std::forward<Scalar>( scalar ),
-																std::forward<Object>( object )... );
+																std::forward<Object>( object ));
 	}
 };
 
@@ -63,7 +61,7 @@ struct default_scalar_multiply_assign_dispatch
 	{
 		using dispatch_tag = tag_of_t<Object>;
 		return default_r_module<dispatch_tag>::scalar_multiply_assign( std::forward<Scalar>( scalar ),
-																	   std::forward<Object>( object )... );
+																	   std::forward<Object>( object ));
 	}
 };
 

@@ -79,4 +79,37 @@ template<class BinaryOperator, class Inverse> static constexpr auto binary_opera
 template<class UnaryOperatorAssign> static constexpr auto unary_operator_v = function_object_v<impl::unary_operator<UnaryOperatorAssign>>;
 }
 
+
+#ifdef CXXMATH_COMMUTATIVE_BINARY_OPERATOR_OVERLOAD
+#error "CXXMATH_COMMUTATIVE_BINARY_OPERATOR_OVERLOAD already defined"
+#endif
+#define CXXMATH_COMMUTATIVE_BINARY_OPERATOR_OVERLOAD( classname, op ) \
+classname operator op( const classname &arg ) const & \
+{ return classname{ *this } op ## = arg; } \
+\
+classname operator op( const classname &arg ) && \
+{ return std::move( *this ) op ## = arg; } \
+\
+classname operator op( classname &&arg ) const & \
+{ return std::move( arg ) op ## = *this; } \
+\
+classname operator op( classname &&arg ) && \
+{ return std::move( *this ) op ## = std::move( arg ); }
+
+#ifdef CXXMATH_BINARY_OPERATOR_OVERLOAD
+#error "CXXMATH_BINARY_OPERATOR_OVERLOAD already defined"
+#endif
+#define CXXMATH_BINARY_OPERATOR_OVERLOAD( classname, op ) \
+classname operator op( const classname &arg ) const & \
+{ return classname{ *this } op ## = arg; } \
+\
+classname operator op( const classname &arg ) && \
+{ return std::move( *this ) op ## = arg; } \
+\
+classname operator op( classname &&arg ) const & \
+{ return classname{ *this } op ## = std::move( arg ); } \
+\
+classname operator op( classname &&arg ) && \
+{ return std::move( *this ) op ## = std::move( arg ); }
+
 #endif //CXXMATH_CORE_OPERATOR_HELPERS_HPP

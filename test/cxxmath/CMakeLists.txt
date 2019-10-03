@@ -23,3 +23,7 @@ add_test(product_set product_set)
 add_executable(product_monoid product_monoid.cpp)
 target_link_libraries(product_monoid)
 add_test(product_monoid product_monoid)
+
+add_executable(polynomial polynomial.cpp)
+target_link_libraries(polynomial)
+add_test(polynomial polynomial)

@@ -23,7 +23,7 @@ struct tag_of<std::vector<Symbol, Allocator>>
 };
 
 template<class Symbol, class Allocator>
-struct is_abelian_std_vector_tag : supports_tag<std_vector_tag<Symbol, Allocator>>
+struct is_abelian_std_vector_tag : supports_tag_helper<std_vector_tag<Symbol, Allocator>>
 {
 	static constexpr std::bool_constant<std::is_empty_v<Symbol>> apply( void )
 	{
@@ -32,7 +32,7 @@ struct is_abelian_std_vector_tag : supports_tag<std_vector_tag<Symbol, Allocator
 };
 
 template<class Symbol, class Allocator>
-struct neutral_element_std_vector_tag : supports_tag<std_vector_tag<Symbol, Allocator>>
+struct neutral_element_std_vector_tag : supports_tag_helper<std_vector_tag<Symbol, Allocator>>
 {
 	static std::vector<Symbol, Allocator> apply( void )
 	{
@@ -41,7 +41,7 @@ struct neutral_element_std_vector_tag : supports_tag<std_vector_tag<Symbol, Allo
 };
 
 template<class Symbol, class Allocator>
-struct compose_assign_std_vector_tag : supports_tag<std_vector_tag<Symbol, Allocator>>
+struct compose_assign_std_vector_tag : supports_tag_helper<std_vector_tag<Symbol, Allocator>>
 {
 	static constexpr std::vector<Symbol, Allocator> &
 	apply( std::vector<Symbol, Allocator> &v1, const std::vector<Symbol, Allocator> &v2 )
@@ -59,13 +59,14 @@ struct compose_assign_std_vector_tag : supports_tag<std_vector_tag<Symbol, Alloc
 };
 
 template<class Symbol, class Allocator>
-struct equal_std_vector_tag : supports_tag<std_vector_tag<Symbol, Allocator>>
+struct equal_std_vector_tag : supports_tag_helper<std_vector_tag<Symbol, Allocator>>
 {
 	static constexpr bool apply( const std::vector<Symbol, Allocator> &v1, const std::vector<Symbol, Allocator> &v2 )
 	{
 		return v1 == v2;
 	}
 };
+}
 
 template<class Symbol, class Allocator = std::allocator<Symbol>>
 struct vector_monoid
@@ -76,9 +77,11 @@ private:
 	using neutral_element_impl = impl::neutral_element_std_vector_tag<Symbol, Allocator>;
 	using is_abelian_impl = impl::is_abelian_std_vector_tag<Symbol, Allocator>;
 public:
-	using type = concepts::assignable_monoid <compose_assign_impl, neutral_element_impl, is_abelian_impl>
+	using type = concepts::assignable_monoid<compose_assign_impl, neutral_element_impl, is_abelian_impl>;
 };
 
+namespace impl
+{
 template<class Symbol, class Allocator>
 struct default_monoid<std_vector_tag<Symbol, Allocator>>
 {

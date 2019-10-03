@@ -21,7 +21,7 @@ struct tag_of<std::pair<First, Second>>
 	using type = std_pair_tag;
 };
 
-struct first_std_pair : supports_tag<std_pair_tag>
+struct first_std_pair : supports_tag_helper<std_pair_tag>
 {
 	template<class First, class Second>
 	static constexpr auto apply( std::pair<First, Second> &&p )
@@ -42,7 +42,7 @@ struct first_std_pair : supports_tag<std_pair_tag>
 	}
 };
 
-struct second_std_pair : supports_tag<std_pair_tag>
+struct second_std_pair : supports_tag_helper<std_pair_tag>
 {
 	template<class First, class Second>
 	static constexpr auto apply( std::pair<First, Second> &&p )

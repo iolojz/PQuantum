@@ -5,13 +5,23 @@
 #ifndef CXXMATH_MODELS_POLYNOMIAL_HPP
 #define CXXMATH_MODELS_POLYNOMIAL_HPP
 
+#include "std_get.hpp"
 #include "std_vector.hpp"
+#include "product_monoid.hpp"
+
+#include <boost/range/combine.hpp>
+#include <boost/container/flat_map.hpp>
 
 namespace cxxmath
 {
 template<class Coefficient, class Variable, class CoefficientSet = default_set_t <tag_of_t<Coefficient>>, class CoefficientRing = default_ring_t <tag_of_t<Coefficient>>, class TotalVariableOrder = default_total_order_t <tag_of_t<Variable>>>
 struct polynomial_tag
 {
+	using coefficient = Coefficient;
+	using coefficient_set = CoefficientSet;
+	using coefficient_ring = CoefficientRing;
+	using variable = Variable;
+	using total_variable_order = TotalVariableOrder;
 };
 
 template<class Coefficient, class Variable, class CoefficientSet = default_set_t <tag_of_t<Coefficient>>, class CoefficientRing = default_ring_t <tag_of_t<Coefficient>>, class TotalVariableOrder = default_total_order_t <tag_of_t<Variable>>>
@@ -26,10 +36,9 @@ struct polynomial
 	using variable_monoid = typename vector_monoid<variable>::type;
 private:
 	using monomial_product = std_get_product;
-	using monomial_monoid = product_monoid<monomial_product, typename coefficient_ring::monoid_, variable_monoid>
+	using monomial_monoid = product_monoid<monomial_product, typename coefficient_ring::monoid_, variable_monoid>;
 	
-	static constexpr auto
-	add_assign_coefficients = coefficient_ring::add_assign;
+	static constexpr auto add_assign_coefficients = coefficient_ring::add_assign;
 	static constexpr auto equal_coefficients = coefficient_set::equal;
 	static constexpr auto zero_coefficient = coefficient_ring::zero;
 	static constexpr auto negate_coefficient_in_place = coefficient_ring::negate_in_place;
@@ -65,17 +74,16 @@ private:
 	//using monomial_container = std::map<decltype(std::declval<monomial>().variables), coefficient, less_variable_ranges>;
 	monomial_container monomial_map;
 public:
-	free_polynomial( void ) = default;
+	polynomial( void ) = default;
 	
-	free_polynomial( const free_polynomial & ) = default;
+	polynomial( const polynomial & ) = default;
 	
-	free_polynomial(free_polynomial
-	&&) = default;
+	polynomial( polynomial && ) = default;
 	
 	const monomial_container &monomials( void ) const
 	{ return monomial_map; }
 	
-	free_polynomial &operator+=( const free_polynomial &p )
+	polynomial &operator+=( const polynomial &p )
 	{
 		if( this == &p ) {
 			for( auto &term : monomial_map )
@@ -96,7 +104,7 @@ public:
 		return *this;
 	}
 	
-	free_polynomial &operator+=( free_polynomial &&p )
+	polynomial &operator+=( polynomial &&p )
 	{
 		if( this == &p ) {
 			for( auto &term : monomial_map )
@@ -117,18 +125,18 @@ public:
 	}
 	
 	template<class Polynomial>
-	free_polynomial &operator-=( Polynomial &&p )
+	polynomial &operator-=( Polynomial &&p )
 	{
 		return *this += -std::forward<Polynomial>( p );
 	}
 	
-	CXXMATH_COMMUTATIVE_BINARY_OPERATOR_OVERLOAD(free_polynomial,
-	+)
+	CXXMATH_COMMUTATIVE_BINARY_OPERATOR_OVERLOAD( polynomial,
+												  +)
 	
-	CXXMATH_BINARY_OPERATOR_OVERLOAD( free_polynomial,
-	- )
+	CXXMATH_BINARY_OPERATOR_OVERLOAD( polynomial,
+									  - )
 	
-	free_polynomial &negate_in_place( void )
+	polynomial &negate_in_place( void )
 	{
 		for( auto &term : monomial_map )
 			negate_coefficient_in_place( term.second );
@@ -136,18 +144,18 @@ public:
 		return std::move( *this );
 	}
 	
-	free_polynomial operator-( void ) &&
+	polynomial operator-( void ) &&
 	{
 		negate_in_place();
 		return std::move( *this );
 	}
 	
-	free_polynomial operator-( void ) const &
-	{ return -free_polynomial{ *this }; }
+	polynomial operator-( void ) const &
+	{ return -polynomial{ *this }; }
 	
-	free_polynomial &operator*=( const free_polynomial &p )
+	polynomial &operator*=( const polynomial &p )
 	{
-		std::vector<monomial_container::value_type> monomials;
+		std::vector<typename monomial_container::value_type> monomials;
 		for( const auto &factor1 : monomial_map ) {
 			for( const auto &factor2 : p.monomial_map ) {
 				monomials.push_back( monomial_monoid::multiply( factor1, factor2 ));
@@ -171,10 +179,10 @@ public:
 		return *this;
 	}
 	
-	CXXMATH_BINARY_OPERATOR_OVERLOAD(free_polynomial, *
+	CXXMATH_BINARY_OPERATOR_OVERLOAD( polynomial, *
 	)
 	
-	bool operator==( const free_polynomial &p ) const
+	bool operator==( const polynomial &p ) const
 	{
 		if( monomial_map.size() != p.monomial_map.size())
 			return false;
@@ -198,7 +206,7 @@ public:
 		return true;
 	}
 	
-	bool operator!=( const free_polynomial &p ) const
+	bool operator!=( const polynomial &p ) const
 	{ return !( *this == p ); }
 };
 
@@ -210,7 +218,8 @@ struct is_polynomial_tag : std::false_type
 };
 
 template<class Coefficient, class Variable, class CoefficientSet, class CoefficientRing, class TotalVariableOrder>
-struct is_polynomial_tag<Coefficient, Variable, CoefficientSet, CoefficientRing, TotalVariableOrder> : std::true_type
+struct is_polynomial_tag<polynomial_tag<Coefficient, Variable, CoefficientSet, CoefficientRing, TotalVariableOrder>>
+: std::true_type
 {
 };
 
@@ -220,6 +229,15 @@ struct supports_polynomial_tag
 	static constexpr bool supports_tag( void )
 	{
 		return is_polynomial_tag<Tag>::value;
+	}
+};
+
+struct polynomial_equal : supports_polynomial_tag
+{
+	template<class Polynomial1, class Polynomial2>
+	static constexpr decltype( auto ) apply( Polynomial1 &&p1, Polynomial2 &&p2 )
+	{
+		return std::forward<Polynomial1>( p1 ) == std::forward<Polynomial2>( p2 );
 	}
 };
 
@@ -249,7 +267,7 @@ struct polynomial_zero
 	}
 };
 
-struct polynomial_negate : supports_polynomial_tag
+struct polynomial_negate_in_place : supports_polynomial_tag
 {
 	template<class Polynomial>
 	static constexpr bool apply( Polynomial &&p )
@@ -281,12 +299,48 @@ struct polynomial_one
 	static constexpr auto apply( void )
 	{
 		return polynomial<Coefficient, Variable, CoefficientSet, CoefficientRing, TotalVariableOrder>{
-		std::make_pair( CoefficientRing::one(), std::vector<Variable>{} ); };
+		std::make_pair( CoefficientRing::one(), std::vector<Variable>{} ) };
 	}
+};
+
+template<class DispatchTag>
+struct default_set<DispatchTag, std::enable_if_t<is_polynomial_tag<DispatchTag>::value>>
+{
+	using type = concepts::set<polynomial_equal>;
+};
+
+template<class DispatchTag>
+struct default_monoid<DispatchTag, std::enable_if_t<is_polynomial_tag<DispatchTag>::value>>
+{
+private:
+	using coefficient = typename DispatchTag::coefficient;
+	using coefficient_set = typename DispatchTag::coefficient_set;
+	using coefficient_ring = typename DispatchTag::coefficient_ring;
+	using variable = typename DispatchTag::variable;
+	using total_variable_order = typename DispatchTag::total_variable_order;
+	
+	using polynomial_one_ = polynomial_one<coefficient, variable, coefficient_set, coefficient_ring, total_variable_order>;
+public:
+	using type = concepts::assignable_monoid<polynomial_multiply_assign, polynomial_one_, polynomial_multiplication_is_abelian>;
+};
+
+template<class DispatchTag>
+struct default_group<DispatchTag, std::enable_if_t<is_polynomial_tag<DispatchTag>::value>>
+{
+private:
+	using coefficient = typename DispatchTag::coefficient;
+	using coefficient_set = typename DispatchTag::coefficient_set;
+	using coefficient_ring = typename DispatchTag::coefficient_ring;
+	using variable = typename DispatchTag::variable;
+	using total_variable_order = typename DispatchTag::total_variable_order;
+	
+	using polynomial_zero_ = polynomial_zero<coefficient, variable, coefficient_set, coefficient_ring, total_variable_order>;
+public:
+	using type = concepts::assignable_group<concepts::assignable_monoid<polynomial_add_assign, polynomial_zero_, polynomial_addition_is_abelian>, polynomial_negate_in_place>;
 };
 }
 
-template<class Coefficient, class Variable, class CoefficientSet = default_set_t <tag_of_t<Coefficient>>, class CoefficientRing = default_ring_t <tag_of_t<Coefficient>>, class TotalVariableOrder = default_total_order_t <tag_of_t<Variable>>> using polynomial_ring = concepts::ring<concepts::assignable_group<concepts::assignable_monoid<impl::polynomial_add_assign, polynomial_zero, polynomial_addition_is_abelian>, impl::polynomial_negate_in_place>, concepts::assignable_monoid<impl::polynomial_multiply_assign, polynomial_one, polynomial_multiplication_is_abelian> >;
+template<class Coefficient, class Variable, class CoefficientSet = default_set_t<tag_of_t<Coefficient>>, class CoefficientRing = default_ring_t<tag_of_t<Coefficient>>, class TotalVariableOrder = default_total_order_t<tag_of_t<Variable>>> using polynomial_ring = concepts::ring<default_group_t<polynomial_tag<Coefficient, Variable, CoefficientSet, CoefficientRing, TotalVariableOrder>>, default_monoid_t<polynomial_tag<Coefficient, Variable, CoefficientSet, CoefficientRing, TotalVariableOrder>>>;
 }
 
 #endif //CXXMATH_MODELS_POLYNOMIAL_HPP
