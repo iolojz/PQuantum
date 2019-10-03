@@ -81,12 +81,12 @@ struct common_tag<Tag1, Tag2, Tags...>
 #error "CXXMATH_ENABLE_IF_TAG_IS is already defined."
 #endif
 #define CXXMATH_ENABLE_IF_TAG_IS( type, tag ) \
-class = std::enable_if_t<std::is_same_v<::tag_dispatch::tag_of_t<type>, tag>>
+class = std::enable_if_t<std::is_same_v<::cxxmath::tag_of_t<type>, tag>>
 
 #ifdef CXXMATH_DISABLE_IF_TAG_IS
 #error "CXXMATH_DISABLE_IF_TAG_IS is already defined."
 #endif
 #define CXXMATH_DISABLE_IF_TAG_IS( type, tag ) \
-class = std::enable_if_t<!std::is_same_v<::tag_dispatch::tag_of_t<type>, tag>>
+class = std::enable_if_t<!std::is_same_v<::cxxmath::tag_of_t<type>, tag>>
 
 #endif //CXXMATH_CORE_DISPATCH_TAGS_HPP

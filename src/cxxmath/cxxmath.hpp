@@ -27,6 +27,7 @@
 #include "models/product_set.hpp"
 #include "models/std_get.hpp"
 #include "models/std_pair.hpp"
+#include "models/std_string_view.hpp"
 #include "models/std_vector.hpp"
 
 #endif //CXXMATH_HPP

@@ -9,6 +9,8 @@
 
 namespace cxxmath
 {
+namespace impl
+{
 struct std_get_0
 {
 	template<class Tag>
@@ -39,7 +41,24 @@ struct std_get_1
 	}
 };
 
-using std_get_product = concepts::product<std_get_0, std_get_1>;
+template<>
+struct make_product<concepts::product < std_get_0, std_get_1>>
+{
+template<class Tag>
+static constexpr bool supports_tag( void )
+{
+	return true;
+}
+
+template<class Arg1, class Arg2>
+static constexpr decltype( auto ) apply( Arg1 &&arg1, Arg2 &&arg2 )
+{
+	return std::make_pair( std::forward<Arg1>( arg1 ), std::forward<Arg2>( arg2 ));
+}
+};
+}
+
+using std_get_product = concepts::product<impl::std_get_0, impl::std_get_1>;
 }
 
 #endif //CXXMATH_MODELS_STD_GET_HPP

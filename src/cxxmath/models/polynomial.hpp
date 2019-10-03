@@ -24,6 +24,17 @@ struct polynomial_tag
 	using total_variable_order = TotalVariableOrder;
 };
 
+template<class Tag>
+struct is_polynomial_tag : std::false_type
+{
+};
+
+template<class Coefficient, class Variable, class CoefficientSet, class CoefficientRing, class TotalVariableOrder>
+struct is_polynomial_tag<polynomial_tag<Coefficient, Variable, CoefficientSet, CoefficientRing, TotalVariableOrder>>
+: std::true_type
+{
+};
+
 template<class Coefficient, class Variable, class CoefficientSet = default_set_t <tag_of_t<Coefficient>>, class CoefficientRing = default_ring_t <tag_of_t<Coefficient>>, class TotalVariableOrder = default_total_order_t <tag_of_t<Variable>>>
 struct polynomial
 {
@@ -36,7 +47,7 @@ struct polynomial
 	using variable_monoid = typename vector_monoid<variable>::type;
 private:
 	using monomial_product = std_get_product;
-	using monomial_monoid = product_monoid<monomial_product, typename coefficient_ring::monoid_, variable_monoid>;
+	using monomial_monoid = product_monoid<monomial_product, variable_monoid, typename coefficient_ring::monoid_>;
 	
 	static constexpr auto add_assign_coefficients = coefficient_ring::add_assign;
 	static constexpr auto equal_coefficients = coefficient_set::equal;
@@ -79,6 +90,28 @@ public:
 	polynomial( const polynomial & ) = default;
 	
 	polynomial( polynomial && ) = default;
+	
+	template<class ...Variables>
+	explicit polynomial( const coefficient &c, Variables &&...variables )
+	: monomial_map{
+	typename monomial_container::value_type{ std::vector<variable>{ std::forward<Variables>( variables )... }, c }}
+	{}
+	
+	template<class ...Variables>
+	explicit polynomial( coefficient &&c, Variables &&...variables )
+	: monomial_map{
+	typename monomial_container::value_type{ std::vector<variable>{ std::forward<Variables>( variables )... },
+											 std::move( c ) }}
+	{}
+	
+	template<class Monomial1, class ...MonomialTail, class = std::enable_if_t<!is_polynomial_tag<tag_of_t<Monomial1>>::value>, CXXMATH_DISABLE_IF_TAG_IS(
+	Monomial1, tag_of_t<coefficient> ) >
+	explicit polynomial( Monomial1 &&m1, MonomialTail &&...tail )
+	: monomial_map{ typename monomial_container::value_type{ monomial_product::first( std::forward<Monomial1>( m1 )),
+															 monomial_product::second( std::forward<Monomial1>( m1 )) }}
+	{
+		*this += polynomial{ std::forward<MonomialTail>( tail )... };
+	}
 	
 	const monomial_container &monomials( void ) const
 	{ return monomial_map; }
@@ -158,7 +191,7 @@ public:
 		std::vector<typename monomial_container::value_type> monomials;
 		for( const auto &factor1 : monomial_map ) {
 			for( const auto &factor2 : p.monomial_map ) {
-				monomials.push_back( monomial_monoid::multiply( factor1, factor2 ));
+				monomials.push_back( monomial_monoid::compose( factor1, factor2 ));
 			}
 		}
 		
@@ -169,7 +202,7 @@ public:
 			
 			auto insertion_result = result.insert( monomial );
 			if( insertion_result.second == false ) {
-				add_assign_coefficients( insertion_result.first->second, std::move( monomial.coefficient ));
+				add_assign_coefficients( insertion_result.first->second, std::move( monomial.second ));
 				if( equal_coefficients( insertion_result.first->second, zero_coefficient()))
 					result.erase( insertion_result.first );
 			}
@@ -212,17 +245,6 @@ public:
 
 namespace impl
 {
-template<class Tag>
-struct is_polynomial_tag : std::false_type
-{
-};
-
-template<class Coefficient, class Variable, class CoefficientSet, class CoefficientRing, class TotalVariableOrder>
-struct is_polynomial_tag<polynomial_tag<Coefficient, Variable, CoefficientSet, CoefficientRing, TotalVariableOrder>>
-: std::true_type
-{
-};
-
 struct supports_polynomial_tag
 {
 	template<class Tag>
@@ -299,7 +321,7 @@ struct polynomial_one
 	static constexpr auto apply( void )
 	{
 		return polynomial<Coefficient, Variable, CoefficientSet, CoefficientRing, TotalVariableOrder>{
-		std::make_pair( CoefficientRing::one(), std::vector<Variable>{} ) };
+		CoefficientRing::one() };
 	}
 };
 
@@ -338,9 +360,52 @@ private:
 public:
 	using type = concepts::assignable_group<concepts::assignable_monoid<polynomial_add_assign, polynomial_zero_, polynomial_addition_is_abelian>, polynomial_negate_in_place>;
 };
+
+template<class PolynomialTag>
+struct make_polynomial
+{
+	static_assert( is_polynomial_tag<PolynomialTag>::value, "The given tag is not a polynomial_tag." );
+private:
+	using coefficient = typename PolynomialTag::coefficient;
+	using coefficient_set = typename PolynomialTag::coefficient_set;
+	using coefficient_ring = typename PolynomialTag::coefficient_ring;
+	using variable = typename PolynomialTag::variable;
+	using total_variable_order = typename PolynomialTag::total_variable_order;
+	
+	using polynomial_ = polynomial<coefficient, variable, coefficient_set, coefficient_ring, total_variable_order>;
+public:
+	template<class ...Args>
+	static constexpr polynomial_ apply( Args &&... args )
+	{
+		return polynomial_{ std::forward<Args>( args )... };
+	}
+};
 }
 
-template<class Coefficient, class Variable, class CoefficientSet = default_set_t<tag_of_t<Coefficient>>, class CoefficientRing = default_ring_t<tag_of_t<Coefficient>>, class TotalVariableOrder = default_total_order_t<tag_of_t<Variable>>> using polynomial_ring = concepts::ring<default_group_t<polynomial_tag<Coefficient, Variable, CoefficientSet, CoefficientRing, TotalVariableOrder>>, default_monoid_t<polynomial_tag<Coefficient, Variable, CoefficientSet, CoefficientRing, TotalVariableOrder>>>;
+template<class PolynomialTag>
+struct default_make_polynomial_dispatch
+{
+	static_assert( is_polynomial_tag<PolynomialTag>::value, "The given tag is not a polynomial_tag." );
+	
+	template<class ...Args>
+	constexpr decltype( auto ) operator()( Args &&... args ) const
+	{
+		return impl::make_polynomial<PolynomialTag>::apply( std::forward<Args>( args )... );
+	}
+};
+
+template<class PolynomialTag> static constexpr default_make_polynomial_dispatch<PolynomialTag> make_polynomial;
+
+template<class PolynomialTag> using polynomial_ring = concepts::ring<default_group_t<PolynomialTag>, default_monoid_t<PolynomialTag> >;
+
+namespace impl
+{
+template<class PolynomialTag>
+struct default_ring<PolynomialTag, std::enable_if_t<is_polynomial_tag<PolynomialTag>::value>>
+{
+	using type = polynomial_ring<PolynomialTag>;
+};
+}
 }
 
 #endif //CXXMATH_MODELS_POLYNOMIAL_HPP
