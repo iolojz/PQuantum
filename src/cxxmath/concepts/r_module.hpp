@@ -39,7 +39,8 @@ template<class DispatchTag, class AbelianGroup, class ScalarMultiplication>
 struct models_concept<DispatchTag, concepts::r_module<AbelianGroup, ScalarMultiplication, Ring>>
 {
 	using r_module = concepts::r_module<AbelianGroup, ScalarMultiplication, Ring>;
-	static constexpr bool value =;
+	static constexpr bool value = ( models_concept_v<DispatchTag, AbelianGroup> &&
+									models_concept_v<DispatchTag, Ring> );
 };
 
 CXXMATH_DEFINE_CONCEPT( r_module )

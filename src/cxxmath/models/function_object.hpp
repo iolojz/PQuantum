@@ -85,7 +85,7 @@ struct composed_function_object
 };
 }
 
-struct compose_function_object : supports_tag_helper<function_object_tag>
+struct compose_function_object : supports_tag<function_object_tag>
 {
 	template<class F1, class F2>
 	static constexpr auto apply( F1, F2 ) noexcept

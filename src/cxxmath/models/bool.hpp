@@ -11,7 +11,7 @@ namespace cxxmath
 {
 namespace impl
 {
-struct and_bool : supports_tag_helper<bool>
+struct and_bool : supports_tag<bool>
 {
 	static constexpr bool apply( bool b1, bool b2 ) noexcept
 	{
@@ -19,7 +19,7 @@ struct and_bool : supports_tag_helper<bool>
 	}
 };
 
-struct or_bool : supports_tag_helper<bool>
+struct or_bool : supports_tag<bool>
 {
 	static constexpr bool apply( bool b1, bool b2 ) noexcept
 	{
@@ -27,7 +27,7 @@ struct or_bool : supports_tag_helper<bool>
 	}
 };
 
-struct not_bool : supports_tag_helper<bool>
+struct not_bool : supports_tag<bool>
 {
 	static constexpr bool apply( bool b ) noexcept
 	{
@@ -44,7 +44,7 @@ struct if_bool
 	}
 };
 
-struct equal_bool : supports_tag_helper<bool>
+struct equal_bool : supports_tag<bool>
 {
 	static constexpr bool apply( bool b1, bool b2 ) noexcept
 	{
@@ -88,21 +88,21 @@ struct tag_of<std::false_type>
 	using type = std_bool_constant_tag;
 };
 
-struct and_std_bool_constant : supports_tag_helper<std_bool_constant_tag>
+struct and_std_bool_constant : supports_tag<std_bool_constant_tag>
 {
 	template<bool b1, bool b2>
 	static constexpr std::bool_constant<b1 && b2> apply( std::bool_constant<b1>, std::bool_constant<b2> ) noexcept
 	{ return {}; }
 };
 
-struct or_std_bool_constant : supports_tag_helper<std_bool_constant_tag>
+struct or_std_bool_constant : supports_tag<std_bool_constant_tag>
 {
 	template<bool b1, bool b2>
 	static constexpr std::bool_constant<b1 || b2> apply( std::bool_constant<b1>, std::bool_constant<b2> ) noexcept
 	{ return {}; }
 };
 
-struct not_std_bool_constant : supports_tag_helper<std_bool_constant_tag>
+struct not_std_bool_constant : supports_tag<std_bool_constant_tag>
 {
 	template<bool b>
 	static constexpr std::bool_constant<!b> apply( std::bool_constant<b> ) noexcept
@@ -124,7 +124,7 @@ struct if_std_bool_constant
 	}
 };
 
-struct equal_std_bool_constant : supports_tag_helper<std_bool_constant_tag>
+struct equal_std_bool_constant : supports_tag<std_bool_constant_tag>
 {
 	template<bool b1, bool b2>
 	static constexpr std::bool_constant<b1 == b2> apply( std::bool_constant<b1>, std::bool_constant<b2> ) noexcept

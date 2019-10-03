@@ -156,7 +156,7 @@ struct compose_assign_product
 };
 }
 
-template<class Product> using product_monoid = concepts::monoid<impl::compose_assign_product<Product>, impl::compose_product<Product>, impl::neutral_element_product<Product>, impl::is_abelian_monoid_product<Product> >;
+template<class Product, class FirstMonoid = void, class SecondMonoid = void> using product_monoid = concepts::monoid<impl::compose_assign_product<Product, FirstMonoid, SecondMonoid>, impl::compose_product<Product, FirstMonoid, SecondMonoid>, impl::neutral_element_product<Product, FirstMonoid, SecondMonoid>, impl::is_abelian_monoid_product<Product, FirstMonoid, SecondMonoid> >;
 
 namespace impl
 {

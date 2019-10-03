@@ -43,10 +43,10 @@ struct default_make_product_dispatch
 	}
 };
 
-template<class DispatchTag, class First, class Second>
-struct models_concept<DispatchTag, concepts::product<First, Second>>
+template<class DispatchTag, class First, class Second, class UniqueFirstTag, class UniqueSecondTag>
+struct models_concept<DispatchTag, concepts::product<First, Second, UniqueFirstTag, UniqueSecondTag>>
 {
-	using product = concepts::product<First, Second>;
+	using product = concepts::product<First, Second, UniqueFirstTag, UniqueSecondTag>;
 	static constexpr bool value = ( product::first.template supports_tag<DispatchTag>() &&
 									product::second.template supports_tag<DispatchTag>() &&
 									!std::is_same_v<impl::make_product<product>, impl::unsupported_implementation> );

@@ -35,7 +35,7 @@ struct one_int
 	}
 };
 
-struct add_assign_int : supports_tag_helper<int>
+struct add_assign_int : supports_tag<int>
 {
 	static constexpr int &apply( int &a, int b )
 	{
@@ -43,7 +43,7 @@ struct add_assign_int : supports_tag_helper<int>
 	}
 };
 
-struct negate_in_place_int : supports_tag_helper<int>
+struct negate_in_place_int : supports_tag<int>
 {
 	static constexpr int &apply( int &a )
 	{
@@ -51,7 +51,7 @@ struct negate_in_place_int : supports_tag_helper<int>
 	}
 };
 
-struct multiply_assign_int : supports_tag_helper<int>
+struct multiply_assign_int : supports_tag<int>
 {
 	static constexpr int &apply( int &a, int b )
 	{
@@ -59,7 +59,7 @@ struct multiply_assign_int : supports_tag_helper<int>
 	}
 };
 
-struct equal_int : supports_tag_helper<int>
+struct equal_int : supports_tag<int>
 {
 	static constexpr bool apply( int a, int b )
 	{
