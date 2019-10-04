@@ -52,8 +52,8 @@ BOOST_AUTO_TEST_CASE( test_polynomial )
 	
 	static_assert( polynomial_ring::is_abelian_ring() == false );
 	
-	auto zero_ = make_polynomial<polynomial_tag>( 0 );
-	auto one_ = make_polynomial<polynomial_tag>( 1 );
+	const auto zero_ = make_polynomial<polynomial_tag>( 0 );
+	const auto one_ = make_polynomial<polynomial_tag>( 1 );
 	
 	BOOST_TEST( equal( zero_, polynomial_ring::zero()));
 	BOOST_TEST( not_equal( one_, polynomial_ring::zero()));
@@ -61,26 +61,26 @@ BOOST_AUTO_TEST_CASE( test_polynomial )
 	BOOST_TEST( equal( one_, polynomial_ring::one()));
 	BOOST_TEST( not_equal( zero_, polynomial_ring::one()));
 	
-	auto ab42 = make_polynomial<polynomial_tag>( 42, "a", "b" );
-	auto ba23 = make_polynomial<polynomial_tag>( 23, "b", "a" );
-	auto abm42 = make_polynomial<polynomial_tag>( -42, "a", "b" );
+	const auto ab42 = make_polynomial<polynomial_tag>( 42, "a", "b" );
+	const auto ba23 = make_polynomial<polynomial_tag>( 23, "b", "a" );
+	const auto abm42 = make_polynomial<polynomial_tag>( -42, "a", "b" );
 	
-	std::array<std::string_view, 2> ab = { "a", "b" };
-	std::array<std::string_view, 2> ba = { "b", "a" };
+	const std::array<std::string_view, 2> ab = { "a", "b" };
+	const std::array<std::string_view, 2> ba = { "b", "a" };
 	
-	std::array<std::string_view, 4> abba = { "a", "b", "b", "a" };
-	std::array<std::string_view, 4> baab = { "b", "a", "a", "b" };
-	std::array<std::string_view, 4> abab = { "a", "b", "a", "b" };
-	std::array<std::string_view, 4> baba = { "b", "a", "b", "a" };
+	const std::array<std::string_view, 4> abba = { "a", "b", "b", "a" };
+	const std::array<std::string_view, 4> baab = { "b", "a", "a", "b" };
+	const std::array<std::string_view, 4> abab = { "a", "b", "a", "b" };
+	const std::array<std::string_view, 4> baba = { "b", "a", "b", "a" };
 	
-	auto ab84 = make_polynomial<polynomial_tag>( 84, "a", "b" );
-	auto abab1764 = make_polynomial<polynomial_tag>( 42 * 42, "a", "b", "a", "b" );
+	const auto ab84 = make_polynomial<polynomial_tag>( 84, "a", "b" );
+	const auto abab1764 = make_polynomial<polynomial_tag>( 42 * 42, "a", "b", "a", "b" );
 	
 	BOOST_TEST( add( ab42, ab42 ) == ab84 );
 	BOOST_TEST( multiply( ab42, ab42 ) == abab1764 );
 	
-	auto ab42_ba23 = make_polynomial<polynomial_tag>( std::make_pair( ab, 42 ), std::make_pair( ba, 23 ));
-	auto abab1764_abba966_baab966_baba529 = make_polynomial<polynomial_tag>( std::make_pair( abab, 1764 ),
+	const auto ab42_ba23 = make_polynomial<polynomial_tag>( std::make_pair( ab, 42 ), std::make_pair( ba, 23 ));
+	const auto abab1764_abba966_baab966_baba529 = make_polynomial<polynomial_tag>( std::make_pair( abab, 1764 ),
 																			 std::make_pair( abba, 966 ),
 																			 std::make_pair( baab, 966 ),
 																			 std::make_pair( baba, 529 ));
@@ -105,4 +105,10 @@ BOOST_AUTO_TEST_CASE( test_polynomial )
 	BOOST_TEST( add_assign( p, ba23 ) == ab42_ba23 );
 	BOOST_TEST( multiply_assign( p, p ) == abab1764_abba966_baab966_baba529 );
 	BOOST_TEST( p == abab1764_abba966_baab966_baba529 );
+	
+	BOOST_TEST( scalar_multiply( 2, ab42 ) == ab84 );
+	
+	p = ab42;
+	BOOST_TEST( polynomial_r_algebra<polynomial_tag>::scalar_multiply_assign( 2, p ) == ab84 );
+	BOOST_TEST( p == ab84 );
 }

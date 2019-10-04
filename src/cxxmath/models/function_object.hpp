@@ -66,6 +66,32 @@ struct unsupported_implementation
 	}
 };
 
+struct true_implementation
+{
+	template<class>
+	static constexpr bool supports_tag( void )
+	{
+		return true;
+	}
+	
+	template<class ...Args>
+	static constexpr bool apply( Args &&... )
+	{ return true; }
+};
+
+struct false_implementation
+{
+	template<class>
+	static constexpr bool supports_tag( void )
+	{
+		return true;
+	}
+	
+	template<class ...Args>
+	static constexpr bool apply( Args &&... )
+	{ return false; }
+};
+
 namespace detail
 {
 template<class Impl1, class Impl2>

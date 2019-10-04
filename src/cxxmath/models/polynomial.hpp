@@ -10,6 +10,7 @@
 #include "product_monoid.hpp"
 
 #include "../core/erase_if.hpp"
+#include "../core/unpack_template.hpp"
 #include "../core/move_aware_range_helpers.hpp"
 
 #include <boost/range/combine.hpp>
@@ -119,6 +120,10 @@ public:
 		strip_zeros();
 	}
 	
+	polynomial &operator=( const polynomial & ) = default;
+	
+	polynomial &operator=( polynomial && ) = default;
+	
 	const monomial_container &monomials( void ) const
 	{ return monomial_map; }
 	
@@ -220,6 +225,18 @@ public:
 	
 	CXXMATH_BINARY_OPERATOR_OVERLOAD( polynomial, *
 	)
+	
+	polynomial &scalar_multiply_assign( const coefficient &c )
+	{
+		for( auto &monomial : monomial_map )
+			coefficient_ring::multiply_assign( monomial.second, c );
+		return *this;
+	}
+	
+	polynomial scalar_multiply( const coefficient &c )
+	{
+		return polynomial{ *this }.scalar_multiply_assign( c );
+	}
 	
 	bool operator==( const polynomial &p ) const
 	{
@@ -331,6 +348,15 @@ struct polynomial_one
 	}
 };
 
+struct polynomial_scalar_multiply_assign : supports_polynomial_tag
+{
+	template<class C, class Polynomial>
+	static constexpr auto apply( C &&c, Polynomial &&p )
+	{
+		return std::forward<Polynomial>( p ).scalar_multiply_assign( std::forward<C>( c ));
+	}
+};
+
 template<class DispatchTag>
 struct default_set<DispatchTag, std::enable_if_t<is_polynomial_tag<DispatchTag>::value>>
 {
@@ -341,13 +367,7 @@ template<class DispatchTag>
 struct default_monoid<DispatchTag, std::enable_if_t<is_polynomial_tag<DispatchTag>::value>>
 {
 private:
-	using coefficient = typename DispatchTag::coefficient;
-	using coefficient_set = typename DispatchTag::coefficient_set;
-	using coefficient_ring = typename DispatchTag::coefficient_ring;
-	using variable = typename DispatchTag::variable;
-	using total_variable_order = typename DispatchTag::total_variable_order;
-	
-	using polynomial_one_ = polynomial_one<coefficient, variable, coefficient_set, coefficient_ring, total_variable_order>;
+	using polynomial_one_ = unpack_template_t<DispatchTag, polynomial_one>;
 public:
 	using type = concepts::assignable_monoid<polynomial_multiply_assign, polynomial_one_, polynomial_multiplication_is_abelian>;
 };
@@ -356,15 +376,21 @@ template<class DispatchTag>
 struct default_group<DispatchTag, std::enable_if_t<is_polynomial_tag<DispatchTag>::value>>
 {
 private:
-	using coefficient = typename DispatchTag::coefficient;
-	using coefficient_set = typename DispatchTag::coefficient_set;
-	using coefficient_ring = typename DispatchTag::coefficient_ring;
-	using variable = typename DispatchTag::variable;
-	using total_variable_order = typename DispatchTag::total_variable_order;
-	
-	using polynomial_zero_ = polynomial_zero<coefficient, variable, coefficient_set, coefficient_ring, total_variable_order>;
+	using polynomial_zero_ = unpack_template_t<DispatchTag, polynomial_zero>;
 public:
 	using type = concepts::assignable_group<concepts::assignable_monoid<polynomial_add_assign, polynomial_zero_, polynomial_addition_is_abelian>, polynomial_negate_in_place>;
+};
+
+template<class DispatchTag>
+struct default_r_module<DispatchTag, std::enable_if_t<is_polynomial_tag<DispatchTag>::value>>
+{
+	using type = concepts::assignable_r_module<default_group_t<DispatchTag>, polynomial_scalar_multiply_assign>;
+};
+
+template<class DispatchTag>
+struct default_r_algebra<DispatchTag, std::enable_if_t<is_polynomial_tag<DispatchTag>::value>>
+{
+	using type = concepts::r_algebra<default_r_module_t<DispatchTag>, default_monoid_t<DispatchTag>>;
 };
 
 template<class PolynomialTag>
@@ -403,6 +429,7 @@ struct default_make_polynomial_dispatch
 template<class PolynomialTag> static constexpr default_make_polynomial_dispatch<PolynomialTag> make_polynomial;
 
 template<class PolynomialTag> using polynomial_ring = concepts::ring<default_group_t<PolynomialTag>, default_monoid_t<PolynomialTag> >;
+template<class PolynomialTag> using polynomial_r_algebra = default_r_algebra_t<PolynomialTag>;
 
 namespace impl
 {

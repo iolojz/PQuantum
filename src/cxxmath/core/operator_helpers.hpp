@@ -12,14 +12,8 @@ namespace cxxmath
 namespace impl
 {
 template<class BinaryOperatorAssign, class IsAbelian>
-struct binary_operator
+struct binary_operator : forward_supports_tag<BinaryOperatorAssign>
 {
-	template<class Tag>
-	static constexpr bool supports_tag( void )
-	{
-		return BinaryOperatorAssign::template supports_tag<Tag>();
-	}
-	
 	template<class Arg1, class Arg2>
 	static constexpr auto apply( Arg1 &&arg1, Arg2 &&arg2 )
 	{
@@ -36,14 +30,8 @@ struct binary_operator
 };
 
 template<class BinaryOperator, class Inverse>
-struct binary_operator_invert_second
+struct binary_operator_invert_second : forward_supports_tag<BinaryOperator, Inverse>
 {
-	template<class Tag>
-	static constexpr bool supports_tag( void )
-	{
-		return ( Inverse::template supports_tag<Tag>() && BinaryOperator::template supports_tag<Tag>());
-	}
-	
 	template<class Arg1, class Arg2>
 	static constexpr decltype( auto ) apply( Arg1 &&arg1, Arg2 &&arg2 )
 	{
@@ -52,7 +40,7 @@ struct binary_operator_invert_second
 };
 
 template<class UnaryOperatorAssign>
-struct unary_operator
+struct unary_operator : forward_supports_tag<UnaryOperatorAssign>
 {
 	template<class Tag>
 	static constexpr bool supports_tag( void )

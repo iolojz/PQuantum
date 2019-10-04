@@ -25,13 +25,13 @@ struct supports_tag_helper
 	}
 };
 
-template<class Implementation>
+template<class ...Implementations>
 struct forward_supports_tag
 {
 	template<class Tag>
-	static constexpr decltype( auto ) supports_tag( void )
+	static constexpr bool supports_tag( void )
 	{
-		return Implementation::template supports_tag<Tag>();
+		return (Implementations::template supports_tag<Tag>() && ... && true);
 	}
 };
 
