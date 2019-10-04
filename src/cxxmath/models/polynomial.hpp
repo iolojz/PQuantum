@@ -9,6 +9,9 @@
 #include "std_vector.hpp"
 #include "product_monoid.hpp"
 
+#include "../core/erase_if.hpp"
+#include "../core/move_aware_range_helpers.hpp"
+
 #include <boost/range/combine.hpp>
 #include <boost/container/flat_map.hpp>
 
@@ -75,7 +78,7 @@ private:
 	
 	void strip_zeros( void )
 	{
-		erase_if( std::begin( monomial_map ), std::end( monomial_map ), []( const auto &monomial ) {
+		erase_if( monomial_map, []( const auto &monomial ) {
 			return equal_coefficients( monomial_product::second( monomial ), zero_coefficient());
 		} );
 	}
@@ -95,22 +98,25 @@ public:
 	explicit polynomial( const coefficient &c, Variables &&...variables )
 	: monomial_map{
 	typename monomial_container::value_type{ std::vector<variable>{ std::forward<Variables>( variables )... }, c }}
-	{}
+	{ strip_zeros(); }
 	
 	template<class ...Variables>
 	explicit polynomial( coefficient &&c, Variables &&...variables )
 	: monomial_map{
 	typename monomial_container::value_type{ std::vector<variable>{ std::forward<Variables>( variables )... },
 											 std::move( c ) }}
-	{}
+	{ strip_zeros(); }
 	
 	template<class Monomial1, class ...MonomialTail, class = std::enable_if_t<!is_polynomial_tag<tag_of_t<Monomial1>>::value>, CXXMATH_DISABLE_IF_TAG_IS(
 	Monomial1, tag_of_t<coefficient> ) >
 	explicit polynomial( Monomial1 &&m1, MonomialTail &&...tail )
-	: monomial_map{ typename monomial_container::value_type{ monomial_product::first( std::forward<Monomial1>( m1 )),
-															 monomial_product::second( std::forward<Monomial1>( m1 )) }}
+	: monomial_map{ typename monomial_container::value_type{
+	{ move_aware_begin( monomial_product::first( std::forward<Monomial1>( m1 ))),
+	  move_aware_end( monomial_product::first( std::forward<Monomial1>( m1 ))) },
+	monomial_product::second( std::forward<Monomial1>( m1 )) }}
 	{
 		*this += polynomial{ std::forward<MonomialTail>( tail )... };
+		strip_zeros();
 	}
 	
 	const monomial_container &monomials( void ) const
@@ -174,7 +180,7 @@ public:
 		for( auto &term : monomial_map )
 			negate_coefficient_in_place( term.second );
 		
-		return std::move( *this );
+		return *this;
 	}
 	
 	polynomial operator-( void ) &&
@@ -292,7 +298,7 @@ struct polynomial_zero
 struct polynomial_negate_in_place : supports_polynomial_tag
 {
 	template<class Polynomial>
-	static constexpr bool apply( Polynomial &&p )
+	static constexpr decltype( auto ) apply( Polynomial &&p )
 	{
 		return std::forward<Polynomial>( p ).negate_in_place();
 	}

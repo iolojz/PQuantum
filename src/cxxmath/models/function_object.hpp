@@ -59,10 +59,10 @@ struct unsupported_implementation
 		return false;
 	}
 	
-	template<class ...Args>
+	template<class ...Args, class False = void>
 	static constexpr void apply( Args &&... )
 	{
-		static_assert( detail::always_false_v<std::void_t<Args...>>, "Unsupported implementation." );
+		static_assert( detail::always_false_v<False>, "Unsupported implementation." );
 	}
 };
 
