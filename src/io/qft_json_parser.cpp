@@ -243,7 +243,6 @@ model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::
 	for(const auto &m : monomial_map) {
 		for(const model::lagrangian_symbol &s : m.first) {
 			const auto &svalue = s.value;
-			
 			if( std::holds_alternative<model::classical_field_id>( svalue )) {
 				auto hit = std::find( field_ids_begin, field_ids_end, std::get<model::classical_field_id>( svalue ));
 				if(hit == field_ids_end) {
