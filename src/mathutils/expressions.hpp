@@ -5,7 +5,8 @@
 #ifndef PQUANTUM_EXPRESSIONS_HPP
 #define PQUANTUM_EXPRESSIONS_HPP
 
-#include "tag_dispatch/models/free_polynomial.hpp"
+#include <cxxmath/cxxmath.hpp>
+
 #include "manifold_specification.hpp"
 #include "number.hpp"
 
@@ -13,9 +14,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 
-namespace PQuantum
-{
-namespace mathutils
+namespace PQuantum::mathutils
 {
 class variable_id
 {
@@ -24,33 +23,59 @@ public:
 	variable_id( void ) : id{ boost::uuids::random_generator()() }
 	{}
 	
-	bool operator==(const variable_id &v) const noexcept
+	bool operator==( const variable_id &v ) const noexcept
 	{ return id == v.id; }
 	
-	bool operator<(const variable_id &v) const noexcept
+	bool operator<( const variable_id &v ) const noexcept
 	{ return id < v.id; }
 };
 
-using expression_variable = std::variant<variable_id, spacetime_dimension>;
+struct expression_symbol
+{
+	std::variant<variable_id, spacetime_dimension> value;
+};
 
-namespace detail {
-struct less_expression_variables {
-	bool operator()(const variable_id &vid1, const variable_id &vid2) const noexcept { return vid1 < vid2; }
+namespace model_expression_symbol
+{
+class less
+{
+	static bool apply( const variable_id &vid1, const variable_id &vid2 ) noexcept
+	{ return vid1 < vid2; }
 	
-	constexpr bool operator()(const variable_id &, const spacetime_dimension &) const noexcept { return true; }
+	static constexpr bool apply( const variable_id &, const spacetime_dimension & ) noexcept
+	{ return true; }
 	
-	constexpr bool operator()(const spacetime_dimension &, const variable_id &) const noexcept { return false; }
+	static constexpr bool apply( const spacetime_dimension &, const variable_id & ) noexcept
+	{ return false; }
 	
-	constexpr bool operator()(const spacetime_dimension &, const spacetime_dimension &) const noexcept { return false; }
+	static constexpr bool apply( const spacetime_dimension &, const spacetime_dimension & ) noexcept
+	{ return false; }
+
+public:
+	static constexpr bool apply( const expression_symbol &s1, const expression_symbol &s2 ) noexcept
+	{
+		return std::visit( []( auto &&v1, auto &&v2 ) {
+			return apply( std::forward<decltype( v1 )>( v1 ), std::forward<decltype( v2 )>( v2 ));
+		}, s1.value, s2.value );
+	}
+};
+}
+}
+
+namespace cxxmath::impl
+{
+template<>
+struct default_total_order<PQuantum::mathutils::expression_symbol>
+{
+	using type = concepts::total_order<PQuantum::mathutils::model_expression_symbol::less>;
 };
 }
 
-static constexpr bool operator<(const expression_variable &ev1, const expression_variable &ev2) {
-	return std::visit(detail::less_expression_variables{}, ev1, ev2);
-}
+namespace PQuantum::mathutils
+{
+using polynomial_expression = cxxmath::free_r_algebra<number, expression_symbol>;
 
-using polynomial_expression = mathutils::free_polynomial<expression_variable, number>;
-}
+static constexpr auto make_polynomial_expression = cxxmath::make<cxxmath::tag_of_t<mathutils::polynomial_expression>>;
 }
 
 #endif //PQUANTUM_EXPRESSIONS_HPP

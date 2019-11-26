@@ -201,17 +201,21 @@ model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::
 		std::string monomial_string = node.get<std::string>( "monomial" );
 		std::string coefficient_string = node.get<std::string>( "coefficient" );
 		auto constant_factor = node.get_optional<std::string>( "constant factor" );
-		
+					
 					  mathutils::variable_id coefficient_id;
-					  coefficient_id_map[coefficient_id] = std::move(coefficient_string);
+					  coefficient_id_map[coefficient_id] = std::move( coefficient_string );
 		auto symbols = io::parse_symbols<model::lagrangian_symbol>( monomial_string, string_to_uuid );
-		
-					  model::lagrangian term{mathutils::polynomial_expression{mathutils::number::one(), &coefficient_id,
-																			  &coefficient_id},
-											 std::make_move_iterator( symbols.begin()), std::make_move_iterator( symbols.end()) };
+					
+					  auto term = model::make_lagrangian( mathutils::make_polynomial_expression( mathutils::number{},
+																								 mathutils::expression_symbol{
+																								 std::move(
+																								 coefficient_id ) } ),
+														  std::make_move_iterator( symbols.begin()),
+														  std::make_move_iterator( symbols.end()));
 		
 		if( constant_factor )
-			term *= model::lagrangian{ mathutils::polynomial_expression{ io::parse_number( *constant_factor ) }};
+			term *= model::make_lagrangian(
+			mathutils::make_polynomial_expression( io::parse_number( *constant_factor )));
 		
 		terms += std::move( term );
 	} );
@@ -238,11 +242,13 @@ model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::
 	
 	for(const auto &m : monomial_map) {
 		for(const model::lagrangian_symbol &s : m.first) {
-			if(std::holds_alternative<model::classical_field_id>(s)) {
-				auto hit = std::find(field_ids_begin, field_ids_end, std::get<model::classical_field_id>(s));
+			const auto &svalue = s.value;
+			
+			if( std::holds_alternative<model::classical_field_id>( svalue )) {
+				auto hit = std::find( field_ids_begin, field_ids_end, std::get<model::classical_field_id>( svalue ));
 				if(hit == field_ids_end) {
 					BOOST_LOG_SEV(logger, io::severity_level::error) << "Unknown field \"" << string_for_uuid(
-								std::get<model::classical_field_id>(s).id) << "\"";
+						std::get<model::classical_field_id>( svalue ).id ) << "\"";
 					error::exit_upon_error();
 				}
 			}

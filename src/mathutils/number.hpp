@@ -7,15 +7,16 @@
 
 #include <utility>
 
-#include "abstract_algebra/ring.hpp"
-#include "tag_dispatch/core/operator_helpers.hpp"
+#include <cxxmath/cxxmath.hpp>
 
 namespace PQuantum
 {
 namespace mathutils
 {
+using number = int;
+
 // TODO: implement numbers...
-class number
+/* class number
 {
 public:
 	static number one(void) noexcept { return {}; }
@@ -31,12 +32,6 @@ public:
 	
 	number operator-( void ) const
 	{ return *this; };
-	
-	PQUANTUM_COMMUTATIVE_BINARY_OPERATOR_OVERLOAD(number, +)
-	
-	PQUANTUM_COMMUTATIVE_BINARY_OPERATOR_OVERLOAD(number, *)
-	
-	PQUANTUM_BINARY_OPERATOR_OVERLOAD(number, -, -)
 	
 	bool operator==( const number & ) const
 	{ return true; }
@@ -81,6 +76,7 @@ struct ring_impl<number>
 	{ return group<number>::neutral_element(); }
 };
 }
+ */
 }
 }
 

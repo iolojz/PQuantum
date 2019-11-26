@@ -11,8 +11,6 @@
 
 #include <variant>
 
-#include "abstract_algebra/abstract_index_notation.hpp"
-
 namespace PQuantum {
 namespace mathutils {
 struct spacetime_index {

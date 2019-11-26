@@ -18,6 +18,9 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost COMPONENTS log program_options REQUIRED)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
+find_package(cxxmath REQUIRED)
+include_directories(SYSTEM ${cxxmath_INCLUDE_DIRS})
+
 set(${PROJECT_NAME}_BUILD_TESTS YES)
 set(${PROJECT_NAME}_BUILD_EXAMPLES NO)
 

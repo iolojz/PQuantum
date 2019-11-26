@@ -7,19 +7,13 @@
 
 #include <variant>
 
-namespace PQuantum
-{
-namespace io
-{
-namespace parser_rules
+namespace PQuantum::io::parser_rules
 {
 template<class Symbol>
 struct rule_for_symbol_impl
 {
 };
 template<class Symbol> constexpr auto rule_for_symbol = rule_for_symbol_impl<Symbol>{};
-}
-}
 }
 
 #endif //PQUANTUM_RULE_FOR_SYMBOL_FWD_HPP

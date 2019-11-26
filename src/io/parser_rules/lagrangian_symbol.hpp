@@ -6,7 +6,7 @@
 #define PQUANTUM_LAGRANGIAN_SYMBOL_HPP
 
 #include "rule_for_symbol_fwd.hpp"
-#include "template_helpers/variant.hpp"
+#include "std_variant.hpp"
 
 #include <boost/spirit/home/x3.hpp>
 
@@ -14,17 +14,21 @@ namespace PQuantum {
 namespace io {
 namespace parser_rules
 {
-template<class ...Alternatives>
-struct rule_for_symbol_impl<std::variant<Alternatives...>>
+struct lagrangian_symbol_tag;
+
+template<>
+struct rule_for_symbol_impl<model::lagrangian_symbol>
 {
-	template<class Context>
-	constexpr auto operator()( Context &&c ) const
+	template<class StringToUUID>
+	auto operator()( StringToUUID &&uuid_gen ) const
 	{
-		auto rule_def = (rule_for_symbol<Alternatives>( c ) | ...).operator[]( []( auto &&context ) {
-			boost::spirit::x3::_val( context ) = template_helpers::to_std_variant<Alternatives...>(
-			boost::spirit::x3::_attr( context ));
+		using value_type = decltype( std::declval<model::lagrangian_symbol>().value );
+		
+		auto rule_def = rule_for_symbol<value_type>( std::forward<StringToUUID>( uuid_gen )).operator[](
+		[]( auto &&context ) {
+			boost::spirit::x3::_val( context ).value = boost::spirit::x3::_attr( context );
 		} );
-		return ( boost::spirit::x3::rule<std::variant<Alternatives...>, std::variant<Alternatives...>>{} = rule_def );
+		return ( boost::spirit::x3::rule<lagrangian_symbol_tag, model::lagrangian_symbol>{} = rule_def );
 	}
 };
 
