@@ -20,26 +20,25 @@ namespace io
 {
 class qft_json_parser
 {
+	boost::uuids::random_generator uuid_generator;
 	json_schema_header header;
 	model::model_specification model_specification;
 	
 	qft_json_parser( const boost::property_tree::ptree &property_tree );
 	
-	static model::model_specification
+	model::model_specification
 	parse_model_specification( const io::json_schema_header &header, const boost::property_tree::ptree &property_tree );
 	
-	static mathutils::manifold_specification
-	parse_manifold_specification( const boost::property_tree::ptree &property_tree );
+	mathutils::manifold_specification parse_manifold_specification( const boost::property_tree::ptree &property_tree );
 	
-	static mathutils::manifold_types::vector_space
+	mathutils::manifold_types::vector_space
 	parse_vector_space_specification( const boost::property_tree::ptree &property_tree );
 	
-	static model::lagrangian parse_lagrangian(const boost::property_tree::ptree &property_tree,
-											  const std::map<std::string, model::classical_field_id> &field_name_map,
-											  std::map<mathutils::variable_id, std::string> &coefficient_id_map);
+	model::lagrangian parse_lagrangian( const boost::property_tree::ptree &property_tree,
+										const std::map<std::string, model::classical_field_id> &field_name_map,
+										std::map<mathutils::variable_id, std::string> &coefficient_id_map );
 	
-	static model::classical_field_specification
-	parse_field_specification( const boost::property_tree::ptree &property_tree );
+	model::classical_field_specification parse_field_specification( const boost::property_tree::ptree &property_tree );
 
 public:
 	static qft_json_parser parse( const std::string &path_to_file );

@@ -2,6 +2,8 @@
 // Created by jayz on 01.08.19.
 //
 
+#include <iostream>
+
 #include "qft_json_parser.hpp"
 
 #include "logging.hpp"
@@ -75,7 +77,7 @@ model::model_specification qft_json_parser::parse_model_specification( const io:
 	
 	std::map<model::classical_field_id, model::classical_field_specification> field_id_map;
 	for( auto &&spec : field_specifications )
-		field_id_map.emplace( model::classical_field_id{}, std::move( spec ) );
+		field_id_map.emplace( model::classical_field_id{ uuid_generator() }, std::move( spec ));
 	
 	std::map<mathutils::variable_id, std::string> coefficient_id_map;
 	std::map<std::string, model::classical_field_id> field_name_map;
@@ -183,12 +185,12 @@ model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::
 	for( const auto &field_id_entry : field_id_map )
 		string_id_map[field_id_entry.first] = field_id_entry.second.id;
 	
-	auto string_to_uuid = [&string_id_map]( const std::string &str ) {
+	auto string_to_uuid = [this, &string_id_map]( const std::string &str ) {
 		auto it = string_id_map.find( str );
 		if( it != string_id_map.end())
 			return it->second;
 		
-		auto new_uuid = boost::uuids::random_generator()();
+		auto new_uuid = uuid_generator();
 		string_id_map[str] = new_uuid;
 		return new_uuid;
 	};
@@ -196,29 +198,31 @@ model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::
 	model::lagrangian terms;
 	std::for_each(property_tree.begin(), property_tree.end(),
 				  [&terms, &string_to_uuid, &coefficient_id_map](const auto &key_value_pair) {
-		const boost::property_tree::ptree &node = key_value_pair.second;
-		
-		std::string monomial_string = node.get<std::string>( "monomial" );
-		std::string coefficient_string = node.get<std::string>( "coefficient" );
-		auto constant_factor = node.get_optional<std::string>( "constant factor" );
+					  const boost::property_tree::ptree &node = key_value_pair.second;
+					
+					  std::string monomial_string = node.get<std::string>( "monomial" );
+					  std::string coefficient_string = node.get<std::string>( "coefficient" );
+					  auto constant_factor = node.get_optional<std::string>( "constant factor" );
 					
 					  mathutils::variable_id coefficient_id;
 					  coefficient_id_map[coefficient_id] = std::move( coefficient_string );
-		auto symbols = io::parse_symbols<model::lagrangian_symbol>( monomial_string, string_to_uuid );
+					  auto symbols = io::parse_symbols<model::lagrangian_symbol>( monomial_string, string_to_uuid );
 					
 					  auto term = model::make_lagrangian( mathutils::make_polynomial_expression( mathutils::number{},
 																								 mathutils::expression_symbol{
 																								 std::move(
 																								 coefficient_id ) } ),
 														  std::make_move_iterator( symbols.begin()),
-														  std::make_move_iterator( symbols.end()));
-		
-		if( constant_factor )
-			term *= model::make_lagrangian(
-			mathutils::make_polynomial_expression( io::parse_number( *constant_factor )));
-		
-		terms += std::move( term );
-	} );
+														  std::make_move_iterator( symbols.end())
+					
+					  );
+					
+					  if( constant_factor )
+						  term *= model::make_lagrangian(
+						  mathutils::make_polynomial_expression( io::parse_number( *constant_factor )));
+					
+					  terms += std::move( term );
+				  } );
 	
 	const auto &monomial_map = terms.monomials();
 	
