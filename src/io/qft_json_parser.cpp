@@ -200,9 +200,8 @@ model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::
 				  [&terms, &string_to_uuid, &coefficient_id_map](const auto &key_value_pair) {
 					  const boost::property_tree::ptree &node = key_value_pair.second;
 					
-					  std::string monomial_string = node.get<std::string>( "monomial" );
+					  std::string monomial_string = node.get<std::string>( "term" );
 					  std::string coefficient_string = node.get<std::string>( "coefficient" );
-					  auto constant_factor = node.get_optional<std::string>( "constant factor" );
 					
 					  mathutils::variable_id coefficient_id;
 					  coefficient_id_map[coefficient_id] = std::move( coefficient_string );

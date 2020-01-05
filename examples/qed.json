@@ -28,27 +28,23 @@
 		],
 		"lagrangian": [
 			{
-				"monomial": "\\bar{\\psi} \\DiracOperator \\psi",
-				"coefficient": "Z_\\psi",
-				"constant factor": "i"
+				"term": "\\iunit \\bar{\\psi} \\DiracOperator \\psi",
+				"coefficient": "Z_\\psi"
 			},
 			{
-				"monomial": "\\bar{\\psi} \\psi",
-				"coefficient": "m",
-				"constant factor": "-i"
+				"term": "-\\iunit \\bar{\\psi} \\psi",
+				"coefficient": "m"
 			},
 			{
-				"monomial": "(\\partial_\\mu A_\\nu - \\partial_\\nu A_\\mu) (\\partial^\\mu A^\\nu - \\partial^\\nu A^\\mu)",
-				"coefficient": "Z_A",
-				"constant factor": "1/4"
+				"term": "1/4 (\\partial_\\mu A_\\nu - \\partial_\\nu A_\\mu) (\\partial^\\mu A^\\nu - \\partial^\\nu A^\\mu)",
+				"coefficient": "Z_A"
 			},
 			{
-				"monomial": "\\bar{\\psi} \\gamma_\\mu A^\\mu \\psi",
-				"coefficient": "e",
-				"constant factor": "-1"
+				"term": "- \\bar{\\psi} \\gamma_\\mu A^\\mu \\psi",
+				"coefficient": "e"
 			},
 			{
-				"monomial": "(\\partial_\\mu A^\\mu)^2",
+				"term": "(\\partial_\\mu A^\\mu)^2",
 				"coefficient": "xi"
 			}
 		]

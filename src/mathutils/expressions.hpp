@@ -16,12 +16,9 @@
 
 namespace PQuantum::mathutils
 {
-class variable_id
+struct variable_id
 {
 	boost::uuids::uuid id;
-public:
-	variable_id( void ) : id{ boost::uuids::random_generator()() }
-	{}
 	
 	bool operator==( const variable_id &v ) const noexcept
 	{ return id == v.id; }

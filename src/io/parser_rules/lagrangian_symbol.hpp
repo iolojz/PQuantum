@@ -86,13 +86,24 @@ struct rule_for_symbol_impl<mathutils::spacetime_index>
 			boost::spirit::x3::_val(context).variance = mathutils::spacetime_index::index_variance::lower;
 		} ) | boost::spirit::x3::lit( "^" ).operator[]( []( auto &&context )
 		{
-			boost::spirit::x3::_val(context).variance = mathutils::spacetime_index::index_variance::upper;
+			boost::spirit::x3::_val( context ).variance = mathutils::spacetime_index::index_variance::upper;
 		} );
 		const auto id_def = (
 		( boost::spirit::x3::lit( "{" ) >> rule_for_symbol<index_core>( uuid_gen ) >> boost::spirit::x3::lit( "}" )) |
 		rule_for_symbol<index_core>( uuid_gen ));
 		return ( boost::spirit::x3::rule<mathutils::spacetime_index, mathutils::spacetime_index>{} = ( variance_def
 		>> id_def ));
+	}
+};
+
+template<>
+struct rule_for_symbol_impl<mathutils::imaginary_unit>
+{
+	template<class Context>
+	auto operator()( Context && ) const
+	{
+		auto rule_def = boost::spirit::x3::lit( "\\iunit" ).operator[]( []( auto && ) {} );
+		return ( boost::spirit::x3::rule<mathutils::imaginary_unit, mathutils::imaginary_unit>{} = rule_def );
 	}
 };
 
