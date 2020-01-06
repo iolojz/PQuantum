@@ -18,35 +18,29 @@
 			{
 				"name": "\\psi",
 				"algebraic field": "complex grassmann numbers",
-				"dimension": 4
+				"dimension": 4,
+				"layout": "vector"
 			},
 			{
 				"name": "A",
 				"algebraic field": "real numbers",
-				"dimension": "spacetime dimension"
+				"dimension": "spacetime dimension",
+				"layout": "vector"
 			}
 		],
+		"parameters": [
+			"Z_\\psi",
+			"m",
+			"Z_A",
+			"e",
+			"\\xi"
+		],
 		"lagrangian": [
-			{
-				"term": "\\iunit \\bar{\\psi} \\DiracOperator \\psi",
-				"coefficient": "Z_\\psi"
-			},
-			{
-				"term": "-\\iunit \\bar{\\psi} \\psi",
-				"coefficient": "m"
-			},
-			{
-				"term": "1/4 (\\partial_\\mu A_\\nu - \\partial_\\nu A_\\mu) (\\partial^\\mu A^\\nu - \\partial^\\nu A^\\mu)",
-				"coefficient": "Z_A"
-			},
-			{
-				"term": "- \\bar{\\psi} \\gamma_\\mu A^\\mu \\psi",
-				"coefficient": "e"
-			},
-			{
-				"term": "(\\partial_\\mu A^\\mu)^2",
-				"coefficient": "xi"
-			}
+			"Z_\\psi \\ImaginaryUnit \\bar{\\psi} \\DiracOperator \\psi",
+			"- m \\ImaginaryUnit \\bar{\\psi} \\psi",
+			"1/4 Z_A (\\partial_\\mu A_\\nu - \\partial_\\nu A_\\mu) (\\partial^\\mu A^\\nu - \\partial^\\nu A^\\mu)",
+			"- e \\bar{\\psi} \\gamma_\\mu A^\\mu \\psi",
+			"\\xi (\\partial_\\mu A^\\mu)^2"
 		]
 	}
 }

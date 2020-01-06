@@ -22,21 +22,18 @@ struct json_schema_header;
 
 namespace model
 {
-class model_specification
-{
+class model_specification {
 	std::string model_name;
 	mathutils::manifold_specification spacetime_manifold;
 	std::map<classical_field_id, classical_field_specification> field_id_map;
-	std::map<mathutils::variable_id, std::string> coefficient_id_map;
+	std::map<mathutils::variable_id, std::string> parameter_id_map;
 	lagrangian lag;
 public:
 	model_specification(std::string &&n, mathutils::manifold_specification &&m,
 						std::map<classical_field_id, classical_field_specification> &&fi,
-						std::map<mathutils::variable_id, std::string> &&ci,
-						lagrangian &&l );
+						std::map<mathutils::variable_id, std::string> &&pi, lagrangian &&l);
 	
-	const std::string &name( void ) const
-	{ return model_name; }
+	const std::string &name(void) const { return model_name; }
 	
 	const mathutils::manifold_specification &spacetime( void ) const
 	{ return spacetime_manifold; }

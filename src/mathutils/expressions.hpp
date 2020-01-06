@@ -14,17 +14,21 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 
-namespace PQuantum::mathutils
-{
-struct variable_id
-{
+#include <boost/fusion/include/adapt_struct.hpp>
+
+namespace PQuantum::mathutils {
+struct imaginary_unit {
+	constexpr bool operator<(const imaginary_unit &) const {
+		return false;
+	}
+};
+
+struct variable_id {
 	boost::uuids::uuid id;
 	
-	bool operator==( const variable_id &v ) const noexcept
-	{ return id == v.id; }
+	bool operator==(const variable_id &v) const noexcept { return id == v.id; }
 	
-	bool operator<( const variable_id &v ) const noexcept
-	{ return id < v.id; }
+	bool operator<(const variable_id &v) const noexcept { return id < v.id; }
 };
 
 struct expression_symbol
@@ -68,11 +72,14 @@ struct default_total_order<PQuantum::mathutils::expression_symbol>
 };
 }
 
-namespace PQuantum::mathutils
-{
+namespace PQuantum::mathutils {
 using polynomial_expression = cxxmath::free_r_algebra<number, expression_symbol>;
 
 static constexpr auto make_polynomial_expression = cxxmath::make<cxxmath::tag_of_t<mathutils::polynomial_expression>>;
 }
+
+BOOST_FUSION_ADAPT_STRUCT(PQuantum::mathutils::imaginary_unit)
+BOOST_FUSION_ADAPT_STRUCT(PQuantum::mathutils::variable_id, id)
+BOOST_FUSION_ADAPT_STRUCT(PQuantum::mathutils::expression_symbol, value)
 
 #endif //PQUANTUM_EXPRESSIONS_HPP

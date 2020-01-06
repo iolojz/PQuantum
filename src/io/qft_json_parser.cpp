@@ -7,7 +7,7 @@
 #include "qft_json_parser.hpp"
 
 #include "logging.hpp"
-#include "parser_rules/lagrangian_symbol.hpp"
+#include "io/parser_rules/lagrangian.hpp"
 #include "math_parser.hpp"
 
 #include "model/model_specification.hpp"
@@ -68,25 +68,37 @@ model::model_specification qft_json_parser::parse_model_specification( const io:
 	auto manifold_spec = parse_manifold_specification( property_tree.get_child( "topological manifold" ));
 	
 	std::vector<model::classical_field_specification> field_specifications;
-	std::transform( property_tree.get_child( "classical fields" ).begin(),
-					property_tree.get_child( "classical fields" ).end(), std::back_inserter( field_specifications ),
-					[&]( const auto &key_value_pair ) {
-						const boost::property_tree::ptree &node = key_value_pair.second;
-						return parse_field_specification( node );
-					} );
+	std::transform(property_tree.get_child("classical fields").begin(),
+				   property_tree.get_child("classical fields").end(), std::back_inserter(field_specifications),
+				   [&](const auto &key_value_pair) {
+					   const boost::property_tree::ptree &node = key_value_pair.second;
+					   return parse_field_specification(node);
+				   });
 	
 	std::map<model::classical_field_id, model::classical_field_specification> field_id_map;
-	for( auto &&spec : field_specifications )
-		field_id_map.emplace( model::classical_field_id{ uuid_generator() }, std::move( spec ));
-	
-	std::map<mathutils::variable_id, std::string> coefficient_id_map;
 	std::map<std::string, model::classical_field_id> field_name_map;
-	for( const auto &id : field_id_map )
-		field_name_map.emplace( id.second.name, id.first );
-	auto lagrangian = parse_lagrangian(property_tree.get_child("lagrangian"), std::move(field_name_map),
-									   coefficient_id_map);
+	for(auto &&spec : field_specifications) {
+		auto id = model::classical_field_id{uuid_generator()};
+		
+		field_name_map.emplace(spec.name, id);
+		field_id_map.emplace(id, std::move(spec));
+	}
 	
-	return {std::move(model_name), std::move(manifold_spec), std::move(field_id_map), std::move(coefficient_id_map),
+	std::vector<std::string> parameters;
+	std::transform(property_tree.get_child("parameters").begin(), property_tree.get_child("parameters").end(),
+				   std::back_inserter(parameters), [&](const auto &node) { return node.first; });
+	
+	std::map<mathutils::variable_id, std::string> parameter_id_map;
+	std::map<std::string, mathutils::variable_id> parameter_name_map;
+	for(auto &&p : parameters) {
+		parameter_id_map.emplace(mathutils::variable_id{uuid_generator()}, p);
+		parameter_name_map.emplace(std::move(p), mathutils::variable_id{uuid_generator()});
+	}
+	
+	auto lagrangian = parse_lagrangian(property_tree.get_child("lagrangian"), std::move(field_name_map),
+									   std::move(parameter_name_map));
+	
+	return {std::move(model_name), std::move(manifold_spec), std::move(field_id_map), std::move(parameter_id_map),
 			std::move(lagrangian)};
 }
 
@@ -176,88 +188,20 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 
 model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::ptree &property_tree,
 													const std::map<std::string, model::classical_field_id> &field_id_map,
-													std::map<mathutils::variable_id, std::string> &coefficient_id_map)
-{
-	BOOST_LOG_NAMED_SCOPE( "model::parse_lagrangian()" );
+													std::map<std::string, mathutils::variable_id> parameter_id_map) {
+	BOOST_LOG_NAMED_SCOPE("model::parse_lagrangian()");
 	io::severity_logger logger;
 	
-	std::map<std::string, boost::uuids::uuid> string_id_map;
-	for( const auto &field_id_entry : field_id_map )
-		string_id_map[field_id_entry.first] = field_id_entry.second.id;
-	
-	auto string_to_uuid = [this, &string_id_map]( const std::string &str ) {
-		auto it = string_id_map.find( str );
-		if( it != string_id_map.end())
-			return it->second;
+	model::lagrangian lagrangian;
+	std::for_each(property_tree.begin(), property_tree.end(), [&](const auto &key_value_pair) {
+		const boost::property_tree::ptree &node = key_value_pair.second;
+		std::string term = node.get<std::string>("");
 		
-		auto new_uuid = uuid_generator();
-		string_id_map[str] = new_uuid;
-		return new_uuid;
-	};
+		lagrangian_parsing_context context = {uuid_generator, field_id_map, parameter_id_map, {}};
+		cxxmath::add_assign(lagrangian, io::parse_symbol<model::lagrangian>(std::move(term), context));
+	});
 	
-	model::lagrangian terms;
-	std::for_each(property_tree.begin(), property_tree.end(),
-				  [&terms, &string_to_uuid, &coefficient_id_map](const auto &key_value_pair) {
-					  const boost::property_tree::ptree &node = key_value_pair.second;
-					
-					  std::string monomial_string = node.get<std::string>( "term" );
-					  std::string coefficient_string = node.get<std::string>( "coefficient" );
-					
-					  mathutils::variable_id coefficient_id;
-					  coefficient_id_map[coefficient_id] = std::move( coefficient_string );
-					  auto symbols = io::parse_symbols<model::lagrangian_symbol>( monomial_string, string_to_uuid );
-					
-					  auto term = model::make_lagrangian( mathutils::make_polynomial_expression( mathutils::number{},
-																								 mathutils::expression_symbol{
-																								 std::move(
-																								 coefficient_id ) } ),
-														  std::make_move_iterator( symbols.begin()),
-														  std::make_move_iterator( symbols.end())
-					
-					  );
-					
-					  if( constant_factor )
-						  term *= model::make_lagrangian(
-						  mathutils::make_polynomial_expression( io::parse_number( *constant_factor )));
-					
-					  terms += std::move( term );
-				  } );
-	
-	const auto &monomial_map = terms.monomials();
-	
-	auto string_for_uuid = [&string_id_map, &logger](boost::uuids::uuid uuid) {
-		auto it = std::find_if(string_id_map.begin(), string_id_map.end(), [uuid](auto &&mapentry) {
-			return (mapentry.second == uuid);
-		});
-		
-		if(it == string_id_map.end()) {
-			BOOST_LOG_SEV(logger, io::severity_level::internal_error) << "Unknown id \"" << uuid << "\"";
-			error::exit_upon_error();
-		}
-		
-		return it->first;
-	};
-	auto map_entry_value = [](auto &&mapentry) {
-		return std::forward<decltype(mapentry)>(mapentry).second;
-	};
-	const auto field_ids_begin = boost::make_transform_iterator(field_id_map.begin(), map_entry_value);
-	const auto field_ids_end = boost::make_transform_iterator(field_id_map.end(), map_entry_value);
-	
-	for(const auto &m : monomial_map) {
-		for(const model::lagrangian_symbol &s : m.first) {
-			const auto &svalue = s.value;
-			if( std::holds_alternative<model::classical_field_id>( svalue )) {
-				auto hit = std::find( field_ids_begin, field_ids_end, std::get<model::classical_field_id>( svalue ));
-				if(hit == field_ids_end) {
-					BOOST_LOG_SEV(logger, io::severity_level::error) << "Unknown field \"" << string_for_uuid(
-						std::get<model::classical_field_id>( svalue ).id ) << "\"";
-					error::exit_upon_error();
-				}
-			}
-		}
-	}
-	
-	return terms;
+	return lagrangian;
 }
 }
 }

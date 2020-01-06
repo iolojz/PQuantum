@@ -11,14 +11,6 @@
 
 namespace PQuantum::mathutils
 {
-struct imaginary_unit
-{
-	constexpr bool operator<( const imaginary_unit & ) const
-	{
-		return false;
-	}
-};
-
 struct gamma_matrix
 {
 	spacetime_index index;
@@ -70,7 +62,6 @@ struct dirac_operator
 using linear_operator = std::variant<imaginary_unit, gamma_matrix, sigma_matrix, spacetime_derivative, dirac_operator>;
 }
 
-BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::imaginary_unit )
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::gamma_matrix, index )
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::sigma_matrix, index1, index2 )
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::spacetime_derivative, index )
