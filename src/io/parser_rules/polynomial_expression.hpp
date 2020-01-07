@@ -22,8 +22,8 @@ struct rule_for_symbol_impl<mathutils::imaginary_unit> {
 
 template<>
 struct rule_for_symbol_impl<mathutils::variable_id> {
-	auto operator()(const lagrangian_parsing_context &lp_context) const {
-		auto rule_def = rule_for_symbol<string_id>(lp_context.parameter_id_lookup());
+	template<class LPContext> auto operator()(LPContext lp_context) const {
+		auto rule_def = rule_for_symbol<string_id>(lp_context.parameter_id_lookup);
 		return (boost::spirit::x3::rule<mathutils::variable_id, mathutils::variable_id>{} = rule_def);
 	}
 };

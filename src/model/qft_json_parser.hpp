@@ -16,47 +16,56 @@
 
 namespace PQuantum {
 namespace io {
+
+template<class FieldIDLookup, class ParameterIDLookup, class IndexIDLookupAndGenerate>
 struct lagrangian_parsing_context {
-	boost::uuids::random_generator &uuid_generator;
-	const std::map<std::string, model::classical_field_id> &field_id_map;
-	const std::map<std::string, mathutils::variable_id> &parameter_id_map;
-	mutable std::map<std::string, boost::uuids::uuid> index_id_map;
+	FieldIDLookup field_id_lookup;
+	ParameterIDLookup parameter_id_lookup;
+	IndexIDLookupAndGenerate index_id_lookup_and_generate;
 	
-	auto field_id_lookup(void) const {
-		return [this](auto &&str) {
-			BOOST_LOG_NAMED_SCOPE("field_id_lookup()");
-			io::severity_logger logger;
-			
-			auto field_id_it = field_id_map.find(str);
-			if(field_id_it != field_id_map.end())
-				return field_id_it->second.id;
-			
-			BOOST_LOG_SEV(logger, severity_level::error) << "unknown field name '" << str << "'";
-			error::exit_upon_error();
-		};
-	}
-	
-	auto parameter_id_lookup(void) const {
-		return [this](auto &&str) {
-			BOOST_LOG_NAMED_SCOPE("field_id_lookup()");
-			io::severity_logger logger;
-			
-			auto parameter_id_it = parameter_id_map.find(str);
-			if(parameter_id_it != parameter_id_map.end())
-				return parameter_id_it->second.id;
-			
-			BOOST_LOG_SEV(logger, severity_level::error) << "unknown field name '" << str << "'";
-			error::exit_upon_error();
-		};
-	}
-	
-	auto index_id_lookup_and_generate(void) const {
-		return [this](auto &&str) {
-			auto result = index_id_map.emplace(std::move(str), uuid_generator());
-			return result.first->second;
-		};
-	}
+	lagrangian_parsing_context(FieldIDLookup fidl, ParameterIDLookup pidl, IndexIDLookupAndGenerate iidlag)
+	: field_id_lookup{fidl}, parameter_id_lookup{pidl}, index_id_lookup_and_generate{iidlag} {}
 };
+
+static inline auto make_lagrangian_parsing_context(
+	boost::uuids::random_generator &uuid_generator,
+	const std::map<std::string, model::classical_field_id> &field_id_map,
+	const std::map<std::string, mathutils::variable_id> &parameter_id_map,
+	std::map<std::string, boost::uuids::uuid> &index_id_map
+) {
+	auto field_id_lookup = [&field_id_map] (auto &&str) {
+		BOOST_LOG_NAMED_SCOPE("field_id_lookup()");
+		io::severity_logger logger;
+		
+		auto field_id_it = field_id_map.find(str);
+		if(field_id_it != field_id_map.end())
+			return field_id_it->second.id;
+		
+		BOOST_LOG_SEV(logger, severity_level::error) << "unknown field name '" << str << "'";
+		error::exit_upon_error();
+	};
+	auto parameter_id_lookup = [&parameter_id_map] (auto &&str) {
+		BOOST_LOG_NAMED_SCOPE("field_id_lookup()");
+		io::severity_logger logger;
+		
+		auto parameter_id_it = parameter_id_map.find(str);
+		if(parameter_id_it != parameter_id_map.end())
+			return parameter_id_it->second.id;
+		
+		BOOST_LOG_SEV(logger, severity_level::error) << "unknown field name '" << str << "'";
+		error::exit_upon_error();
+	};
+	auto index_id_lookup_and_generate =	[&uuid_generator, &index_id_map] (auto &&str) {
+		auto result = index_id_map.emplace(std::move(str), uuid_generator());
+		return result.first->second;
+	};
+	
+	return lagrangian_parsing_context<
+		decltype(field_id_lookup),
+		decltype(parameter_id_lookup),
+		decltype(index_id_lookup_and_generate)
+	>{ field_id_lookup, parameter_id_lookup, index_id_lookup_and_generate };
+}
 
 class qft_json_parser {
 	boost::uuids::random_generator uuid_generator;
@@ -75,7 +84,7 @@ class qft_json_parser {
 	
 	model::lagrangian parse_lagrangian(const boost::property_tree::ptree &property_tree,
 									   const std::map<std::string, model::classical_field_id> &field_id_map,
-									   std::map<std::string, mathutils::variable_id> parameter_id_map);
+									   const std::map<std::string, mathutils::variable_id> parameter_id_map);
 	
 	model::classical_field_specification parse_field_specification( const boost::property_tree::ptree &property_tree );
 

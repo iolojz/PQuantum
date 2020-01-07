@@ -5,7 +5,7 @@
 #ifndef PQUANTUM_IO_PARSER_RULES_STD_VARIANT_HPP
 #define PQUANTUM_IO_PARSER_RULES_STD_VARIANT_HPP
 
-#include "template_helpers/variant.hpp"
+#include "support/variant.hpp"
 
 #include <boost/spirit/home/x3.hpp>
 

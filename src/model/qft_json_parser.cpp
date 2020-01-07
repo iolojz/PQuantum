@@ -2,6 +2,22 @@
 // Created by jayz on 01.08.19.
 //
 
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/mpl/bool.hpp>
+
+// FIXME: remove this when done
+#define BOOST_SPIRIT_X3_DEBUG
+
+// FIXME: wtf?!
+namespace boost::spirit::x3::traits::detail {
+template<class T, class U> struct has_type_value_type;
+
+template<class U> struct has_type_value_type<boost::uuids::uuid, U> {
+	static constexpr bool value = false;
+	using type = boost::mpl::false_;
+};
+}
+
 #include <iostream>
 
 #include "qft_json_parser.hpp"
@@ -18,7 +34,6 @@
 #include <boost/property_tree/json_parser.hpp>
 
 #include <boost/iterator/transform_iterator.hpp>
-#include <boost/uuid/uuid_io.hpp>
 
 namespace PQuantum
 {
@@ -188,7 +203,7 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 
 model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::ptree &property_tree,
 													const std::map<std::string, model::classical_field_id> &field_id_map,
-													std::map<std::string, mathutils::variable_id> parameter_id_map) {
+													const std::map<std::string, mathutils::variable_id> parameter_id_map) {
 	BOOST_LOG_NAMED_SCOPE("model::parse_lagrangian()");
 	io::severity_logger logger;
 	
@@ -197,7 +212,9 @@ model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::
 		const boost::property_tree::ptree &node = key_value_pair.second;
 		std::string term = node.get<std::string>("");
 		
-		lagrangian_parsing_context context = {uuid_generator, field_id_map, parameter_id_map, {}};
+		std::map<std::string, boost::uuids::uuid> index_id_map;
+		lagrangian_parsing_context context = make_lagrangian_parsing_context(
+				uuid_generator, field_id_map, parameter_id_map, index_id_map );
 		cxxmath::add_assign(lagrangian, io::parse_symbol<model::lagrangian>(std::move(term), context));
 	});
 	

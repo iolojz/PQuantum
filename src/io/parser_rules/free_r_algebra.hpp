@@ -32,6 +32,8 @@ struct fra_sum_tag;
 
 template<class FRA>
 struct fra_product_tag;
+template<class FRA>
+struct fra_factor_tag;
 
 template<class FRA>
 struct rule_for_symbol_impl<FRA, std::enable_if_t<cxxmath::is_free_r_algebra_tag_v<cxxmath::tag_of_t<FRA>>>>
@@ -75,7 +77,12 @@ struct rule_for_symbol_impl<FRA, std::enable_if_t<cxxmath::is_free_r_algebra_tag
 		// FIXME: use recursive rule
 		//auto recursive_rule = boost::spirit::x3::rule<free_r_algebra_tag, FRA>{};
 		
-		auto factor_rule = ( boost::spirit::x3::lit( "(" ) >> core_rule >> boost::spirit::x3::lit( ")" ));
+		auto factor_rule_def = (
+			(boost::spirit::x3::lit( "(" ) >> core_rule >> boost::spirit::x3::lit( ")" )) |
+			core_rule
+		);
+		auto factor_rule = ( boost::spirit::x3::rule<fra_factor_tag<FRA>, FRA>{} = factor_rule_def );
+		
 		auto product_rule_def = ( *( factor_rule >> boost::spirit::x3::lit( "*" )) >> factor_rule ).operator[](
 		[]( auto &&x3_context ) {
 			const auto &attr = boost::spirit::x3::_attr( x3_context );
