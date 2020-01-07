@@ -5,17 +5,14 @@
 #ifndef PQUANTUM_QFT_JSON_HEADER_HPP
 #define PQUANTUM_QFT_JSON_HEADER_HPP
 
-namespace PQuantum
-{
-namespace io
-{
-struct json_schema_header
-{
+#include <string>
+
+namespace PQuantum::parsing {
+struct json_schema_header {
 	std::string name;
 	int version_major;
 	int version_minor;
 };
-}
 }
 
 #endif //PQUANTUM_QFT_JSON_HEADER_HPP

@@ -5,17 +5,15 @@
 #ifndef PQUANTUM_IO_STRING_ID_HPP
 #define PQUANTUM_IO_STRING_ID_HPP
 
-#include "rule_for_symbol_fwd.hpp"
-
-#include <string>
+#include "rule_for_fwd.hpp"
 
 #include <boost/spirit/home/x3.hpp>
 
-namespace PQuantum::io::parser_rules {
+namespace PQuantum::parsing::parser_rules {
 struct string_id;
 
 template<>
-struct rule_for_symbol_impl<string_id> {
+struct rule_for_impl<string_id> {
 	template<class StringToUUID>
 	auto operator()(StringToUUID &&uuid_gen) const {
 		auto rule_def = (+boost::spirit::x3::char_).operator[]([&uuid_gen](auto &&context) {

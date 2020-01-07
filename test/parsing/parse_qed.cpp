@@ -3,8 +3,8 @@
 //
 
 #include "config.hpp"
-#include "io/logging.hpp"
-#include "model/qft_json_parser.hpp"
+#include "logging/logging.hpp"
+#include "parsing/qft_json_parser.hpp"
 
 #define BOOST_TEST_MODULE Parse QED
 
@@ -14,18 +14,17 @@
 
 using namespace PQuantum;
 
-BOOST_AUTO_TEST_CASE( parse_qed )
-{
-	io::setup_logging_facilities();
-	auto parser = io::qft_json_parser::parse( std::filesystem::path{ PQUANTUM_EXAMPLES_DIRECTORY } / "qed.json" );
+BOOST_AUTO_TEST_CASE(parse_qed) {
+	logging::setup_logging_facilities();
+	auto parser = parsing::qft_json_parser::parse(std::filesystem::path{PQUANTUM_EXAMPLES_DIRECTORY} / "qed.json");
 	
 	auto json_header = parser.json_header();
-	BOOST_TEST( json_header.name == "QFT JSON" );
-	BOOST_TEST( json_header.version_major == 0 );
-	BOOST_TEST( json_header.version_minor == 1 );
+	BOOST_TEST(json_header.name == "QFT JSON");
+	BOOST_TEST(json_header.version_major == 0);
+	BOOST_TEST(json_header.version_minor == 1);
 	
 	auto model = parser.model();
-	BOOST_TEST( model.name() == "qed" );
+	BOOST_TEST(model.name() == "qed");
 	
 	auto field_ids = model.field_ids();
 	BOOST_TEST( field_ids.size() == 2 );

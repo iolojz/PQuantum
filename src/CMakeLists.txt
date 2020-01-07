@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
 
-add_subdirectory(io)
 add_subdirectory(error)
-add_subdirectory(model)
+add_subdirectory(logging)
 add_subdirectory(mathutils)
+add_subdirectory(model)
+add_subdirectory(parsing)
+add_subdirectory(pquantum)
 
-add_executable(pquantum main.cpp)
-target_link_libraries(pquantum io error model)

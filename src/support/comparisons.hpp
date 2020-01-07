@@ -5,8 +5,7 @@
 #ifndef PQUANTUM_COMPARISONS_HPP
 #define PQUANTUM_COMPARISONS_HPP
 
-namespace PQuantum {
-namespace template_helpers {
+namespace PQuantum::support {
 template<class T, class U, class Less>
 static bool equal(const T &t, const U &u, Less less) {
 	return (!less(t, u) && !less(u, t));
@@ -24,7 +23,6 @@ struct less_to_equal {
 
 template<class Less>
 static constexpr auto less_to_equal(Less &&less) { return detail::less_to_equal{std::forward<Less>(less)}; }
-}
 }
 
 #endif //PQUANTUM_COMPARISONS_HPP

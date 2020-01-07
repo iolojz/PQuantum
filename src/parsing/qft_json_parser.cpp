@@ -21,10 +21,12 @@ template<class U> struct has_type_value_type<boost::uuids::uuid, U> {
 #include <iostream>
 
 #include "qft_json_parser.hpp"
+#include "parse.hpp"
 
-#include "io/logging.hpp"
-#include "io/parser_rules/lagrangian.hpp"
-#include "io/math_parser.hpp"
+#include "logging/logging.hpp"
+
+#include "parsing/parse.hpp"
+#include "parsing/parser_rules/lagrangian.hpp"
 
 #include "model/model_specification.hpp"
 #include "model/lagrangian.hpp"
@@ -35,47 +37,75 @@ template<class U> struct has_type_value_type<boost::uuids::uuid, U> {
 
 #include <boost/iterator/transform_iterator.hpp>
 
-namespace PQuantum
-{
-namespace io
-{
-qft_json_parser::qft_json_parser( const boost::property_tree::ptree &property_tree ) : header{
-property_tree.get<std::string>( "JSON schema.name" ), property_tree.get<int>( "JSON schema.version_major" ),
-property_tree.get<int>( "JSON schema.version_minor" ) }, model_specification{
-parse_model_specification( header, property_tree.get_child( "Quantum Field Theory" )) }
-{}
+namespace PQuantum::parsing {
+static auto make_lagrangian_parsing_context(boost::uuids::random_generator &uuid_generator,
+											const std::map<std::string, model::classical_field_id> &field_id_map,
+											const std::map<std::string, mathutils::variable_id> &parameter_id_map,
+											std::map<std::string, boost::uuids::uuid> &index_id_map) {
+	auto field_id_lookup = [&field_id_map](auto &&str) {
+		BOOST_LOG_NAMED_SCOPE("field_id_lookup()");
+		logging::severity_logger logger;
+		
+		auto field_id_it = field_id_map.find(str);
+		if(field_id_it != field_id_map.end())
+			return field_id_it->second.id;
+		
+		BOOST_LOG_SEV(logger, logging::severity_level::error) << "unknown field name '" << str << "'";
+		error::exit_upon_error();
+	};
+	auto parameter_id_lookup = [&parameter_id_map](auto &&str) {
+		BOOST_LOG_NAMED_SCOPE("field_id_lookup()");
+		logging::severity_logger logger;
+		
+		auto parameter_id_it = parameter_id_map.find(str);
+		if(parameter_id_it != parameter_id_map.end())
+			return parameter_id_it->second.id;
+		
+		BOOST_LOG_SEV(logger, logging::severity_level::error) << "unknown field name '" << str << "'";
+		error::exit_upon_error();
+	};
+	auto index_id_lookup_and_generate = [&uuid_generator, &index_id_map](auto &&str) {
+		auto result = index_id_map.emplace(std::move(str), uuid_generator());
+		return result.first->second;
+	};
+	
+	return parser_rules::lagrangian_parsing_context{field_id_lookup, parameter_id_lookup, index_id_lookup_and_generate};
+}
 
-qft_json_parser qft_json_parser::parse( const std::string &path_to_file )
-{
-	BOOST_LOG_NAMED_SCOPE( "qft_json_parser::parse()" );
-	io::severity_logger logger;
+qft_json_parser::qft_json_parser(const boost::property_tree::ptree &property_tree) : header{
+		property_tree.get<std::string>("JSON schema.name"), property_tree.get<int>("JSON schema.version_major"),
+		property_tree.get<int>("JSON schema.version_minor")}, model_specification{
+		parse_model_specification(header, property_tree.get_child("Quantum Field Theory"))} {}
+
+qft_json_parser qft_json_parser::parse(const std::string &path_to_file) {
+	BOOST_LOG_NAMED_SCOPE("qft_json_parser::parse()");
+	logging::severity_logger logger;
 	
 	boost::property_tree::ptree property_tree;
 	
 	try {
-		boost::property_tree::read_json( path_to_file, property_tree );
-	} catch( const boost::property_tree::json_parser_error &exception ) {
-		BOOST_LOG_SEV( logger, io::severity_level::error ) << "Error parsing QFT JSON file: " << exception.what();
+		boost::property_tree::read_json(path_to_file, property_tree);
+	} catch(const boost::property_tree::json_parser_error &exception) {
+		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Error parsing QFT JSON file: " << exception.what();
 		error::exit_upon_error();
 	}
 	
 	return qft_json_parser{ std::move( property_tree ) };
 }
 
-model::model_specification qft_json_parser::parse_model_specification( const io::json_schema_header &header,
-																	   const boost::property_tree::ptree &property_tree )
-{
-	BOOST_LOG_NAMED_SCOPE( "qft_json_parser::parse_model_specification()" );
-	io::severity_logger logger;
+model::model_specification qft_json_parser::parse_model_specification(const json_schema_header &header,
+																	  const boost::property_tree::ptree &property_tree) {
+	BOOST_LOG_NAMED_SCOPE("qft_json_parser::parse_model_specification()");
+	logging::severity_logger logger;
 	
-	if( header.name != "QFT JSON" ) {
-		BOOST_LOG_SEV( logger, io::severity_level::error )
+	if(header.name != "QFT JSON") {
+		BOOST_LOG_SEV(logger, logging::severity_level::error)
 			<< "The header name does not read \"QFT JSON\". Corrupt file?";
 		error::exit_upon_error();
 	}
-	if( header.version_major != 0 || header.version_minor != 1 ) {
-		BOOST_LOG_SEV( logger, io::severity_level::error ) << "Incompatible header version " << header.version_major
-														   << "." << header.version_minor;
+	if(header.version_major != 0 || header.version_minor != 1) {
+		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Incompatible header version " << header.version_major
+															  << "." << header.version_minor;
 		error::exit_upon_error();
 	}
 	
@@ -127,36 +157,35 @@ qft_json_parser::parse_field_specification( const boost::property_tree::ptree &p
 }
 
 mathutils::manifold_specification
-qft_json_parser::parse_manifold_specification( const boost::property_tree::ptree &property_tree )
-{
-	BOOST_LOG_NAMED_SCOPE( "qft_json_parser::parse_manifold_specification()" );
-	io::severity_logger logger;
+qft_json_parser::parse_manifold_specification( const boost::property_tree::ptree &property_tree ) {
+	BOOST_LOG_NAMED_SCOPE("qft_json_parser::parse_manifold_specification()");
+	logging::severity_logger logger;
 	
-	std::string type = property_tree.get<std::string>( "type" );
-	if( type != "vector space" ) {
-		BOOST_LOG_SEV( logger, io::severity_level::error ) << "Unrecognized manifold type: \"" << type << "\"";
+	std::string type = property_tree.get<std::string>("type");
+	if(type != "vector space") {
+		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Unrecognized manifold type: \"" << type << "\"";
 		error::exit_upon_error();
 	}
 	
-	return { parse_vector_space_specification( property_tree ) };
+	return {parse_vector_space_specification(property_tree)};
 }
 
 mathutils::manifold_types::vector_space
-qft_json_parser::parse_vector_space_specification( const boost::property_tree::ptree &property_tree )
-{
-	BOOST_LOG_NAMED_SCOPE( "qft_json_parser::parse_vector_space_specification()" );
-	io::severity_logger logger;
+qft_json_parser::parse_vector_space_specification( const boost::property_tree::ptree &property_tree ) {
+	BOOST_LOG_NAMED_SCOPE("qft_json_parser::parse_vector_space_specification()");
+	logging::severity_logger logger;
 	
 	mathutils::manifold_types::vector_space::algebraic_field field;
-	std::string field_name = property_tree.get<std::string>( "algebraic field" );
-	if( field_name == "real numbers" )
+	std::string field_name = property_tree.get<std::string>("algebraic field");
+	if(field_name == "real numbers")
 		field = mathutils::manifold_types::vector_space::algebraic_field::real;
-	else if( field_name == "complex numbers" )
+	else if(field_name == "complex numbers")
 		field = mathutils::manifold_types::vector_space::algebraic_field::complex;
-	else if( field_name == "complex grassmann numbers" )
+	else if(field_name == "complex grassmann numbers")
 		field = mathutils::manifold_types::vector_space::algebraic_field::complex_grassmann;
 	else {
-		BOOST_LOG_SEV( logger, io::severity_level::error ) << "Unrecognized algebraic field: \"" << field_name << "\"";
+		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Unrecognized algebraic field: \"" << field_name
+															  << "\"";
 		error::exit_upon_error();
 	}
 	
@@ -169,8 +198,8 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 		if( dim_boost )
 			dimension = *dim_boost;
 		else {
-			BOOST_LOG_SEV( logger, io::severity_level::error ) << "Unrecognized dimension: \"" << dimension_string
-															   << "\" encountered";
+			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Unrecognized dimension: \"" << dimension_string
+																  << "\" encountered";
 			error::exit_upon_error();
 		}
 	}
@@ -192,7 +221,8 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 			else if( *metric_name == "unspecified" )
 				metric = mathutils::manifold_types::vector_space::vector_space_metric::unspecified;
 			else {
-				BOOST_LOG_SEV( logger, io::severity_level::error ) << "Unrecognized metric: \"" << *metric_name << "\"";
+				BOOST_LOG_SEV(logger, logging::severity_level::error) << "Unrecognized metric: \"" << *metric_name
+																	  << "\"";
 				error::exit_upon_error();
 			}
 		}
@@ -203,9 +233,9 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 
 model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::ptree &property_tree,
 													const std::map<std::string, model::classical_field_id> &field_id_map,
-													const std::map<std::string, mathutils::variable_id> parameter_id_map) {
+													const std::map<std::string, mathutils::variable_id> &parameter_id_map) {
 	BOOST_LOG_NAMED_SCOPE("model::parse_lagrangian()");
-	io::severity_logger logger;
+	logging::severity_logger logger;
 	
 	model::lagrangian lagrangian;
 	std::for_each(property_tree.begin(), property_tree.end(), [&](const auto &key_value_pair) {
@@ -213,12 +243,12 @@ model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::
 		std::string term = node.get<std::string>("");
 		
 		std::map<std::string, boost::uuids::uuid> index_id_map;
-		lagrangian_parsing_context context = make_lagrangian_parsing_context(
-				uuid_generator, field_id_map, parameter_id_map, index_id_map );
-		cxxmath::add_assign(lagrangian, io::parse_symbol<model::lagrangian>(std::move(term), context));
+		parser_rules::lagrangian_parsing_context context = make_lagrangian_parsing_context(uuid_generator, field_id_map,
+																						   parameter_id_map,
+																						   index_id_map);
+		cxxmath::add_assign(lagrangian, PQuantum::parsing::parse<model::lagrangian>(std::move(term), context));
 	});
 	
 	return lagrangian;
-}
 }
 }

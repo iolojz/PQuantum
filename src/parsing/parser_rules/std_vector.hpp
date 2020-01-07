@@ -5,7 +5,7 @@
 #ifndef PQUANTUM_IO_STD_VECTOR_HPP
 #define PQUANTUM_IO_STD_VECTOR_HPP
 
-#include "rule_for_symbol_fwd.hpp"
+#include "rule_for_fwd.hpp"
 
 #include <vector>
 

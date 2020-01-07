@@ -10,9 +10,9 @@
 
 #include <boost/spirit/home/x3.hpp>
 
-namespace PQuantum::io::parser_rules {
+namespace PQuantum::parsing::parser_rules {
 template<>
-struct rule_for_symbol_impl<mathutils::imaginary_unit> {
+struct rule_for_impl<mathutils::imaginary_unit> {
 	template<class Context>
 	auto operator()(Context &&) const {
 		auto rule_def = boost::spirit::x3::lit("\\ImaginaryUnit").operator[]([](auto &&) {});
@@ -21,15 +21,16 @@ struct rule_for_symbol_impl<mathutils::imaginary_unit> {
 };
 
 template<>
-struct rule_for_symbol_impl<mathutils::variable_id> {
-	template<class LPContext> auto operator()(LPContext lp_context) const {
-		auto rule_def = rule_for_symbol<string_id>(lp_context.parameter_id_lookup);
+struct rule_for_impl<mathutils::variable_id> {
+	template<class LPContext>
+	auto operator()(LPContext lp_context) const {
+		auto rule_def = rule_for<string_id>(lp_context.parameter_id_lookup);
 		return (boost::spirit::x3::rule<mathutils::variable_id, mathutils::variable_id>{} = rule_def);
 	}
 };
 
 template<>
-struct rule_for_symbol_impl<mathutils::spacetime_dimension> {
+struct rule_for_impl<mathutils::spacetime_dimension> {
 	template<class Context>
 	auto operator()(Context &&) const {
 		auto rule_def = boost::spirit::x3::lit("\\SpacetimeDimension").operator[]([](auto &&) {});
@@ -40,12 +41,12 @@ struct rule_for_symbol_impl<mathutils::spacetime_dimension> {
 
 #include "std_variant.hpp"
 
-namespace PQuantum::io::parser_rules {
+namespace PQuantum::parsing::parser_rules {
 template<>
-struct rule_for_symbol_impl<mathutils::expression_symbol> {
+struct rule_for_impl<mathutils::expression_symbol> {
 	template<class Context>
 	auto operator()(Context &&context) const {
-		auto rule_def = rule_for_symbol<std::decay_t<decltype(std::declval<mathutils::expression_symbol>().value)>>(
+		auto rule_def = rule_for<std::decay_t<decltype(std::declval<mathutils::expression_symbol>().value)>>(
 				std::forward<Context>(context));
 		return (boost::spirit::x3::rule<mathutils::expression_symbol, mathutils::expression_symbol>{} = rule_def);
 	}

@@ -7,19 +7,13 @@
 
 #include "boost/variant.hpp"
 
-namespace PQuantum
-{
-namespace template_helpers
-{
-namespace detail
-{
+namespace PQuantum::support {
+namespace detail {
 template<class ...Alternatives>
-class to_std_visitor : public boost::static_visitor<void>
-{
+class to_std_visitor : public boost::static_visitor<void> {
 	std::variant<Alternatives...> &std_v;
 public:
-	to_std_visitor( std::variant<Alternatives...> &v ) : std_v{ v }
-	{}
+	to_std_visitor(std::variant<Alternatives...> &v) : std_v{v} {}
 	
 	template<class Alternative>
 	void operator()( Alternative &&a ) const
@@ -37,7 +31,6 @@ std::variant<Alternatives...> to_std_variant( BoostVariant &&v )
 	
 	boost::apply_visitor( visitor, std::forward<BoostVariant>( v ));
 	return std_v;
-}
 }
 }
 

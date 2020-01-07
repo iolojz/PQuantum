@@ -19,21 +19,16 @@
 
 BOOST_LOG_ATTRIBUTE_KEYWORD( object_tag, "object", std::string )
 BOOST_LOG_ATTRIBUTE_KEYWORD( scope_tag, "scope", boost::log::attributes::named_scope::value_type )
-BOOST_LOG_ATTRIBUTE_KEYWORD( severity_tag, "Severity", PQuantum::io::severity_level::severity_level )
+BOOST_LOG_ATTRIBUTE_KEYWORD(severity_tag, "Severity", PQuantum::logging::severity_level::severity_level)
 
 namespace sinks = boost::log::sinks;
 namespace expr = boost::log::expressions;
 namespace keywords = boost::log::keywords;
 
-namespace PQuantum
-{
-namespace io
-{
-namespace severity_level
-{
-static std::ostream &operator<<( std::ostream &os, severity_level slevel )
-{
-	switch( slevel ) {
+namespace PQuantum::logging {
+namespace severity_level {
+static std::ostream &operator<<(std::ostream &os, severity_level slevel) {
+	switch(slevel) {
 		case user_info:
 			return os << "user_info";
 			break;
@@ -88,6 +83,5 @@ void setup_logging_facilities( void )
 	
 	boost::log::core::get()->add_sink( cout_sink );
 	boost::log::core::get()->add_sink( clog_sink );
-}
 }
 }

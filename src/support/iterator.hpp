@@ -8,8 +8,7 @@
 #include <type_traits>
 #include <iterator>
 
-namespace PQuantum {
-namespace template_helpers {
+namespace PQuantum::support {
 template<class Range>
 constexpr auto begin(Range &&range) {
 	constexpr if(std::is_rvalue_reference_v<Range>)
@@ -30,7 +29,6 @@ constexpr auto end(Range &&range) {
 		return std::make_move_iterator(std::cend(std::forward<Range>(range)));
 	
 	return std::end(std::forward<Range>(range));
-}
 }
 }
 

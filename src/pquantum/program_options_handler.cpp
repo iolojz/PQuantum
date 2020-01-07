@@ -3,7 +3,7 @@
 //
 
 #include "program_options_handler.hpp"
-#include "model/qft_json_parser.hpp"
+#include "parsing/qft_json_parser.hpp"
 #include "error/error.hpp"
 
 #include <boost/log/attributes.hpp>
@@ -13,8 +13,6 @@
 namespace po = boost::program_options;
 
 namespace PQuantum
-{
-namespace io
 {
 program_options_handler::program_options_handler( int argc, const char **argv ) : program_options_description(
 "recognized options" )
@@ -39,16 +37,15 @@ void program_options_handler::take_action( void )
 	BOOST_LOG_NAMED_SCOPE( "take_action()" );
 	
 	if( print_help_message ) {
-		BOOST_LOG_SEV( logger, io::severity_level::user_info ) << program_options_description;
+		BOOST_LOG_SEV(logger, logging::severity_level::user_info) << program_options_description;
 		return;
 	}
 	
 	if( model_file.length() == 0 ) {
-		BOOST_LOG_SEV( logger, io::severity_level::error ) << "No model file specified.";
+		BOOST_LOG_SEV(logger, logging::severity_level::error) << "No model file specified.";
 		error::exit_upon_error();
 	}
 	
 	qft_json_parser::parse( model_file );
-}
 }
 }
