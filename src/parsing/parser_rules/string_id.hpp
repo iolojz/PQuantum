@@ -19,7 +19,8 @@ struct rule_for_impl<string_id> {
 		auto rule_def = (+boost::spirit::x3::char_).operator[]([&uuid_gen](auto &&context) {
 			boost::spirit::x3::_val(context) = uuid_gen(boost::spirit::x3::_attr(context));
 		});
-		return (boost::spirit::x3::rule<string_id, boost::uuids::uuid>{} = rule_def);
+		boost::spirit::x3::rule<string_id, boost::uuids::uuid> rule{"string_id"};
+		return (rule = rule_def);
 	}
 };
 }

@@ -18,7 +18,8 @@ struct rule_for_impl<std::variant<Alternatives...>> {
 			boost::spirit::x3::_val(context) = support::to_std_variant<Alternatives...>(
 					boost::spirit::x3::_attr(context));
 		});
-		return (boost::spirit::x3::rule<std::variant<Alternatives...>, std::variant<Alternatives...>>{} = rule_def);
+		boost::spirit::x3::rule<std::variant<Alternatives...>, std::variant<Alternatives...>> rule{"variant"};
+		return (rule = rule_def);
 	}
 };
 }
