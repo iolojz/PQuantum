@@ -4,7 +4,7 @@
 
 #include "config.hpp"
 #include "io/logging.hpp"
-#include "io/qft_json_parser.hpp"
+#include "model/qft_json_parser.hpp"
 
 #define BOOST_TEST_MODULE Parse QED
 

@@ -8,7 +8,7 @@
 #include "string_id.hpp"
 #include "free_r_algebra.hpp"
 #include "polynomial_expression.hpp"
-#include "../qft_json_parser.hpp"
+#include "model/qft_json_parser.hpp"
 #include "../../template_helpers/variant.hpp"
 
 #include <boost/spirit/home/x3.hpp>

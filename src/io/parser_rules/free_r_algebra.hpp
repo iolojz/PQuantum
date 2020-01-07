@@ -7,7 +7,7 @@
 
 #include "rule_for_symbol_fwd.hpp"
 #include "std_vector.hpp"
-#include "../qft_json_parser.hpp"
+#include "model/qft_json_parser.hpp"
 
 #include <numeric>
 #include <boost/spirit/home/x3.hpp>

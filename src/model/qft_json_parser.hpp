@@ -7,15 +7,14 @@
 
 #include <boost/property_tree/ptree_fwd.hpp>
 
-#include "logging.hpp"
-#include "qft_json_header.hpp"
+#include "io/logging.hpp"
+#include "io/qft_json_header.hpp"
 
 #include "model/model_specification.hpp"
 
 #include <map>
 
-namespace PQuantum
-{
+namespace PQuantum {
 namespace io {
 struct lagrangian_parsing_context {
 	boost::uuids::random_generator &uuid_generator;

@@ -6,9 +6,9 @@
 
 #include "qft_json_parser.hpp"
 
-#include "logging.hpp"
+#include "io/logging.hpp"
 #include "io/parser_rules/lagrangian.hpp"
-#include "math_parser.hpp"
+#include "io/math_parser.hpp"
 
 #include "model/model_specification.hpp"
 #include "model/lagrangian.hpp"

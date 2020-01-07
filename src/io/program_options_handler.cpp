@@ -3,7 +3,7 @@
 //
 
 #include "program_options_handler.hpp"
-#include "qft_json_parser.hpp"
+#include "model/qft_json_parser.hpp"
 #include "error/error.hpp"
 
 #include <boost/log/attributes.hpp>
