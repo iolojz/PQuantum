@@ -59,12 +59,20 @@ struct dirac_operator
 	}
 };
 
-using linear_operator = std::variant<imaginary_unit, gamma_matrix, sigma_matrix, spacetime_derivative, dirac_operator>;
+struct dirac_conjugate {
+	constexpr bool operator<( const dirac_conjugate & ) const
+	{
+		return false;
+	}
+};
+
+using linear_operator = std::variant<imaginary_unit, gamma_matrix, sigma_matrix, spacetime_derivative, dirac_operator, dirac_conjugate>;
 }
 
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::gamma_matrix, index )
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::sigma_matrix, index1, index2 )
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::spacetime_derivative, index )
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::dirac_operator )
+BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::dirac_conjugate )
 
 #endif //PQUANTUM_LINEAR_OPERATORS_HPP

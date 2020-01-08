@@ -10,9 +10,14 @@
 #include <numeric>
 #include <boost/spirit/home/x3.hpp>
 
-namespace PQuantum::parsing::parser_rules {
-struct free_r_algebra_tag;
+#include <boost/range/numeric.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+#include <boost/range/algorithm_ext/push_back.hpp>
+#include <boost/range/algorithm_ext/push_front.hpp>
 
+namespace PQuantum::parsing::parser_rules {
+template<class FRA>
+struct free_r_algebra_tag;
 template<class FRA>
 struct fra_coefficient_tag;
 template<class FRA>
@@ -25,6 +30,8 @@ template<class FRA>
 struct fra_factor_tag;
 template<class FRA>
 struct fra_product_tag;
+template<class FRA>
+struct fra_sign_tag;
 
 template<class FRA>
 struct rule_for_impl<fra_coefficient_tag<FRA>> {
@@ -116,7 +123,7 @@ struct rule_for_impl<fra_product_tag<FRA>> {
 		using fra_ring = typename cxxmath::model_free_r_algebra::free_r_algebra_concepts<cxxmath::tag_of_t<FRA>>::ring;
 		auto factor_rule = rule_for<fra_factor_tag<FRA>>(context);
 		
-		auto rule_def = (*(factor_rule >> boost::spirit::x3::lit("*")) >> factor_rule).operator[](
+		auto rule_def = (*(factor_rule >> boost::spirit::x3::lit('*')) >> factor_rule).operator[](
 				[](auto &&x3_context) {
 					const auto &attr = boost::spirit::x3::_attr(x3_context);
 					auto last_factor = boost::fusion::at_c<1>(attr);
@@ -136,24 +143,58 @@ struct rule_for_impl<fra_product_tag<FRA>> {
 };
 
 template<class FRA>
+struct rule_for_impl<fra_sign_tag<FRA>> {
+	template<class Context>
+	auto operator()(Context) const {
+		auto rule_def = (boost::spirit::x3::char_('+') | boost::spirit::x3::char_('-'));
+		boost::spirit::x3::rule<fra_sign_tag<FRA>, char> rule{"fra_sign"};
+		return (rule = rule_def);
+	}
+};
+
+template<class FRA>
 struct rule_for_impl<FRA, std::enable_if_t<cxxmath::is_free_r_algebra_tag_v<cxxmath::tag_of_t<FRA>>>> {
 	template<class Context>
 	auto operator()(Context context) const {
 		using fra_ring = typename cxxmath::model_free_r_algebra::free_r_algebra_concepts<cxxmath::tag_of_t<FRA>>::ring;
 		auto product_rule = rule_for<fra_product_tag<FRA>>(context);
+		auto sign_rule = rule_for<fra_sign_tag<FRA>>(context);
 		
-		auto rule_def = (*(product_rule >> boost::spirit::x3::lit("*")) >> product_rule).operator[](
+		auto rule_def = ((-sign_rule) >> *(product_rule >> sign_rule) >> product_rule).operator[](
 				[](auto &&x3_context) {
 					const auto &attr = boost::spirit::x3::_attr(x3_context);
-					auto last_summand = boost::fusion::at_c<1>(attr);
-					const auto &summands = boost::fusion::at_c<0>(attr);
 					
-					auto sum = std::accumulate(std::begin(summands), std::end(summands), last_summand,
-											   fra_ring::add_assign);
+					const auto &preceeding_minus_sign = boost::fusion::at_c<0>(attr);
+					auto &summands_and_ops = boost::fusion::at_c<1>(attr);
+					auto &last_summand = boost::fusion::at_c<2>(attr);
+					
+					char first_sign = bool(preceeding_minus_sign) ? '-' : '+';
+					
+					std::vector<char> ops{ first_sign };
+					std::transform( std::begin( summands_and_ops ), std::end( summands_and_ops ),
+									std::back_inserter( ops ), []( auto &&fra_and_op ) {
+								return std::move( boost::fusion::at_c<1>( fra_and_op ) );
+							} );
+					
+					std::vector<FRA> summands;
+					std::transform( std::begin( summands_and_ops ), std::end( summands_and_ops ),
+									std::back_inserter( summands ), []( auto &&fra_and_op ) {
+								return std::move( boost::fusion::at_c<0>( fra_and_op ) );
+							} );
+					summands.push_back( std::move( last_summand ) );
+					
+					auto add_up = [] ( FRA &fra, const auto &op_and_fra ) {
+						if( boost::fusion::at_c<0>( op_and_fra ) == '-' )
+							return fra_ring::subtract_assign( fra, boost::fusion::at_c<1>( op_and_fra ) );
+						else
+							return fra_ring::add_assign( fra, boost::fusion::at_c<1>( op_and_fra ) );
+					};
+					
+					auto sum = boost::accumulate( boost::range::combine( ops, summands ), fra_ring::zero(), add_up );
 					boost::spirit::x3::_val(x3_context) = std::move(sum);
 				});
 		
-		boost::spirit::x3::rule<fra_factor_tag<FRA>, FRA> rule{"fra_sum"};
+		boost::spirit::x3::rule<free_r_algebra_tag<FRA>, FRA> rule{"fra_sum"};
 		return (rule = rule_def);
 	}
 };

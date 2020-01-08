@@ -12,17 +12,6 @@
 
 namespace PQuantum::parsing::parser_rules {
 template<>
-struct rule_for_impl<mathutils::imaginary_unit> {
-	template<class Context>
-	auto operator()(Context &&) const {
-		auto rule_def = boost::spirit::x3::lit("\\ImaginaryUnit").operator[]([](auto &&) {});
-		
-		boost::spirit::x3::rule<mathutils::imaginary_unit, mathutils::imaginary_unit> rule{"imaginary unit"};
-		return (rule = rule_def);
-	}
-};
-
-template<>
 struct rule_for_impl<mathutils::variable_id> {
 	template<class LPContext>
 	auto operator()(LPContext lp_context) const {

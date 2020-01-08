@@ -14,18 +14,23 @@ struct string_id;
 
 template<>
 struct rule_for_impl<string_id> {
-	template<class StringToUUID>
-	auto operator()(StringToUUID uuid_gen) const {
+	auto operator()(std::function<std::pair<bool, boost::uuids::uuid>(std::string)> uuid_gen) const {
 		using boost::spirit::x3::char_;
 		using boost::spirit::x3::alpha;
 		using boost::spirit::x3::alnum;
 		using boost::spirit::x3::lexeme;
 		
-		auto core = ((char_('\\') >> alpha) | alpha) >> *(char_("\\") | alnum | char_("_") | char_("^"));
+		auto special_chars = char_('\\') | char_('{') | char_("_") | char_("^") | char_('}');
+		auto core = ((char_('\\') >> alpha) | alpha) >> *(alnum | special_chars);
 		
 		auto rule_def = lexeme[core].operator[]([uuid_gen](auto &&context) {
 			const auto &where = boost::spirit::x3::_where(context);
-			boost::spirit::x3::_val(context) = uuid_gen(std::string{where.begin(), where.end()});
+			
+			auto result = uuid_gen( std::string{ where.begin(), where.end() } );
+			if( result.first )
+				boost::spirit::x3::_val(context) = std::move( result.second );
+			else
+				boost::spirit::x3::_pass(context) = false;
 		});
 		boost::spirit::x3::rule<string_id, boost::uuids::uuid> rule{"string_id"};
 		return (rule = rule_def);

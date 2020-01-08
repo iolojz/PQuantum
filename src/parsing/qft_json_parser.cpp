@@ -42,31 +42,23 @@ static auto make_lagrangian_parsing_context(boost::uuids::random_generator &uuid
 											const std::map<std::string, model::classical_field_id> &field_id_map,
 											const std::map<std::string, mathutils::variable_id> &parameter_id_map,
 											std::map<std::string, boost::uuids::uuid> &index_id_map) {
-	auto field_id_lookup = [&field_id_map](auto &&str) {
-		BOOST_LOG_NAMED_SCOPE("field_id_lookup()");
-		logging::severity_logger logger;
-		
+	auto field_id_lookup = [&field_id_map] (auto &&str) -> std::pair<bool, boost::uuids::uuid> {
 		auto field_id_it = field_id_map.find(str);
 		if(field_id_it != field_id_map.end())
-			return field_id_it->second.id;
+			return { true, field_id_it->second.id };
 		
-		BOOST_LOG_SEV(logger, logging::severity_level::error) << "unknown field name '" << str << "'";
-		error::exit_upon_error();
+		return { false, {} };
 	};
-	auto parameter_id_lookup = [&parameter_id_map](auto &&str) {
-		BOOST_LOG_NAMED_SCOPE("field_id_lookup()");
-		logging::severity_logger logger;
-		
+	auto parameter_id_lookup = [&parameter_id_map] (auto &&str) -> std::pair<bool, boost::uuids::uuid> {
 		auto parameter_id_it = parameter_id_map.find(str);
 		if(parameter_id_it != parameter_id_map.end())
-			return parameter_id_it->second.id;
+			return { true, parameter_id_it->second.id };
 		
-		BOOST_LOG_SEV(logger, logging::severity_level::error) << "unknown field name '" << str << "'";
-		error::exit_upon_error();
+		return { false, {} };
 	};
-	auto index_id_lookup_and_generate = [&uuid_generator, &index_id_map](auto &&str) {
+	auto index_id_lookup_and_generate = [&uuid_generator, &index_id_map] (auto &&str) -> std::pair<bool, boost::uuids::uuid> {
 		auto result = index_id_map.emplace(std::move(str), uuid_generator());
-		return result.first->second;
+		return { true, result.first->second };
 	};
 	
 	return parser_rules::lagrangian_parsing_context{field_id_lookup, parameter_id_lookup, index_id_lookup_and_generate};

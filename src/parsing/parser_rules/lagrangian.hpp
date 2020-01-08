@@ -15,9 +15,9 @@
 
 namespace PQuantum::parsing::parser_rules {
 struct lagrangian_parsing_context {
-	std::function<boost::uuids::uuid(std::string)> field_id_lookup;
-	std::function<boost::uuids::uuid(std::string)> parameter_id_lookup;
-	std::function<boost::uuids::uuid(std::string)> index_id_lookup_and_generate;
+	std::function<std::pair<bool, boost::uuids::uuid>(std::string)> field_id_lookup;
+	std::function<std::pair<bool, boost::uuids::uuid>(std::string)> parameter_id_lookup;
+	std::function<std::pair<bool, boost::uuids::uuid>(std::string)> index_id_lookup_and_generate;
 };
 
 struct index_core;
@@ -117,6 +117,18 @@ struct rule_for_impl<mathutils::dirac_operator> {
 	}
 };
 
+template<>
+struct rule_for_impl<mathutils::dirac_conjugate> {
+	template<class Context>
+	auto operator()(Context context) const {
+		using boost::spirit::x3::lit;
+		auto field_rule = rule_for<model::classical_field_id>( context );
+		
+		auto rule_def = (lit("\\bar{") >> field_rule >> lit("}")).operator[]([](auto &&) {});
+		boost::spirit::x3::rule<mathutils::dirac_operator, mathutils::dirac_operator> rule{"dirac operator"};
+		return (rule = rule_def);
+	}
+};
 
 template<>
 struct rule_for_impl<model::lagrangian_symbol> {
