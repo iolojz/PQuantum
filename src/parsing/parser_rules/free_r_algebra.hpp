@@ -29,7 +29,7 @@ struct fra_product_tag;
 template<class FRA>
 struct rule_for_impl<fra_coefficient_tag<FRA>> {
 	template<class Context>
-	auto operator()(Context &&context) const {
+	auto operator()(Context context) const {
 		using coefficient = typename FRA::coefficient;
 		using coefficient_ring = typename FRA::coefficient_ring;
 		
@@ -48,7 +48,7 @@ struct rule_for_impl<fra_coefficient_tag<FRA>> {
 template<class FRA>
 struct rule_for_impl<fra_core_with_coefficient_tag<FRA>> {
 	template<class Context>
-	auto operator()(Context &&context) const {
+	auto operator()(Context context) const {
 		auto coefficient_rule = rule_for<fra_coefficient_tag<FRA>>(context);
 		auto symbol_rule = rule_for<typename FRA::symbol>(context);
 		
@@ -68,7 +68,7 @@ struct rule_for_impl<fra_core_with_coefficient_tag<FRA>> {
 template<class FRA>
 struct rule_for_impl<fra_core_without_coefficient_tag<FRA>> {
 	template<class Context>
-	auto operator()(Context &&context) const {
+	auto operator()(Context context) const {
 		auto symbol_rule = rule_for<typename FRA::symbol>(context);
 		
 		auto rule_def = (+symbol_rule).operator[]([](auto &&x3_context) {
@@ -85,7 +85,7 @@ struct rule_for_impl<fra_core_without_coefficient_tag<FRA>> {
 template<class FRA>
 struct rule_for_impl<fra_core_tag<FRA>> {
 	template<class Context>
-	auto operator()(Context &&context) const {
+	auto operator()(Context context) const {
 		auto fra_core_with_coefficient = rule_for<fra_core_with_coefficient_tag<FRA>>(context);
 		auto fra_core_without_coefficient = rule_for<fra_core_without_coefficient_tag<FRA>>(context);
 		
@@ -99,7 +99,7 @@ struct rule_for_impl<fra_core_tag<FRA>> {
 template<class FRA>
 struct rule_for_impl<fra_factor_tag<FRA>> {
 	template<class Context>
-	auto operator()(Context &&context) const {
+	auto operator()(Context context) const {
 		auto core_rule = rule_for<fra_core_tag<FRA>>(context);
 		
 		auto rule_def = ((boost::spirit::x3::lit("(") >> core_rule >> boost::spirit::x3::lit(")")) | core_rule);
@@ -112,7 +112,7 @@ struct rule_for_impl<fra_factor_tag<FRA>> {
 template<class FRA>
 struct rule_for_impl<fra_product_tag<FRA>> {
 	template<class Context>
-	auto operator()(Context &&context) const {
+	auto operator()(Context context) const {
 		using fra_ring = typename cxxmath::model_free_r_algebra::free_r_algebra_concepts<cxxmath::tag_of_t<FRA>>::ring;
 		auto factor_rule = rule_for<fra_factor_tag<FRA>>(context);
 		
@@ -138,7 +138,7 @@ struct rule_for_impl<fra_product_tag<FRA>> {
 template<class FRA>
 struct rule_for_impl<FRA, std::enable_if_t<cxxmath::is_free_r_algebra_tag_v<cxxmath::tag_of_t<FRA>>>> {
 	template<class Context>
-	auto operator()(Context &&context) const {
+	auto operator()(Context context) const {
 		using fra_ring = typename cxxmath::model_free_r_algebra::free_r_algebra_concepts<cxxmath::tag_of_t<FRA>>::ring;
 		auto product_rule = rule_for<fra_product_tag<FRA>>(context);
 		

@@ -15,9 +15,17 @@ struct string_id;
 template<>
 struct rule_for_impl<string_id> {
 	template<class StringToUUID>
-	auto operator()(StringToUUID &&uuid_gen) const {
-		auto rule_def = (+boost::spirit::x3::char_).operator[]([&uuid_gen](auto &&context) {
-			boost::spirit::x3::_val(context) = uuid_gen(boost::spirit::x3::_attr(context));
+	auto operator()(StringToUUID uuid_gen) const {
+		using boost::spirit::x3::char_;
+		using boost::spirit::x3::alpha;
+		using boost::spirit::x3::alnum;
+		using boost::spirit::x3::lexeme;
+		
+		auto core = ((char_('\\') >> alpha) | alpha) >> *(char_("\\") | alnum | char_("_") | char_("^"));
+		
+		auto rule_def = lexeme[core].operator[]([uuid_gen](auto &&context) {
+			const auto &where = boost::spirit::x3::_where(context);
+			boost::spirit::x3::_val(context) = uuid_gen(std::string{where.begin(), where.end()});
 		});
 		boost::spirit::x3::rule<string_id, boost::uuids::uuid> rule{"string_id"};
 		return (rule = rule_def);

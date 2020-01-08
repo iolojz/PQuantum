@@ -24,8 +24,7 @@ struct index_core;
 
 template<>
 struct rule_for_impl<model::classical_field_id> {
-	template<class LPContext>
-	auto operator()(LPContext lp_context) const {
+	auto operator()(lagrangian_parsing_context lp_context) const {
 		auto rule_def = rule_for<string_id>(lp_context.field_id_lookup);
 		boost::spirit::x3::rule<model::classical_field_id, model::classical_field_id> rule{"classical field id"};
 		return (rule = rule_def);
@@ -35,7 +34,7 @@ struct rule_for_impl<model::classical_field_id> {
 template<>
 struct rule_for_impl<int> {
 	template<class Context>
-	auto operator()(Context &&) const {
+	auto operator()(Context) const {
 		boost::spirit::x3::rule<int, int> rule{"int"};
 		return (rule = boost::spirit::x3::int_);
 	}
@@ -58,15 +57,15 @@ struct rule_for_impl<index_core> {
 
 template<>
 struct rule_for_impl<mathutils::spacetime_index> {
-	template<class LPContext>
-	auto operator()(LPContext lp_context) const {
+	template<class Context>
+	auto operator()(Context context) const {
 		const auto variance_def = boost::spirit::x3::lit("_").operator[]([](auto &&x3_context) {
 			boost::spirit::x3::_val(x3_context).variance = mathutils::spacetime_index::index_variance::lower;
 		}) | boost::spirit::x3::lit("^").operator[]([](auto &&x3_context) {
 			boost::spirit::x3::_val(x3_context).variance = mathutils::spacetime_index::index_variance::upper;
 		});
 		
-		auto index_core_def = rule_for<index_core>(lp_context);
+		auto index_core_def = rule_for<index_core>(context);
 		
 		const auto id_def = ((boost::spirit::x3::lit("{") >> index_core_def >> boost::spirit::x3::lit("}")) |
 							 index_core_def);
@@ -78,9 +77,9 @@ struct rule_for_impl<mathutils::spacetime_index> {
 
 template<>
 struct rule_for_impl<mathutils::gamma_matrix> {
-	template<class LPContext>
-	auto operator()(LPContext lp_context) const {
-		auto rule_def = boost::spirit::x3::lit("\\gamma") >> rule_for<mathutils::spacetime_index>(lp_context);
+	template<class Context>
+	auto operator()(Context context) const {
+		auto rule_def = boost::spirit::x3::lit("\\gamma") >> rule_for<mathutils::spacetime_index>(context);
 		boost::spirit::x3::rule<mathutils::gamma_matrix, mathutils::gamma_matrix> rule{"gamma matrix"};
 		return (rule = rule_def);
 	}
@@ -88,10 +87,10 @@ struct rule_for_impl<mathutils::gamma_matrix> {
 
 template<>
 struct rule_for_impl<mathutils::sigma_matrix> {
-	template<class LPContext>
-	auto operator()(LPContext lp_context) const {
-		auto rule_def = boost::spirit::x3::lit("\\sigma_{") >> rule_for<mathutils::spacetime_index>(lp_context) >> ","
-															>> rule_for<mathutils::spacetime_index>(lp_context);
+	template<class Context>
+	auto operator()(Context context) const {
+		auto rule_def = boost::spirit::x3::lit("\\sigma_{") >> rule_for<mathutils::spacetime_index>(context) >> ","
+															>> rule_for<mathutils::spacetime_index>(context);
 		boost::spirit::x3::rule<mathutils::sigma_matrix, mathutils::sigma_matrix> rule{"sigma_matrix"};
 		return (rule = rule_def);
 	}
@@ -99,9 +98,9 @@ struct rule_for_impl<mathutils::sigma_matrix> {
 
 template<>
 struct rule_for_impl<mathutils::spacetime_derivative> {
-	template<class LPContext>
-	auto operator()(LPContext lp_context) const {
-		auto rule_def = boost::spirit::x3::lit("\\partial_") >> rule_for<mathutils::spacetime_index>(lp_context);
+	template<class Context>
+	auto operator()(Context context) const {
+		auto rule_def = boost::spirit::x3::lit("\\partial_") >> rule_for<mathutils::spacetime_index>(context);
 		boost::spirit::x3::rule<mathutils::spacetime_derivative, mathutils::spacetime_derivative> rule{
 				"spacetime derivative"};
 		return (rule = rule_def);
@@ -110,8 +109,8 @@ struct rule_for_impl<mathutils::spacetime_derivative> {
 
 template<>
 struct rule_for_impl<mathutils::dirac_operator> {
-	template<class LPContext>
-	auto operator()(LPContext) const {
+	template<class Context>
+	auto operator()(Context) const {
 		auto rule_def = boost::spirit::x3::lit("\\DiracOperator").operator[]([](auto &&) {});
 		boost::spirit::x3::rule<mathutils::dirac_operator, mathutils::dirac_operator> rule{"dirac operator"};
 		return (rule = rule_def);
@@ -121,11 +120,12 @@ struct rule_for_impl<mathutils::dirac_operator> {
 
 template<>
 struct rule_for_impl<model::lagrangian_symbol> {
-	auto operator()(lagrangian_parsing_context lp_context) const {
+	template<class Context>
+	auto operator()(Context context) const {
 		using value_type = std::decay_t<decltype(std::declval<model::lagrangian_symbol>().value)>;
 		boost::spirit::x3::rule<model::lagrangian_symbol, model::lagrangian_symbol> rule{"lagrangian symbol"};
 		
-		return (rule = rule_for<value_type>(lp_context));
+		return (rule = rule_for<value_type>(context));
 	}
 };
 
