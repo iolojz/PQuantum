@@ -5,8 +5,6 @@
 #ifndef PQUANTUM_LOGGING_HPP
 #define PQUANTUM_LOGGING_HPP
 
-#define BOOST_LOG_DYN_LINK
-
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/sources/record_ostream.hpp> // For BOOST_LOG_STREAM_WITH_PARAMS() used by BOOST_LOG_SEV()
 #include <boost/log/attributes/named_scope.hpp> // For BOOST_LOG_NAMED_SCOPE() for easy scope specification

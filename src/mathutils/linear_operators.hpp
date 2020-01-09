@@ -66,7 +66,7 @@ struct dirac_conjugate {
 	}
 };
 
-using linear_operator = std::variant<imaginary_unit, gamma_matrix, sigma_matrix, spacetime_derivative, dirac_operator, dirac_conjugate>;
+using linear_operator = std::variant<gamma_matrix, sigma_matrix, spacetime_derivative, dirac_operator, dirac_conjugate>;
 }
 
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::gamma_matrix, index )

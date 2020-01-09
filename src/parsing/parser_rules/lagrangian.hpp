@@ -8,6 +8,7 @@
 #include "../parse.hpp"
 #include "string_id.hpp"
 #include "std_variant.hpp"
+#include "number.hpp"
 #include "free_r_algebra.hpp"
 #include "polynomial_expression.hpp"
 
