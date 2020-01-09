@@ -15,7 +15,7 @@ set(CMAKE_CXX_EXTENSIONS NO)
 
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_STATIC_RUNTIME OFF)
-find_package(Boost 1.70.0 COMPONENTS log program_options REQUIRED)
+find_package(Boost 1.69.0 COMPONENTS log program_options REQUIRED)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 find_package(cxxmath REQUIRED)
