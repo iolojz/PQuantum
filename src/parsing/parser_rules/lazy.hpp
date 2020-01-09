@@ -26,7 +26,7 @@ template<class ID, class Attribute> static inline auto make_lazy( void ) {
 
 template<class Iterator, class Context, class Attribute, class LazyID, class LazyAttribute>
 inline bool parse_rule(
-	std::decay_t<decltype(make_lazy<LazyID, LazyAttribute>())>,
+	boost::spirit::x3::rule<detail::lazy<LazyID, LazyAttribute>, LazyAttribute>,
     Iterator &first, const Iterator &last,
     const Context &context, Attribute &attr
 ) {

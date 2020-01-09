@@ -61,11 +61,10 @@ struct rule_for_impl<arithmetic_core_tag<ArithmeticType, supports_division>> {
 	template<class Context> auto operator()( Context context ) const {
 		using boost::spirit::x3::lit;
 		
-		// FIXME: ...
-		//auto brackets_rule = lit("(") >> make_lazy<arithmetic_tag<ArithmeticType, supports_division>, ArithmeticType>() >> lit(")");
+		auto brackets_rule = lit("(") >> make_lazy<arithmetic_tag<ArithmeticType, supports_division>, ArithmeticType>() >> lit(")");
 		auto no_brackets_rule = rule_for<no_arithmetic_tag<ArithmeticType>>( context );
 		
-		auto rule_def = (/*brackets_rule | */no_brackets_rule);
+		auto rule_def = (brackets_rule | no_brackets_rule);
 		boost::spirit::x3::rule<arithmetic_core_tag<ArithmeticType, supports_division>, ArithmeticType> rule{"arithmetic core"};
 		return (rule = rule_def);
 	}

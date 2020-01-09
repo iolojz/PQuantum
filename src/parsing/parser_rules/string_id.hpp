@@ -37,8 +37,6 @@ struct rule_for_impl<string_id> {
 		auto rule_def = string_rule.operator[]( [uuid_gen] (auto &&x3_context) {
 			const auto &str = boost::spirit::x3::_attr(x3_context);
 			
-			std::cout << "foooo: " << str << std::endl;
-			
 			auto result = uuid_gen( str );
 			if( result.first )
 				boost::spirit::x3::_val(x3_context) = std::move( result.second );

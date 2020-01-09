@@ -38,9 +38,9 @@
 		"lagrangian": [
 			"\\ImaginaryUnit Z_\\psi \\bar{\\psi} \\DiracOperator \\psi",
 			"- \\ImaginaryUnit m \\bar{\\psi} \\psi",
-			"1/4 Z_A (\\partial_\\mu A_\\nu - \\partial_\\nu A_\\mu) (\\partial^\\mu A^\\nu - \\partial^\\nu A^\\mu)",
+			"1/4 Z_A * (\\partial_\\mu A_\\nu - \\partial_\\nu A_\\mu) * (\\partial^\\mu A^\\nu - \\partial^\\nu A^\\mu)",
 			"- e \\bar{\\psi} \\gamma_\\mu A^\\mu \\psi",
-			"\\xi (\\partial_\\mu A^\\mu)^2"
+			"\\xi (\\partial_\\mu A^\\mu) * (\\partial_\\nu A^\\nu)"
 		]
 	}
 }

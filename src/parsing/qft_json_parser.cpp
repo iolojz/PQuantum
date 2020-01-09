@@ -6,7 +6,7 @@
 #include <boost/mpl/bool.hpp>
 
 // FIXME: remove this when done
-#define BOOST_SPIRIT_X3_DEBUG
+// #define BOOST_SPIRIT_X3_DEBUG
 
 // FIXME: wtf?!
 namespace boost::spirit::x3::traits::detail {
