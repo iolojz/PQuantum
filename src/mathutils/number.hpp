@@ -76,7 +76,7 @@ template<> struct tag_of<PQuantum::mathutils::number> {
 };*/
 
 template<> struct default_set<PQuantum::mathutils::number_tag> {
-	using type = cxxmath::concepts::total_order<
+	using type = cxxmath::concepts::set<
 		PQuantum::mathutils::model_number::equal
 	>;
 };
@@ -84,7 +84,7 @@ template<> struct default_set<PQuantum::mathutils::number_tag> {
 template<> struct default_monoid<PQuantum::mathutils::number_tag> {
 	using type = cxxmath::concepts::assignable_monoid<
 	    PQuantum::mathutils::model_number::multiply_assign,
-		PQuantum::mathutils::model_number::zero,
+		PQuantum::mathutils::model_number::one,
 		true_implementation
 	>;
 };

@@ -7,6 +7,8 @@
 
 #include "rule_for_fwd.hpp"
 
+#include "support/variant.hpp"
+
 #include <boost/spirit/home/x3.hpp>
 
 namespace PQuantum::parsing::parser_rules {
@@ -20,11 +22,12 @@ struct rule_for_impl<string> {
 		using boost::spirit::x3::alpha;
 		using boost::spirit::x3::alnum;
 		using boost::spirit::x3::lexeme;
+		using boost::spirit::x3::repeat;
 		
 		auto special_chars = char_('\\') | char_('{') | char_("_") | char_("^") | char_('}');
-		auto core = ((char_('\\') >> alpha) | alpha) >> *(alnum | special_chars);
+		auto begin = (char_('\\') >> alpha) | repeat(1)[alpha];
+		auto rule_def = lexeme[ begin >> *(alnum | special_chars) ];
 		
-		auto rule_def = lexeme[core].operator[]( [] (auto &&) {} );
 		boost::spirit::x3::rule<string, std::string> rule{"string"};
 		return (rule = rule_def);
 	}

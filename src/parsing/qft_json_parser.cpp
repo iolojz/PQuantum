@@ -145,7 +145,9 @@ model::model_specification qft_json_parser::parse_model_specification(const json
 	
 	std::vector<std::string> parameters;
 	std::transform(property_tree.get_child("parameters").begin(), property_tree.get_child("parameters").end(),
-				   std::back_inserter(parameters), [&](const auto &node) { return node.first; });
+				   std::back_inserter(parameters), [&](const auto &node) {
+		return node.second.template get<std::string>("");
+	});
 	
 	std::map<mathutils::variable_id, std::string> parameter_id_map;
 	std::map<std::string, mathutils::variable_id> parameter_name_map;
