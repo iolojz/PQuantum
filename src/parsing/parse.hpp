@@ -13,6 +13,33 @@
 
 namespace PQuantum::parsing {
 struct pquantum_context;
+template<class NodeData, class InputIterator, class Context>
+tree_node<NodeData> parse_tree( InputIterator begin, InputIterator end, Context context ) {
+	using boost::spirit::x3::with;
+	
+	BOOST_LOG_NAMED_SCOPE("parsing::parse_tree()");
+	logging::severity_logger logger;
+	
+	tree_node<NodeData> root;
+	bool parsing_result = boost::spirit::x3::phrase_parse(
+		begin, end,
+		with<pquantum_context>( context )[parser_rules::rule_for<tree_node<NodeData>>( context )],
+		boost::spirit::x3::ascii::space, root
+	);
+	
+	if(parsing_result == false) {
+		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Cannot parse input string: \"" << string << "\"";
+		error::exit_upon_error();
+	}
+	
+	if(it != string.end()) {
+		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Cannot parse end of input string: \""
+															  << std::string(it, string.end()) << "\"";
+		error::exit_upon_error();
+	}
+	
+	return t;
+}
 
 template<class T, class Context>
 T parse(const std::string &string, Context context) {
