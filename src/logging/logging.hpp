@@ -5,14 +5,20 @@
 #ifndef PQUANTUM_LOGGING_HPP
 #define PQUANTUM_LOGGING_HPP
 
+#ifndef BOOST_LOG_DYN_LINK
+#define BOOST_LOG_DYN_LINK
+#endif
+
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/sources/record_ostream.hpp> // For BOOST_LOG_STREAM_WITH_PARAMS() used by BOOST_LOG_SEV()
 #include <boost/log/attributes/named_scope.hpp> // For BOOST_LOG_NAMED_SCOPE() for easy scope specification
 
-namespace PQuantum::logging {
-void setup_logging_facilities(void);
+namespace PQuantum::logging
+{
+void setup_logging_facilities( void );
 
-namespace severity_level {
+namespace severity_level
+{
 /** FIXME: Unfortunately, this needs to be an old-school enum to get
  * things to work with boost log...
  **/
