@@ -18,6 +18,14 @@ namespace PQuantum::model
 struct lagrangian_symbol {
 	std::variant<mathutils::linear_operator, classical_field_id> value;
 };
+
+std::ostream &operator<<( std::ostream &os, const lagrangian_symbol &ls ) {
+	if( std::holds_alternative<mathutils::linear_operator>( ls.value ) )
+		return os << std::get<mathutils::linear_operator>( ls.value );
+	else
+		return os << std::get<classical_field_id>( ls.value );
+}
+
 using lagrangian_coefficient = mathutils::polynomial_expression;
 
 namespace model_lagrangian_symbol

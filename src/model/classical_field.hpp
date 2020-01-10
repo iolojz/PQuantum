@@ -10,6 +10,7 @@
 #include <string>
 
 #include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 
@@ -37,6 +38,10 @@ struct classical_field_id
 		return id == field_id.id;
 	}
 };
+
+std::ostream &operator<<( std::ostream &os, const classical_field_id &id ) {
+	return os << id.id;
+}
 }
 }
 

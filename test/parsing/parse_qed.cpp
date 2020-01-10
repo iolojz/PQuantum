@@ -27,18 +27,30 @@ BOOST_AUTO_TEST_CASE(parse_qed) {
 	BOOST_TEST(model.name() == "qed");
 	
 	auto field_ids = model.field_ids();
-	BOOST_TEST( field_ids.size() == 2 );
+	BOOST_TEST( field_ids.size() == 3 );
 	
-	auto psi_id = field_ids.front();
-	auto psi_specification = model.field_specification_for_id( field_ids.front());
-	
-	auto a_id = field_ids.front();
-	auto a_specification = model.field_specification_for_id( field_ids.back());
-	
-	if( psi_specification.name == "A" && a_specification.name == "\\psi" ) {
-		std::swap(psi_id, a_id);
-		std::swap(psi_specification, a_specification);
+	model::classical_field_id psi_id, a_id, bar_psi_id;
+	bool has_psi = false, has_a = false, has_bar_psi = false;
+	for( const auto &field_id : field_ids ) {
+		if( model.field_specification_for_id( field_id ).name == "\\psi" ) {
+			psi_id = field_id;
+			has_psi = true;
+		} else if( model.field_specification_for_id( field_id ).name == "A" ) {
+			a_id = field_id;
+			has_a = true;
+		} else if( model.field_specification_for_id( field_id ).name == "\\bar{\\psi}" ) {
+			bar_psi_id = field_id;
+			has_bar_psi = true;
+		}
 	}
+	
+	BOOST_TEST(has_psi);
+	BOOST_TEST(has_a);
+	BOOST_TEST(has_bar_psi);
+	
+	auto psi_specification = model.field_specification_for_id( psi_id );
+	auto a_specification = model.field_specification_for_id( a_id );
+	auto bar_psi_specification = model.field_specification_for_id( bar_psi_id );
 	
 	BOOST_TEST( psi_specification.name == "\\psi" );
 	BOOST_TEST(
@@ -49,6 +61,12 @@ BOOST_AUTO_TEST_CASE(parse_qed) {
 	BOOST_TEST( a_specification.name == "A" );
 	BOOST_TEST( a_specification.algebraic_field == mathutils::manifold_types::vector_space::algebraic_field::real );
 	BOOST_TEST( std::holds_alternative<mathutils::spacetime_dimension>( a_specification.dimension ));
+	
+	BOOST_TEST( bar_psi_specification.name == "\\bar{\\psi}" );
+	BOOST_TEST(
+			bar_psi_specification.algebraic_field == mathutils::manifold_types::vector_space::algebraic_field::complex_grassmann );
+	BOOST_TEST( std::holds_alternative<int>( bar_psi_specification.dimension ));
+	BOOST_TEST( std::get<int>( bar_psi_specification.dimension ) == 4 );
 	
 	const auto &spacetime = model.spacetime();
 	BOOST_TEST( std::holds_alternative<mathutils::manifold_types::vector_space>( spacetime ));

@@ -41,6 +41,10 @@ struct sigma_matrix
 	}
 };
 
+std::ostream &operator<<( std::ostream &os, const sigma_matrix &sm ) {
+	return os << "\\sigma" << sm.index1 << ", " << sm.index2;
+}
+
 struct spacetime_derivative
 {
 	spacetime_index index;
@@ -51,6 +55,10 @@ struct spacetime_derivative
 	}
 };
 
+std::ostream &operator<<( std::ostream &os, const spacetime_derivative &sd ) {
+	return os << "\\partial" << sd.index;
+}
+
 struct dirac_operator
 {
 	constexpr bool operator<( const dirac_operator & ) const
@@ -59,20 +67,22 @@ struct dirac_operator
 	}
 };
 
-struct dirac_conjugate {
-	constexpr bool operator<( const dirac_conjugate & ) const
-	{
-		return false;
-	}
-};
+std::ostream &operator<<( std::ostream &os, const dirac_operator & ) {
+	return os << "\\DiracOperator";
+}
 
-using linear_operator = std::variant<gamma_matrix, sigma_matrix, spacetime_derivative, dirac_operator, dirac_conjugate>;
+using linear_operator = std::variant<gamma_matrix, sigma_matrix, spacetime_derivative, dirac_operator>;
+
+std::ostream &operator<<( std::ostream &os, const linear_operator &lop ) {
+	return std::visit( [&os] ( const auto &o ) -> std::ostream & {
+		return os << o;
+	}, lop );
+}
 }
 
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::gamma_matrix, index )
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::sigma_matrix, index1, index2 )
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::spacetime_derivative, index )
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::dirac_operator )
-BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::dirac_conjugate )
 
 #endif //PQUANTUM_LINEAR_OPERATORS_HPP

@@ -112,6 +112,28 @@ model::model_specification qft_json_parser::parse_model_specification(const json
 					   return parse_field_specification(node);
 				   });
 	
+	std::vector<model::classical_field_specification> conjugate_field_specifications;
+	for( auto &&spec : field_specifications) {
+		if( spec.algebraic_field == mathutils::manifold_types::vector_space::algebraic_field::complex )
+			conjugate_field_specifications.push_back( model::classical_field_specification{
+				std::string{"\\conj{"} + spec.name + "}",
+				spec.algebraic_field,
+				spec.dimension
+			} );
+		else if( spec.algebraic_field == mathutils::manifold_types::vector_space::algebraic_field::complex_grassmann )
+			conjugate_field_specifications.emplace_back( model::classical_field_specification{
+					std::string{"\\bar{"} + spec.name + "}",
+					spec.algebraic_field,
+					spec.dimension
+			} );
+	}
+	field_specifications.insert(
+		field_specifications.end(),
+		std::make_move_iterator( conjugate_field_specifications.begin() ),
+		std::make_move_iterator( conjugate_field_specifications.end() )
+	);
+	
+	
 	std::map<model::classical_field_id, model::classical_field_specification> field_id_map;
 	std::map<std::string, model::classical_field_id> field_name_map;
 	for(auto &&spec : field_specifications) {
@@ -238,7 +260,11 @@ model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::
 		parser_rules::lagrangian_parsing_context context = make_lagrangian_parsing_context(uuid_generator, field_id_map,
 																						   parameter_id_map,
 																						   index_id_map);
-		cxxmath::add_assign(lagrangian, PQuantum::parsing::parse<model::lagrangian>(std::move(term), context));
+		
+		auto result = PQuantum::parsing::parse<model::lagrangian>(std::move(term), context);
+		std::cout << "parsing result = " << result << std::endl;
+		
+		cxxmath::add_assign(lagrangian, std::move(result));
 	});
 	
 	return lagrangian;

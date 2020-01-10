@@ -12,6 +12,7 @@
 
 #include <string>
 #include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 
 #include <boost/fusion/include/adapt_struct.hpp>
@@ -21,14 +22,24 @@ struct variable_id {
 	boost::uuids::uuid id;
 	
 	bool operator==(const variable_id &v) const noexcept { return id == v.id; }
-	
 	bool operator<(const variable_id &v) const noexcept { return id < v.id; }
 };
+
+std::ostream &operator<<( std::ostream &os, const variable_id &id ) {
+	return os << id.id;
+}
 
 struct expression_symbol
 {
 	std::variant<variable_id, spacetime_dimension> value;
 };
+
+std::ostream &operator<<( std::ostream &os, const expression_symbol &es ) {
+	if( std::holds_alternative<variable_id>( es.value ) )
+		return os << std::get<variable_id>( es.value );
+	else
+		return os << std::get<spacetime_dimension>( es.value );
+}
 
 namespace model_expression_symbol
 {

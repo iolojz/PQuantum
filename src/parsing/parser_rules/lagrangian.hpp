@@ -119,19 +119,6 @@ struct rule_for_impl<mathutils::dirac_operator> {
 };
 
 template<>
-struct rule_for_impl<mathutils::dirac_conjugate> {
-	template<class Context>
-	auto operator()(Context context) const {
-		using boost::spirit::x3::lit;
-		auto field_rule = rule_for<model::classical_field_id>( context );
-		
-		auto rule_def = (lit("\\bar{") >> field_rule >> lit("}")).operator[]([](auto &&) {});
-		boost::spirit::x3::rule<mathutils::dirac_operator, mathutils::dirac_operator> rule{"dirac operator"};
-		return (rule = rule_def);
-	}
-};
-
-template<>
 struct rule_for_impl<model::lagrangian_symbol> {
 	template<class Context>
 	auto operator()(Context context) const {

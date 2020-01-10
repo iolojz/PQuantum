@@ -24,6 +24,10 @@ struct spacetime_dimension
 	{ return false; }
 };
 
+std::ostream &operator<<( std::ostream &os, const spacetime_dimension & ) {
+	return os << "D";
+}
+
 namespace manifold_types
 {
 struct vector_space
@@ -76,10 +80,43 @@ struct vector_space
 };
 
 std::ostream &
-operator<<( std::ostream &os, const PQuantum::mathutils::manifold_types::vector_space::algebraic_field &field );
+operator<<( std::ostream &os, const PQuantum::mathutils::manifold_types::vector_space::algebraic_field &field )
+{
+	switch( field ) {
+		case PQuantum::mathutils::manifold_types::vector_space::algebraic_field::real:
+			os << "real";
+			break;
+		case PQuantum::mathutils::manifold_types::vector_space::algebraic_field::complex:
+			os << "complex";
+			break;
+		case PQuantum::mathutils::manifold_types::vector_space::algebraic_field::complex_grassmann:
+			os << "complex grassmann";
+			break;
+	}
+	
+	return os;
+}
 
 std::ostream &
-operator<<( std::ostream &os, const PQuantum::mathutils::manifold_types::vector_space::vector_space_metric &metric );
+operator<<( std::ostream &os, const PQuantum::mathutils::manifold_types::vector_space::vector_space_metric &metric )
+{
+	switch( metric ) {
+		case PQuantum::mathutils::manifold_types::vector_space::vector_space_metric::unspecified:
+			os << "unspecified";
+			break;
+		case PQuantum::mathutils::manifold_types::vector_space::vector_space_metric::euclidean:
+			os << "euclidean";
+			break;
+		case PQuantum::mathutils::manifold_types::vector_space::vector_space_metric::lorentzian:
+			os << "lorentzian";
+			break;
+		case PQuantum::mathutils::manifold_types::vector_space::vector_space_metric::complex_nondegenerate:
+			os << "complex non-degenerate";
+			break;
+	}
+	
+	return os;
+}
 }
 
 using manifold_specification = std::variant<manifold_types::vector_space>;
