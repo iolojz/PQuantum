@@ -5,7 +5,7 @@
 #ifndef PQUANTUM_IO_STRING_ID_HPP
 #define PQUANTUM_IO_STRING_ID_HPP
 
-#include "rule_for_fwd.hpp"
+#include "node_rule_for_fwd.hpp"
 
 #include "support/variant.hpp"
 

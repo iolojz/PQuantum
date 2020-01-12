@@ -5,7 +5,7 @@
 #ifndef PQUANTUM_PARSING_PARSE_HPP
 #define PQUANTUM_PARSING_PARSE_HPP
 
-#include "parser_rules/rule_for_fwd.hpp"
+#include "parsing/parser_rules/node_rule_for_fwd.hpp"
 
 #include <string>
 
@@ -14,27 +14,28 @@
 namespace PQuantum::parsing {
 struct pquantum_context;
 template<class NodeData, class InputIterator, class Context>
-tree_node<NodeData> parse_tree( InputIterator begin, InputIterator end, Context context ) {
-	using boost::spirit::x3::with;
-	
-	BOOST_LOG_NAMED_SCOPE("parsing::parse_tree()");
+tree_node<NodeData> parse_tree( InputIterator begin, InputIterator end, Context context )
+{
+	BOOST_LOG_NAMED_SCOPE( "parsing::parse_tree()" );
 	logging::severity_logger logger;
 	
-	tree_node<NodeData> root;
-	bool parsing_result = boost::spirit::x3::phrase_parse(
-		begin, end,
-		with<pquantum_context>( context )[parser_rules::rule_for<tree_node<NodeData>>( context )],
-		boost::spirit::x3::ascii::space, root
-	);
+	using boost::spirit::x3::with;
+	using node_type = tree_node<NodeData>;
+	template<class Data> using node_rule_for = parser_rules::node_rule_for<node_type, Data>;
 	
-	if(parsing_result == false) {
-		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Cannot parse input string: \"" << string << "\"";
+	tree_node <NodeData> root;
+	bool parsing_result = boost::spirit::x3::phrase_parse( begin, end, with<pquantum_context>(
+	context )[parser_rules::node_rule_for<NodeData>( context )], boost::spirit::x3::ascii::space, root );
+	
+	if( parsing_result == false ) {
+		BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Cannot parse input string: \""
+																<< std::string( it, end ) << "\"";
 		error::exit_upon_error();
 	}
 	
 	if(it != string.end()) {
 		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Cannot parse end of input string: \""
-															  << std::string(it, string.end()) << "\"";
+															  << std::string( it, end ) << "\"";
 		error::exit_upon_error();
 	}
 	

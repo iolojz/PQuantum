@@ -5,7 +5,7 @@
 #ifndef PQUANTUM_PARSING_PARSER_RULES_RECURSIVE_HPP
 #define PQUANTUM_PARSING_PARSER_RULES_RECURSIVE_HPP
 
-#include "../parse.hpp"
+#include "parsing/parse_tree.hpp"
 
 namespace PQuantum::parsing::parser_rules {
 namespace detail {

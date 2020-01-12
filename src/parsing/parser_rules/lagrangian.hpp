@@ -5,22 +5,93 @@
 #ifndef PQUANTUM_PARSING_PARSER_RULES_LAGRANGIAN_HPP
 #define PQUANTUM_PARSING_PARSER_RULES_LAGRANGIAN_HPP
 
-#include "../parse.hpp"
-#include "string_id.hpp"
-#include "std_variant.hpp"
-#include "number.hpp"
-#include "free_r_algebra.hpp"
-#include "polynomial_expression.hpp"
+#include "support/tree.hpp"
 
-#include "support/variant.hpp"
+#include "mathutils/lagrangian.hpp"
 
-namespace PQuantum::parsing::parser_rules {
-struct lagrangian_parsing_context {
-	std::function<std::pair<bool, boost::uuids::uuid>(std::string)> field_id_lookup;
-	std::function<std::pair<bool, boost::uuids::uuid>(std::string)> parameter_id_lookup;
-	std::function<std::pair<bool, boost::uuids::uuid>(std::string)> index_id_lookup_and_generate;
+namespace PQuantum::parsing::parser_rules
+{
+struct lagrangian_parsing_context
+{
+	std::function<std::pair<bool, boost::uuids::uuid>( std::string )> field_id_lookup;
+	std::function<std::pair<bool, boost::uuids::uuid>( std::string )> parameter_id_lookup;
+	std::function<std::pair<bool, boost::uuids::uuid>( std::string )> index_id_lookup_and_generate;
 };
 
+template<std::string_view name>
+struct rule_for_impl<tree_node < mathutils::node_data::sum>>
+{
+template<class Context>
+auto operator()( Context context ) const
+{
+	return std::make_pair( rule_for < tree_node < lagrangian_node_data >> ( context ) % '+', "sum" );
+}
+};
+
+template<std::string_view name>
+struct rule_for_impl<tree_node < mathutils::node_data::difference>> {
+template<class Context>
+auto operator()( Context context ) const
+{
+	auto lnode = rule_for < tree_node < lagrangian_node_data >> ( context );
+	return std::make_pair( lnode >> '-' >> lnode, "difference" );
+}
+
+};
+
+template<std::string_view name>
+struct rule_for_impl<tree_node < mathutils::node_data::product>> {
+template<class Context>
+auto operator()( Context context ) const
+{
+	return std::make_pair( rule_for < tree_node < lagrangian_node_data >> ( context ) % '+', "product" );
+}
+
+};
+
+template<std::string_view name>
+struct rule_for_impl<tree_node < mathutils::node_data::quotient>> {
+template<class Context>
+auto operator()( Context context ) const
+{
+	auto lnode = rule_for < tree_node < lagrangian_node_data >> ( context );
+	return std::make_pair( lnode >> '/' >> lnode, "quotient" );
+}
+
+};
+
+template<std::string_view name>
+struct rule_for_impl<tree_node < mathutils::node_data::gamma_matrix>> {
+template<class Context>
+auto operator()( Context context ) const
+{
+	auto lnode = rule_for < tree_node < lagrangian_node_data >> ( context );
+	return std::make_pair( lnode >> '/' >> lnode, "quotient" );
+}
+
+};
+
+mathutils::node_data::gamma_matrix,
+mathutils::node_data::sigma_matrix,
+mathutils::node_data::spacetime_derivative,
+mathutils::node_data::dirac_operator,
+mathutils::node_data::spacetime_index,
+classical_field_id,
+variable_id
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 struct index_core;
 
 template<>
@@ -130,8 +201,6 @@ struct rule_for_impl<model::lagrangian_symbol> {
 };
 
 }
-
-#include "polynomial_expression.hpp"
-#include "free_r_algebra.hpp"
+*/
 
 #endif //PQUANTUM_PARSING_PARSER_RULES_LAGRANGIAN_HPP

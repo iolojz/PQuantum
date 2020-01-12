@@ -5,7 +5,7 @@
 #ifndef PQUANTUM_MODEL_LAGRANGIAN_HPP
 #define PQUANTUM_MODEL_LAGRANGIAN_HPP
 
-#include "mathutils/expressions.hpp"
+#include "mathutils/expression_node.hpp"
 #include "mathutils/linear_operators.hpp"
 
 #include "classical_field.hpp"
@@ -15,12 +15,19 @@
 
 namespace PQuantum::model
 {
-struct lagrangian_symbol {
+using lagrangian_node_data = std::variant<mathutils::node_data::sum, mathutils::node_data::difference, mathutils::node_data::product, mathutils::node_data::quotient, mathutils::node_data::gamma_matrix, mathutils::node_data::sigma_matrix, mathutils::node_data::spacetime_derivative, mathutils::node_data::dirac_operator, classical_field_id, variable_id>;
+
+
+
+
+struct lagrangian_symbol
+{
 	std::variant<mathutils::linear_operator, classical_field_id> value;
 };
 
-std::ostream &operator<<( std::ostream &os, const lagrangian_symbol &ls ) {
-	if( std::holds_alternative<mathutils::linear_operator>( ls.value ) )
+std::ostream &operator<<( std::ostream &os, const lagrangian_symbol &ls )
+{
+	if( std::holds_alternative<mathutils::linear_operator>( ls.value ))
 		return os << std::get<mathutils::linear_operator>( ls.value );
 	else
 		return os << std::get<classical_field_id>( ls.value );

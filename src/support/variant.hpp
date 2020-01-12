@@ -32,6 +32,14 @@ std::variant<Alternatives...> to_std_variant( BoostVariant &&v )
 	boost::apply_visitor( visitor, std::forward<BoostVariant>( v ));
 	return std_v;
 }
+
+template<class Tuple>
+struct std_variant_over_tuple_types;
+template<class ...Types>
+struct std_variant_over_tuple_types<std::tuple<Types...>>
+{
+	using type = std::variant<Types...>;
+};
 }
 
 #endif //PQUANTUM_VARIANT_HPP
