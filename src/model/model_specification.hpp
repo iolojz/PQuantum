@@ -27,16 +27,15 @@ class model_specification {
 	mathutils::manifold_specification spacetime_manifold;
 	std::map<classical_field_id, classical_field_specification> field_id_map;
 	std::map<mathutils::variable_id, std::string> parameter_id_map;
-	lagrangian lag;
+	lagrangian_tree lag;
 public:
-	model_specification(std::string &&n, mathutils::manifold_specification &&m,
-						std::map<classical_field_id, classical_field_specification> &&fi,
-						std::map<mathutils::variable_id, std::string> &&pi, lagrangian &&l);
+	model_specification( std::string &&n, mathutils::manifold_specification &&m,
+						 std::map<classical_field_id, classical_field_specification> &&fi,
+						 std::map<mathutils::variable_id, std::string> &&pi, lagrangian_tree &&l );
 	
-	const std::string &name(void) const { return model_name; }
+	const std::string &name( void ) const { return model_name; }
 	
-	const mathutils::manifold_specification &spacetime( void ) const
-	{ return spacetime_manifold; }
+	const mathutils::manifold_specification &spacetime( void ) const { return spacetime_manifold; }
 	
 	std::vector<classical_field_id> field_ids( void ) const
 	{
@@ -46,13 +45,11 @@ public:
 		return fields;
 	}
 	
-	const classical_field_specification &field_specification_for_id( const classical_field_id &id ) const
-	{
+	const classical_field_specification &field_specification_for_id( const classical_field_id &id ) const {
 		return field_id_map.at( id );
 	}
 	
-	const lagrangian &model_lagrangian( void ) const
-	{ return lag; }
+	const lagrangian_tree &model_lagrangian( void ) const { return lag; }
 };
 }
 }

@@ -5,7 +5,7 @@
 #ifndef PQUANTUM_PARSING_PARSER_RULES_NUMBER_HPP
 #define PQUANTUM_PARSING_PARSER_RULES_NUMBER_HPP
 
-#include "arithmetic.hpp"
+#include "linear_operators.hpp"
 
 namespace PQuantum::parsing::parser_rules {
 struct real_number;

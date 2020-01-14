@@ -21,12 +21,9 @@ template<class U> struct has_type_value_type<boost::uuids::uuid, U> {
 #include <iostream>
 
 #include "qft_json_parser.hpp"
-#include "parse_tree.hpp"
+#include "support/parsing.hpp"
 
 #include "logging/logging.hpp"
-
-#include "parsing/parse_tree.hpp"
-#include "parsing/parser_rules/lagrangian.hpp"
 
 #include "model/model_specification.hpp"
 #include "model/lagrangian.hpp"
@@ -38,30 +35,31 @@ template<class U> struct has_type_value_type<boost::uuids::uuid, U> {
 #include <boost/iterator/transform_iterator.hpp>
 
 namespace PQuantum::parsing {
-static auto make_lagrangian_parsing_context(boost::uuids::random_generator &uuid_generator,
-											const std::map<std::string, model::classical_field_id> &field_id_map,
-											const std::map<std::string, mathutils::variable_id> &parameter_id_map,
-											std::map<std::string, boost::uuids::uuid> &index_id_map) {
-	auto field_id_lookup = [&field_id_map] (auto &&str) -> std::pair<bool, boost::uuids::uuid> {
-		auto field_id_it = field_id_map.find(str);
-		if(field_id_it != field_id_map.end())
+static auto make_qft_parsing_context( boost::uuids::random_generator &uuid_generator,
+									  const std::map<std::string, model::classical_field_id> &field_id_map,
+									  const std::map<std::string, mathutils::variable_id> &parameter_id_map,
+									  std::map<std::string, boost::uuids::uuid> &index_id_map ) {
+	auto field_id_lookup = [&field_id_map]( auto &&str ) -> std::pair<bool, boost::uuids::uuid> {
+		auto field_id_it = field_id_map.find( str );
+		if( field_id_it != field_id_map.end())
 			return { true, field_id_it->second.id };
 		
-		return { false, {} };
+		return { false, {}};
 	};
 	auto parameter_id_lookup = [&parameter_id_map] (auto &&str) -> std::pair<bool, boost::uuids::uuid> {
 		auto parameter_id_it = parameter_id_map.find(str);
-		if(parameter_id_it != parameter_id_map.end())
+		if( parameter_id_it != parameter_id_map.end())
 			return { true, parameter_id_it->second.id };
 		
-		return { false, {} };
+		return { false, {}};
 	};
-	auto index_id_lookup_and_generate = [&uuid_generator, &index_id_map] (auto &&str) -> std::pair<bool, boost::uuids::uuid> {
-		auto result = index_id_map.emplace(std::move(str), uuid_generator());
+	auto index_id_lookup_and_generate = [&uuid_generator, &index_id_map](
+		auto &&str ) -> std::pair<bool, boost::uuids::uuid> {
+		auto result = index_id_map.emplace( std::move( str ), uuid_generator());
 		return { true, result.first->second };
 	};
 	
-	return parser_rules::lagrangian_parsing_context{field_id_lookup, parameter_id_lookup, index_id_lookup_and_generate};
+	return qft_parsing_context{ field_id_lookup, parameter_id_lookup, index_id_lookup_and_generate };
 }
 
 qft_json_parser::qft_json_parser(const boost::property_tree::ptree &property_tree) : header{
@@ -247,28 +245,25 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 	return { std::move( field ), std::move( dimension ), std::move( metric ) };
 }
 
-model::lagrangian qft_json_parser::parse_lagrangian(const boost::property_tree::ptree &property_tree,
-													const std::map<std::string, model::classical_field_id> &field_id_map,
-													const std::map<std::string, mathutils::variable_id> &parameter_id_map) {
-	BOOST_LOG_NAMED_SCOPE("model::parse_lagrangian()");
+model::lagrangian_tree qft_json_parser::parse_lagrangian( const boost::property_tree::ptree &property_tree,
+														  const std::map<std::string, model::classical_field_id> &field_id_map,
+														  const std::map<std::string, mathutils::variable_id> &parameter_id_map ) {
+	BOOST_LOG_NAMED_SCOPE( "model::parse_lagrangian()" );
 	logging::severity_logger logger;
 	
-	model::lagrangian lagrangian;
-	std::for_each(property_tree.begin(), property_tree.end(), [&](const auto &key_value_pair) {
-		const boost::property_tree::ptree &node = key_value_pair.second;
-		std::string term = node.get<std::string>("");
-		
-		std::map<std::string, boost::uuids::uuid> index_id_map;
-		parser_rules::lagrangian_parsing_context context = make_lagrangian_parsing_context(uuid_generator, field_id_map,
-																						   parameter_id_map,
-																						   index_id_map);
-		
-		auto result = PQuantum::parsing::parse<model::lagrangian>(std::move(term), context);
-		std::cout << "parsing result = " << result << std::endl;
-		
-		cxxmath::add_assign(lagrangian, std::move(result));
-	});
+	std::vector<model::lagrangian_tree> lagrangian_parts;
+	std::transform( property_tree.begin(), property_tree.end(),
+					std::back_inserter( lagrangian_parts ), [&]( const auto &key_value_pair ) {
+			const boost::property_tree::ptree &node = key_value_pair.second;
+			std::string term = node.get<std::string>( "" );
+			
+			std::map<std::string, boost::uuids::uuid> index_id_map;
+			qft_parsing_context context = make_qft_parsing_context( uuid_generator, field_id_map, parameter_id_map,
+																	index_id_map );
+			
+			return PQuantum::support::parsing::parse<model::lagrangian_tree>( term.begin(), term.end(), context );
+		} );
 	
-	return lagrangian;
+	return model::lagrangian_tree{ mathutils::linear_operators::sum{}, std::move( lagrangian_parts ) };
 }
 }

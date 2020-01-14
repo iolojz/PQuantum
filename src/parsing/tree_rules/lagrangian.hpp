@@ -11,12 +11,6 @@
 
 namespace PQuantum::parsing::parser_rules
 {
-struct lagrangian_parsing_context
-{
-	std::function<std::pair<bool, boost::uuids::uuid>( std::string )> field_id_lookup;
-	std::function<std::pair<bool, boost::uuids::uuid>( std::string )> parameter_id_lookup;
-	std::function<std::pair<bool, boost::uuids::uuid>( std::string )> index_id_lookup_and_generate;
-};
 
 template<std::string_view name>
 struct rule_for_impl<tree_node < mathutils::node_data::sum>>
