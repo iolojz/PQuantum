@@ -2,38 +2,38 @@
 // Created by jayz on 09.01.20.
 //
 
-#ifndef PQUANTUM_PARSING_PARSER_RULES_ARITHMETIC_HPP
-#define PQUANTUM_PARSING_PARSER_RULES_ARITHMETIC_HPP
+#ifndef PQUANTUM_PARSING_TYPE_RULES_LINEAR_OPERATORS_HPP
+#define PQUANTUM_PARSING_TYPE_RULES_LINEAR_OPERATORS_HPP
 
 #include "mathutils/linear_operators.hpp"
 
-#include "child.hpp"
+namespace PQuantum::support::parsing {
+template<class Child>
+struct rule_for_impl<tree::tree_node_incarnation < mathutils::linear_operators::product, Child>> {
+static constexpr const char *name = "product";
 
-#include <numeric>
+static auto apply( void ) {
+	constexpr auto node_data = mathutils::linear_operators::product{};
+	auto child_rule = rule_for<Child>();
+	return boost::spirit::x3::attr( node_data ) >> ( child_rule % '*' );
+}
+};
 
-namespace PQuantum::parsing::parser_rules {
-struct node_rule_for_impl<mathutils::linear_operators::product> {
-	static constexpr std::string_view = "product";
-	
-	template<class Context>
-	static auto apply( Context context ) {
-		constexpr auto node_data = mathutils::linear_operators::product{};
-		return boost::spirit::x3::attr( node_data ) >> ( node_rule_for_child( context ) % '*' );
-	}
+template<class Child>
+struct rule_for_impl<tree::tree_node_incarnation < mathutils::linear_operators::sum, Child>> {
+static constexpr const char *name = "sum";
+
+static auto apply( void ) {
+	constexpr auto node_data = mathutils::linear_operators::sum{};
+	auto child_rule = lazy_rule_for<Child>();
+	return boost::spirit::x3::attr( node_data ) >> ( child_rule % '+' );
 }
 
-struct node_rule_for_impl<mathutils::linear_operators::sum> {
-	static constexpr std::string_view = "sum";
-	
-	template<class Context>
-	static auto apply( Context context ) {
-		constexpr auto node_data = mathutils::linear_operators::sum{};
-		return boost::spirit::x3::attr( node_data ) >> ( node_rule_for_child( context ) % '+' );
-	}
-}
-
+};
+/*
+template<>
 struct node_rule_for_impl<mathutils::linear_operators::spacetime_derivative> {
-	static constexpr std::string_view = "spacetime_derivative";
+	static constexpr const char *name = "spacetime_derivative";
 	
 	template<class Context>
 	static auto apply( Context context ) {
@@ -41,8 +41,9 @@ struct node_rule_for_impl<mathutils::linear_operators::spacetime_derivative> {
 	}
 }
 
+template<>
 struct node_rule_for_impl<mathutils::linear_operators::dirac_operator> {
-	static constexpr std::string_view = "dirac_operator";
+	static constexpr const char *name = "dirac_operator";
 	
 	template<class Context>
 	static auto apply( Context context ) {
@@ -50,30 +51,20 @@ struct node_rule_for_impl<mathutils::linear_operators::dirac_operator> {
 	}
 }
 
+template<>
 struct node_rule_for_impl<mathutils::linear_operators::dirac_operator> {
-	static constexpr std::string_view = "multiplication_operator";
+	static constexpr const char *name = "multiplication_operator";
 	
 	template<class Context>
 	static auto apply( Context context ) {
 		return boost::spirit::x3::lit( "\\DiracOperator" );
 	}
-}
-
-
-namespace detail {
-template<int N>
-struct wrap_at_c {
-	template<class T>
-	decltype( auto ) operator()( T &&t ) const
-	{
-		return boost::fusion::at_c<N>( std::forward<T>( t ));
-	}
-};
+}*/
 }
 
 
 
-
+/*
 
 
 template<class ArithmeticType, bool supports_division = true> struct arithmetic_tag;
@@ -185,5 +176,6 @@ struct rule_for_impl<arithmetic_product_tag<ArithmeticType, supports_division>> 
 
 
 }
+*/
 
-#endif //PQUANTUM_PARSING_PARSER_RULES_ARITHMETIC_HPP
+#endif //PQUANTUM_PARSING_TYPE_RULES_LINEAR_OPERATORS_HPP

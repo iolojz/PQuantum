@@ -21,7 +21,9 @@ template<class U> struct has_type_value_type<boost::uuids::uuid, U> {
 #include <iostream>
 
 #include "qft_json_parser.hpp"
+
 #include "support/parsing.hpp"
+#include "parsing/type_rules/linear_operators.hpp"
 
 #include "logging/logging.hpp"
 
