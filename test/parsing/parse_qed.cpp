@@ -77,8 +77,6 @@ BOOST_AUTO_TEST_CASE(parse_qed) {
 	BOOST_TEST(
 	spacetime_vector_space.metric == mathutils::manifold_types::vector_space::vector_space_metric::euclidean );
 	
-	const auto &lagrangian_monomial_map = model.model_lagrangian().monomials();
-	BOOST_TEST(lagrangian_monomial_map.size() == 5);
 	
 	/*
 	const auto &kinetic_coefficient = lagrangian_monomial_map.at( { psi_id, mathutils::dirac_operator{}, psi_id } );

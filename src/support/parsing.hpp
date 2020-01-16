@@ -9,6 +9,11 @@
 
 namespace PQuantum::support::parsing {
 namespace detail {
+BOOST_TTI_HAS_TYPE( attribute_type )
+
+template<class T>
+struct lazy;
+
 template<class InputIterator>
 struct printable_range_wrapper {
 	InputIterator begin, end;
@@ -30,34 +35,60 @@ std::ostream &operator<<( std::ostream &os, printable_range_wrapper<InputIterato
 }
 }
 
-template<class T, class InputIterator, class HanaMap>
-T parse( InputIterator begin, InputIterator end, HanaMap ) {
-	BOOST_LOG_NAMED_SCOPE( "parsing::parse_tree()" );
-	logging::severity_logger logger;
+template<class T, class ...Args>
+static auto rule_for( Args &&...args ) {
+	using impl = rule_for_impl<T>;
+	static constexpr bool has_specified_attribute = detail::has_type_attribute_type<impl>::value;
 	
+	if constexpr( has_specified_attribute ) {
+		using attribute_type = typename impl::attribute_type;
+		return ( boost::spirit::x3::rule<struct _, attribute_type>{ impl::name } = impl::apply(
+			std::forward<Args>( args )...
+		));
+	} else
+		return ( boost::spirit::x3::rule<struct _, T>{ impl::name } = impl::apply(
+			std::forward<Args>( args )...
+		));
+}
+
+template<class T>
+static auto lazy_rule_for( void ) {
+	using impl = rule_for_impl<T>;
+	static constexpr bool has_specified_attribute = detail::has_type_attribute_type<impl>::value;
+	
+	if constexpr( has_specified_attribute ) {
+		using attribute_type = typename impl::attribute_type;
+		return boost::spirit::x3::rule<detail::lazy<T>, attribute_type>{ "lazy" };
+	} else
+		return boost::spirit::x3::rule<detail::lazy<T>, T>{ "lazy" };
+	
+}
+
+template<class T, class InputIterator>
+std::variant<T, std::tuple<bool, InputIterator, InputIterator>>
+parse( InputIterator begin, InputIterator end ) {
 	using boost::spirit::x3::with;
 	
 	T t;
 	auto rule = rule_for<T>();
 	bool parsing_result = boost::spirit::x3::phrase_parse( begin, end, rule, boost::spirit::x3::ascii::space, t );
 	
-	if( parsing_result == false ) {
-		BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Cannot parse input string: \"" <<
-																detail::make_printable_range_wrapper( begin, end )
-																<< "\"";
-		
-		error::exit_upon_error();
-	}
-	
-	if( begin != end ) {
-		BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Cannot parse end of input string: \"" <<
-																detail::make_printable_range_wrapper( begin, end )
-																<< "\"";
-		
-		error::exit_upon_error();
-	}
-	
-	return t;
+	if( parsing_result )
+		return t;
+	else
+		return std::make_tuple( parsing_result, begin, end );
+}
+}
+
+namespace boost::spirit::x3 {
+template<typename Iterator, typename Context, typename Attribute, class LazyT, class LazyAttribute>
+inline bool parse_rule(
+	rule <PQuantum::support::parsing::detail::lazy<LazyT>, LazyAttribute>,
+	Iterator &first, const Iterator &last,
+	const Context &context, Attribute &attr
+) {
+	static auto const rule_def = PQuantum::support::parsing::rule_for<LazyT>();
+	return rule_def.parse( first, last, context, unused, attr );
 }
 }
 

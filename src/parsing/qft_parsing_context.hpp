@@ -5,6 +5,9 @@
 #ifndef PQUANTUM_PARSING_QFT_PARSING_CONTEXT_HPP
 #define PQUANTUM_PARSING_QFT_PARSING_CONTEXT_HPP
 
+#include <functional>
+#include <boost/uuid/uuid.hpp>
+
 namespace PQuantum::parsing {
 struct qft_parsing_context {
 	std::function<std::pair<bool, boost::uuids::uuid>( std::string )> field_id_lookup;

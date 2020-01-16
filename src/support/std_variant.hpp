@@ -5,6 +5,8 @@
 #ifndef PQUANTUM_STD_VARIANT_HPP
 #define PQUANTUM_STD_VARIANT_HPP
 
+#include <variant>
+
 #include "boost/variant.hpp"
 
 namespace PQuantum::support {
