@@ -16,6 +16,7 @@ using namespace PQuantum;
 BOOST_AUTO_TEST_CASE( parse_math ) {
 	std::string test = "a + b - c^d * e / (f + g)";
 	
-	using tree_expression = support::tree::tree_node<mathutils::tree_expression::parentheses>;
+	//using tree_expression = support::tree::tree_node<mathutils::tree_expression::parentheses, mathutils::tree_expression::terminal_string>;
+	using tree_expression = mathutils::tree_expression::arithmetic_tree;
 	auto tree = support::parsing::parse<tree_expression>( test.begin(), test.end());
 }

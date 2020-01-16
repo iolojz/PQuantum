@@ -42,6 +42,19 @@ static constexpr auto arity( boost::hana::basic_type<NodeData> node ) {
 	return decltype(+node)::type::tree_node_arity;
 }
 
+template<class NodeData>
+static constexpr bool has_exactly_one_child( boost::hana::basic_type<NodeData> node_data ) {
+	if constexpr( is_terminal( node_data ) )
+		return false;
+	else {
+		constexpr auto arity_ = arity( node_data );
+		if constexpr( !std::is_same_v<decltype(arity_), const runtime_arity_t> )
+			return (arity_ == 1);
+		else
+			return false;
+	}
+}
+
 template<class NodeData, class TreeNode, class = void>
 struct tree_node_incarnation;
 
@@ -105,13 +118,15 @@ static constexpr auto child_container_in_tree(
 	
 	if constexpr( boost::hana::type_c<std::decay_t<decltype( arity_ )>> == boost::hana::type_c<runtime_arity_t> )
 		return boost::hana::type_c<std::vector<child_incarnation>>;
-	else
+	else if constexpr( arity_ != 1 )
 		return boost::hana::type_c<std::array<child_incarnation, arity_>>;
+	else
+		return boost::hana::type_c<child_incarnation>;
 }
 
-// non-terminals
+// non-terminals, arity != 1
 template<class NodeData, class TreeNode>
-struct tree_node_incarnation<NodeData, TreeNode, std::enable_if_t<!is_terminal( boost::hana::type_c<NodeData> )>> {
+struct tree_node_incarnation<NodeData, TreeNode, std::enable_if_t<!is_terminal( boost::hana::type_c<NodeData> ) && !has_exactly_one_child( boost::hana::type_c<NodeData> )>> {
 	NodeData data;
 	typename decltype(+child_container_in_tree(
 		boost::hana::type_c<NodeData>,
@@ -129,6 +144,32 @@ struct tree_node_incarnation<NodeData, TreeNode, std::enable_if_t<!is_terminal( 
 	
 	template<class N, class C>
 	tree_node_incarnation( N &&n, C &&c ) : data{ std::forward<N>( n ) }, children{ std::forward<C>( c ) } {}
+	
+	tree_node_incarnation &operator=( tree_node_incarnation && ) = default;
+	tree_node_incarnation &operator=( const tree_node_incarnation & ) = default;
+};
+
+
+// non-terminals, arity == 1
+template<class NodeData, class TreeNode>
+struct tree_node_incarnation<NodeData, TreeNode, std::enable_if_t<has_exactly_one_child( boost::hana::type_c<NodeData> )>> {
+	NodeData data;
+	typename decltype(+child_container_in_tree(
+		boost::hana::type_c<NodeData>,
+		boost::hana::type_c<TreeNode>
+	))::type child;
+	
+	using node_data = NodeData;
+	using child_type = decltype(child);
+	
+	static constexpr bool is_terminal( void ) { return false; };
+	
+	tree_node_incarnation( void ) = default;
+	tree_node_incarnation( tree_node_incarnation && ) = default;
+	tree_node_incarnation( const tree_node_incarnation &other ) = default;
+	
+	template<class N, class C>
+	tree_node_incarnation( N &&n, C &&c ) : data{ std::forward<N>( n ) }, child{ std::forward<C>( c ) } {}
 	
 	tree_node_incarnation &operator=( tree_node_incarnation && ) = default;
 	tree_node_incarnation &operator=( const tree_node_incarnation & ) = default;
@@ -162,16 +203,13 @@ struct tree_node {
 	node_variant node_incarnation;
 	
 	tree_node( void ) = default;
-	
 	tree_node( tree_node &&node ) = default;
-	
 	tree_node( const tree_node &node ) = default;
 	
 	template<class NodeIncarnation, std::enable_if_t<is_tree_node_incarnation_v<NodeIncarnation>, int> = 42>
 	tree_node( NodeIncarnation &&ni ) : node_incarnation{ std::forward<NodeIncarnation>( ni ) } {}
 	
 	tree_node( node_variant &&node ) : node_incarnation{ std::move( node ) } {}
-	
 	tree_node( const node_variant &node ) : node_incarnation{ node } {}
 	
 	template<class ND, std::enable_if_t<is_member_v<std::decay_t<ND>, std::tuple<NodeData...>>, int> = 42>
@@ -204,9 +242,20 @@ struct tree_node {
 BOOST_FUSION_ADAPT_TPL_STRUCT(
 	( NodeData )( TreeNode ),
 	(PQuantum::support::tree::tree_node_incarnation) ( NodeData )( TreeNode )(
-		std::enable_if_t<!is_terminal( boost::hana::type_c<NodeData> )> ),
+		std::enable_if_t<!is_terminal( boost::hana::type_c<NodeData> ) &&
+		!has_exactly_one_child( boost::hana::type_c<NodeData> )>
+	),
 	data,
 	children
+)
+
+BOOST_FUSION_ADAPT_TPL_STRUCT(
+	( NodeData )( TreeNode ),
+	(PQuantum::support::tree::tree_node_incarnation) ( NodeData )( TreeNode )(
+		std::enable_if_t<has_exactly_one_child( boost::hana::type_c<NodeData> )>
+	),
+	data,
+	child
 )
 
 BOOST_FUSION_ADAPT_TPL_STRUCT(
