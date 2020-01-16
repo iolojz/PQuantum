@@ -7,7 +7,7 @@
 
 #include "node_rule_for_fwd.hpp"
 
-#include "support/std_variant.hpp"
+#include "support/variant.hpp"
 
 #include <boost/spirit/home/x3.hpp>
 

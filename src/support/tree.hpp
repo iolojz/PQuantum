@@ -11,7 +11,8 @@
 #include <boost/fusion/include/adapt_struct.hpp>
 
 #include "parsing_fwd.hpp"
-#include "std_variant.hpp"
+#include "variant.hpp"
+#include "std_unique_ptr.hpp"
 #include "is_member.hpp"
 
 namespace PQuantum::support::tree {
@@ -59,6 +60,22 @@ template<class ...Nodes>
 struct is_tree_node<tree_node<Nodes...>> : std::true_type {};
 template<class T> static constexpr auto is_tree_node_v = is_tree_node<T>::value;
 
+namespace detail {
+template<class T> class wrap_non_terminals;
+
+template<class NodeData, class TreeNode>
+class wrap_non_terminals<tree_node_incarnation<NodeData, TreeNode>> {
+	using incarnation = tree_node_incarnation<NodeData, TreeNode>;
+public:
+	using type = std::conditional_t<
+		is_terminal( boost::hana::type_c<NodeData> ),
+		incarnation,
+		boost::recursive_wrapper<incarnation>
+	>;
+};
+template<class T> using wrap_non_terminals_t = typename wrap_non_terminals<T>::type;
+}
+
 template<class NodeData, class TreeNode>
 static constexpr auto child_container_in_tree(
 	boost::hana::basic_type<NodeData> node,
@@ -69,16 +86,19 @@ static constexpr auto child_container_in_tree(
 	static_assert( boost::hana::length( valid_child_data_types ) != boost::hana::size_c<0>,
 				   "No valid child data types." );
 	
-	constexpr auto incarnation_for_child_data_type = boost::hana::curry<2>(
-		boost::hana::flip( boost::hana::template_<tree_node_incarnation> )
-	)( boost::hana::type_c<TreeNode> );
+	constexpr auto incarnation_for_child_data_type = boost::hana::compose(
+		boost::hana::template_<detail::wrap_non_terminals_t>,
+		boost::hana::curry<2>(
+			boost::hana::flip( boost::hana::template_<tree_node_incarnation> )
+		)( boost::hana::type_c<TreeNode> )
+	);
 	
 	using child_incarnation = typename decltype(+boost::hana::unpack(
 		boost::hana::transform(
 			valid_child_data_types,
 			incarnation_for_child_data_type
 		),
-		boost::hana::template_<std::variant>
+		boost::hana::template_<boost::variant>
 	))::type;
 	
 	constexpr auto arity_ = arity( node );
@@ -104,16 +124,13 @@ struct tree_node_incarnation<NodeData, TreeNode, std::enable_if_t<!is_terminal( 
 	static constexpr bool is_terminal( void ) { return false; };
 	
 	tree_node_incarnation( void ) = default;
-	
-	tree_node_incarnation( tree_node_incarnation &&t ) = default;
-	
-	tree_node_incarnation( const tree_node_incarnation & ) = default;
+	tree_node_incarnation( tree_node_incarnation && ) = default;
+	tree_node_incarnation( const tree_node_incarnation &other ) = default;
 	
 	template<class N, class C>
 	tree_node_incarnation( N &&n, C &&c ) : data{ std::forward<N>( n ) }, children{ std::forward<C>( c ) } {}
 	
 	tree_node_incarnation &operator=( tree_node_incarnation && ) = default;
-	
 	tree_node_incarnation &operator=( const tree_node_incarnation & ) = default;
 };
 
@@ -126,17 +143,13 @@ struct tree_node_incarnation<NodeData, TreeNode, std::enable_if_t<is_terminal( b
 	static constexpr bool is_terminal( void ) { return true; };
 	
 	tree_node_incarnation( void ) = default;
-	
 	tree_node_incarnation( tree_node_incarnation && ) = default;
-	
 	tree_node_incarnation( const tree_node_incarnation & ) = default;
 	
 	tree_node_incarnation( NodeData &&n ) : data{ std::move( n ) } {}
-	
 	tree_node_incarnation( const NodeData &n ) : data{ n } {}
 	
 	tree_node_incarnation &operator=( tree_node_incarnation && ) = default;
-	
 	tree_node_incarnation &operator=( const tree_node_incarnation & ) = default;
 };
 

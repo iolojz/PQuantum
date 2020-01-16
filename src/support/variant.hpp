@@ -2,12 +2,13 @@
 // Created by jayz on 25.08.19.
 //
 
-#ifndef PQUANTUM_STD_VARIANT_HPP
-#define PQUANTUM_STD_VARIANT_HPP
+#ifndef PQUANTUM_VARIANT_HPP
+#define PQUANTUM_VARIANT_HPP
 
 #include <variant>
 
-#include "boost/variant.hpp"
+#include <boost/variant.hpp>
+#include <boost/variant/recursive_wrapper.hpp>
 
 namespace PQuantum::support {
 namespace detail {
@@ -61,7 +62,29 @@ struct rule_for_impl<std::variant<Alternatives...>> {
 			} );
 	}
 };
+
+template<class ...Alternatives>
+struct rule_for_impl<boost::variant<Alternatives...>> {
+	static constexpr const char *name = "std_variant";
+	
+	template<class ...Args>
+	static constexpr auto apply( Args &&...args ) {
+		using boost::unwrap_recursive;
+		static_assert( sizeof...( Alternatives ) != 0 );
+		
+		if constexpr( sizeof...( Alternatives ) == 1 )
+			return rule_for<typename unwrap_recursive<Alternatives...>::type>( std::forward<Args>( args )... );
+		else
+			return (rule_for<typename unwrap_recursive<Alternatives>::type>( args... ) | ...).operator[](
+				[]( auto &&context ) {
+					boost::spirit::x3::_val( context ) = support::to_std_variant<Alternatives...>(
+						boost::spirit::x3::_attr( context )
+					);
+				}
+			);
+	}
+};
 }
 }
 
-#endif //PQUANTUM_STD_VARIANT_HPP
+#endif //PQUANTUM_VARIANT_HPP
