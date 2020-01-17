@@ -25,24 +25,30 @@ static constexpr auto possible_node_data = boost::hana::tuple_t<
 	difference, parentheses, terminal_string
 >;
 
-using arithmetic_tree = typename decltype(+boost::hana::unpack(
-	possible_node_data,
-	boost::hana::template_<support::tree::tree_node>
-))::type;
-
-static constexpr auto ops_by_precedence = boost::hana::tuple_t<
+static constexpr auto ops_by_descending_precedence = boost::hana::tuple_t<
 	power, product, quotient, sum, difference
 >;
 
 static constexpr auto has_higher_precedence = []( auto hop, auto lop ) {
 	auto lower_ops = boost::hana::drop_while(
-		ops_by_precedence,
+		ops_by_descending_precedence,
 		boost::hana::not_equal.to( lop )
 	);
 	return boost::hana::not_( boost::hana::contains( lower_ops, hop ));
 };
 
-static constexpr auto is_op = boost::hana::curry<2>( boost::hana::contains )( ops_by_precedence );
+static constexpr auto is_op = boost::hana::curry<2>( boost::hana::contains )( ops_by_descending_precedence );
+
+using arithmetic_tree = typename decltype(+boost::hana::unpack(
+	boost::hana::concat(
+		boost::hana::reverse( ops_by_descending_precedence ),
+		boost::hana::remove_if(
+			possible_node_data,
+			is_op
+		)
+	),
+	boost::hana::template_<support::tree::tree_node>
+))::type;
 
 namespace detail {
 static constexpr auto higher_operator_filter = []( [[maybe_unused]] auto op_data, auto node_data ) {
@@ -69,13 +75,9 @@ struct name { \
 };
 
 PQUANTUM_DEFINE_ARITHMETIC_OPERATOR_NODE_DATA( power )
-
 PQUANTUM_DEFINE_ARITHMETIC_OPERATOR_NODE_DATA( product )
-
 PQUANTUM_DEFINE_ARITHMETIC_OPERATOR_NODE_DATA( quotient )
-
 PQUANTUM_DEFINE_ARITHMETIC_OPERATOR_NODE_DATA( sum )
-
 PQUANTUM_DEFINE_ARITHMETIC_OPERATOR_NODE_DATA( difference )
 
 #undef PQUANTUM_DEFINE_ARITHMETIC_OPERATOR_NODE_DATA
@@ -109,13 +111,9 @@ struct rule_for_impl<tree::tree_node_incarnation<mathutils::tree_expression::op_
 };
 
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( power, '^' )
-
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( product, '*' )
-
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( quotient, '/' )
-
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( sum, '+' )
-
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( difference, '-' )
 
 #undef PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR
