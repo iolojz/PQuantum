@@ -12,7 +12,6 @@
 
 #include "parsing_fwd.hpp"
 #include "variant.hpp"
-#include "std_unique_ptr.hpp"
 #include "is_member.hpp"
 
 namespace PQuantum::support::tree {
@@ -63,6 +62,54 @@ struct is_tree_node_incarnation : std::false_type {};
 template<class Node, class TreeNode>
 struct is_tree_node_incarnation<tree_node_incarnation<Node, TreeNode>> : std::true_type {};
 template<class T> static constexpr auto is_tree_node_incarnation_v = is_tree_node_incarnation<T>::value;
+
+namespace detail {
+template<class NodeIncarnation> struct node_data_of_incarnation {
+	using type = typename NodeIncarnation::node_data;
+};
+template<class NodeIncarnation>
+using node_data_of_incarnation_t = typename node_data_of_incarnation<NodeIncarnation>::type;
+}
+
+template<class NodeData, class ...Incarnations>
+static constexpr std::size_t index_of_node_incarnation( const boost::variant<Incarnations...> & ) {
+	constexpr auto incarnations = boost::hana::tuple_t<
+		typename boost::unwrap_recursive<Incarnations>::type...
+	>;
+	constexpr auto node_data_types = boost::hana::transform(
+		incarnations,
+		boost::hana::template_<detail::node_data_of_incarnation_t>
+	);
+	constexpr auto index = boost::hana::index_if(
+		node_data_types,
+		boost::hana::equal.to( boost::hana::type_c<NodeData> )
+	);
+	static_assert( boost::hana::is_just( index ), "NodeType does not exist in given IncarnationVariant" );
+	return boost::hana::value( *index );
+}
+
+template<class NodeData, class ...Incarnations>
+static constexpr bool holds_node_incarnation( const boost::variant<Incarnations...> &iv ) {
+	return iv.which() == index_of_node_incarnation<NodeData>( iv );
+}
+
+template<class NodeData, class ...Incarnations>
+static constexpr decltype(auto) get_node_incarnation( const boost::variant<Incarnations...> &iv ) {
+	constexpr auto index = index_of_node_incarnation<NodeData>( iv );
+	using incarnation = std::tuple_element_t<index, std::tuple<
+		typename boost::unwrap_recursive<Incarnations>::type...
+	>>;
+	return boost::get<incarnation>( iv );
+}
+
+template<class NodeData, class ...Incarnations>
+static constexpr decltype(auto) get_node_incarnation( boost::variant<Incarnations...> &iv ) {
+	constexpr auto index = index_of_node_incarnation<NodeData>( iv );
+	using incarnation = std::tuple_element_t<index, std::tuple<
+		typename boost::unwrap_recursive<Incarnations>::type...
+	>>;
+	return boost::get<incarnation>( iv );
+}
 
 template<class ...Nodes>
 class tree_node;
@@ -197,7 +244,7 @@ struct tree_node_incarnation<NodeData, TreeNode, std::enable_if_t<is_terminal( b
 template<class ...NodeData>
 struct tree_node {
 	static constexpr auto child_data_types = boost::hana::tuple_t<NodeData...>;
-	using node_variant = std::variant<
+	using node_variant = boost::variant<
 		tree_node_incarnation<NodeData, tree_node>...
 	>;
 	node_variant node_incarnation;
@@ -214,14 +261,15 @@ struct tree_node {
 	
 	template<class ND, std::enable_if_t<is_member_v<std::decay_t<ND>, std::tuple<NodeData...>>, int> = 42>
 	tree_node( ND &&nd ) : node_incarnation{
-		std::in_place_type<tree_node_incarnation<std::decay_t<ND>, tree_node>>,
-		std::forward<ND>( nd )
+		tree_node_incarnation<std::decay_t<ND>, tree_node>{	std::forward<ND>( nd ) }
 	} {}
 	
 	template<class ND, class Children>
 	tree_node( ND &&nd, Children &&children ) : node_incarnation{
-		std::in_place_type<tree_node_incarnation<std::decay_t<ND>, tree_node>>,
-		std::forward<ND>( nd ), std::forward<Children>( children )
+		tree_node_incarnation<std::decay_t<ND>, tree_node>{
+			std::forward<ND>( nd ),
+			std::forward<Children>( children )
+		}
 	} {}
 	
 	tree_node &operator=( tree_node &&node ) = default;
@@ -237,6 +285,12 @@ struct tree_node {
 		return *this;
 	}
 };
+
+template<class TreeNode>
+std::enable_if_t<is_tree_node_v<std::decay_t<TreeNode>>, std::ostream &>
+operator<<( std::ostream &os, const TreeNode &tn ) {
+	return os << tn.node_incarnation;
+}
 }
 
 BOOST_FUSION_ADAPT_TPL_STRUCT(
