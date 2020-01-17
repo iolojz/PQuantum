@@ -14,11 +14,10 @@ template<class T>
 struct rule_for_impl<std::unique_ptr<T>> {
 	static constexpr const char *name = "std_unique_ptr";
 	
-	template<class ...Args>
-	static constexpr auto apply( Args &&...args ) {
-		return rule_for<T>( args... ).operator[]( []( auto &&context ) {
-			boost::spirit::x3::_val( context ) = std::make_unique<T>(
-				boost::spirit::x3::_attr( context )
+	static constexpr auto apply( void ) {
+		return rule_for<T>().operator[]( []( auto &&x3_context ) {
+			boost::spirit::x3::_val( x3_context ) = std::make_unique<T>(
+				boost::spirit::x3::_attr( x3_context )
 			);
 		} );
 	}

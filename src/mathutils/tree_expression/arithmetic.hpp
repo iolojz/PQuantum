@@ -128,7 +128,7 @@ struct rule_for_impl<tree::tree_node_incarnation<mathutils::tree_expression::par
 		using incarnation = tree::tree_node_incarnation<mathutils::tree_expression::parentheses, TreeNode>;
 		constexpr auto node_data = typename incarnation::node_data{};
 		
-		auto child_rule = lazy_rule_for<typename incarnation::child_type>();
+		auto child_rule = rule_for<typename incarnation::child_type>();
 		return boost::spirit::x3::attr( node_data ) >> '(' >> child_rule >> ')';
 	}
 };

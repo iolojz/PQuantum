@@ -35,24 +35,8 @@ std::ostream &operator<<( std::ostream &os, printable_range_wrapper<InputIterato
 }
 }
 
-template<class T, class ...Args>
-static auto rule_for( Args &&...args ) {
-	using impl = rule_for_impl<T>;
-	static constexpr bool has_specified_attribute = detail::has_type_attribute_type<impl>::value;
-	
-	if constexpr( has_specified_attribute ) {
-		using attribute_type = typename impl::attribute_type;
-		return ( boost::spirit::x3::rule<struct _, attribute_type>{ impl::name } = impl::apply(
-			std::forward<Args>( args )...
-		));
-	} else
-		return ( boost::spirit::x3::rule<struct _, T>{ impl::name } = impl::apply(
-			std::forward<Args>( args )...
-		));
-}
-
 template<class T>
-static auto lazy_rule_for( void ) {
+static auto rule_for( void ) {
 	using impl = rule_for_impl<T>;
 	static constexpr bool has_specified_attribute = detail::has_type_attribute_type<impl>::value;
 	

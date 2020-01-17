@@ -11,11 +11,8 @@ namespace PQuantum::support::parsing {
 template<class T, class = void>
 struct rule_for_impl;
 
-template<class T, class ...Args>
-static auto rule_for( Args &&...args );
-
 template<class T>
-static auto lazy_rule_for( void );
+static auto rule_for( void );
 }
 
 #endif //PQUANTUM_SUPPORT_PARSING_FWD_HPP

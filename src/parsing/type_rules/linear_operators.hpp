@@ -25,7 +25,7 @@ static constexpr const char *name = "sum";
 
 static auto apply( void ) {
 	constexpr auto node_data = mathutils::linear_operators::sum{};
-	auto child_rule = lazy_rule_for<Child>();
+	auto child_rule = rule_for<Child>();
 	return boost::spirit::x3::attr( node_data ) >> ( child_rule % '+' );
 }
 
