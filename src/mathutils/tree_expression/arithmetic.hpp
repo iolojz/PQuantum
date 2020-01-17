@@ -119,12 +119,29 @@ struct rule_for_impl<tree::tree_node_incarnation<mathutils::tree_expression::op_
     } \
 };
 
-PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( product, '*' )
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( quotient, '/' )
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( sum, '+' )
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( difference, '-' )
 
 #undef PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR
+
+template<class TreeNode>
+struct rule_for_impl<tree::tree_node_incarnation<mathutils::tree_expression::product, TreeNode>> {
+    static constexpr const char *name = "product";
+    
+    static auto apply( void ) {
+        using incarnation = tree::tree_node_incarnation<mathutils::tree_expression::product, TreeNode>;
+        using child_type = typename incarnation::child_type;
+        constexpr auto node_data = typename incarnation::node_data{};
+        
+        auto child_rule = rule_for<child_type>();
+        auto op_helper_def = child_rule >> +((-boost::spirit::x3::lit('*')) >> child_rule);
+        boost::spirit::x3::rule<struct _, std::vector<child_type>> op_helper{"op_helper"};
+        auto op_helper_rule = (op_helper = op_helper_def);
+        
+        return boost::spirit::x3::attr( node_data ) >> op_helper_rule;
+    }
+};
 
 template<class TreeNode>
 struct rule_for_impl<tree::tree_node_incarnation<mathutils::tree_expression::parentheses, TreeNode>> {

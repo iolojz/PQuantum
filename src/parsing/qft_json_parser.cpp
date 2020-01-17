@@ -263,6 +263,8 @@ model::lagrangian_tree qft_json_parser::parse_lagrangian( const boost::property_
 			qft_parsing_context context = make_qft_parsing_context( uuid_generator, field_id_map, parameter_id_map,
 																	index_id_map );
 			
+			auto arithmetic_tree = parse_arithmetic_tree( term );
+			return support::tree::transform_tree( arithmetic_tree,  )
 			return PQuantum::support::parsing::parse<model::lagrangian_tree>( term.begin(), term.end(), context );
 		} );
 	

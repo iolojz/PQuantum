@@ -6,8 +6,8 @@
 
 #include <sstream>
 
-#include "mathutils/tree_expression/arithmetic.hpp"
-#include "support/parsing.hpp"
+#include "parsing/string_parsing.hpp"
+#include "support/tree.hpp"
 
 #define BOOST_TEST_MODULE Parse Math
 
@@ -16,13 +16,12 @@
 using namespace PQuantum;
 using namespace PQuantum::support;
 using namespace PQuantum::mathutils;
+using PQuantum::parsing::parse_arithmetic_expression;
 
 BOOST_AUTO_TEST_CASE( parse_math ) {
 	std::string test = "a + b - c - d * e / (f + g)";
-	auto result = parsing::parse<tree_expression::arithmetic_tree>( test.begin(), test.end());
-	
-	BOOST_TEST_REQUIRE( result.index() == 0, "test string could not be parsed" );
-	auto root_incarnation = std::get<0>( result ).node_incarnation;
+	auto result = parse_arithmetic_expression( test );
+	auto root_incarnation = result.node_incarnation;
 	
 	std::stringstream ss;
 	ss << root_incarnation;
