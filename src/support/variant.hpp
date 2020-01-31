@@ -48,14 +48,13 @@ template<class ...Alternatives>
 struct rule_for_impl<std::variant<Alternatives...>> {
 	static constexpr const char *name = "std_variant";
 	
-	template<class ...Args>
-	static constexpr auto apply( Args &&...args ) {
+	static constexpr auto apply( void ) {
 		static_assert( sizeof...( Alternatives ) != 0 );
 		
 		if constexpr( sizeof...( Alternatives ) == 1 ) {
-			return rule_for<Alternatives...>( std::forward<Args>( args )... );
+			return rule_for<Alternatives...>();
 		} else
-			return (rule_for<Alternatives>( args... ) | ...).operator[]( []( auto &&context ) {
+			return (rule_for<Alternatives>() | ...).operator[]( []( auto &&context ) {
 				boost::spirit::x3::_val( context ) = support::to_std_variant<Alternatives...>(
 					boost::spirit::x3::_attr( context )
 				);
@@ -67,10 +66,9 @@ template<class ...Alternatives>
 struct rule_for_impl<boost::variant<Alternatives...>> {
 	static constexpr const char *name = "boost_variant";
 	
-	template<class ...Args>
-	static constexpr auto apply( Args &&...args ) {
+	static constexpr auto apply( void ) {
 		static_assert( sizeof...( Alternatives ) != 0 );
-		return (rule_for<typename boost::unwrap_recursive<Alternatives>::type>( args... ) | ...);
+		return (rule_for<typename boost::unwrap_recursive<Alternatives>::type>() | ...);
 	}
 };
 }
