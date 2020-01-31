@@ -6,20 +6,20 @@
 #define PQUANTUM_MATHUTILS_TREE_EXPRESSION_ARITHMETIC_HPP
 
 #include "support/tree.hpp"
+#include "support/parsing.hpp"
 
 #include <boost/hana.hpp>
 
 #include <string>
 
 namespace PQuantum::mathutils::tree_expression {
-struct power {};
 struct product {};
 struct quotient {};
 struct sum {};
 struct difference {};
 struct parentheses {};
 
-static constexpr auto ops_by_precedence = boost::hana::tuple_t<power, product, quotient, sum, difference>;
+static constexpr auto ops_by_precedence = boost::hana::tuple_t<product, quotient, sum, difference>;
 
 struct arithmetic_node_traits {
 	static constexpr auto node_data_types = boost::hana::reverse(
@@ -44,13 +44,11 @@ static constexpr auto has_higher_precedence = []( auto hop, auto lop ) {
 };
 }
 
-namespace PQuantum::support::tree {
-static constexpr auto arity_for_node_data( boost::hana::basic_type<mathutils::tree_expression::power> ) { return runtime_arity; }
-static constexpr auto arity_for_node_data( boost::hana::basic_type<mathutils::tree_expression::product> ) { return runtime_arity; }
-static constexpr auto arity_for_node_data( boost::hana::basic_type<mathutils::tree_expression::quotient> ) { return runtime_arity; }
-static constexpr auto arity_for_node_data( boost::hana::basic_type<mathutils::tree_expression::sum> ) { return runtime_arity; }
-static constexpr auto arity_for_node_data( boost::hana::basic_type<mathutils::tree_expression::difference> ) { return runtime_arity; }
-}
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::tree_expression::product, runtime_arity)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::tree_expression::quotient, runtime_arity)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::tree_expression::sum, runtime_arity)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::tree_expression::difference, runtime_arity)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::tree_expression::parentheses, 1)
 
 namespace PQuantum::support::parsing {
 namespace detail {
@@ -61,14 +59,15 @@ static constexpr auto child_type_of_op_for_parsing( boost::hana::basic_type<Op> 
 	>::child_container;
 	using all_child_incarnations = typename child_container::value_type::types;
 	
-	constexpr auto valid_child_incarnations = boost::hana::filter( all_child_incarnations{},
-		[] (auto &&incarnation) {
-			constexpr node_data = boost::hana::type_c<
-				typename boost::unwrap_recursive<typename decltype(+incarnation)::node_data>::type
+	constexpr auto valid_child_incarnations = boost::hana::filter(
+		boost::hana::to_tuple( all_child_incarnations{} ),
+		[op] (auto &&incarnation) {
+			constexpr auto node_data = boost::hana::type_c<
+				typename boost::unwrap_recursive<typename decltype(+incarnation)::type::node_data>::type
 			>;
 			
-			if constexpr( is_arithmetic_op( node_data ))
-				return has_higher_precedence( node_data, op );
+			if constexpr( mathutils::tree_expression::is_arithmetic_op( node_data ))
+				return mathutils::tree_expression::has_higher_precedence( node_data, op );
 			else
 				return boost::hana::true_c;
 	} );
@@ -92,17 +91,16 @@ struct rule_for_impl<tree::node_incarnation<mathutils::tree_expression::op_name,
 		using child_container = typename tree::node_incarnation< \
 			mathutils::tree_expression::op_name, TreeNode \
 		>::child_container; \
-		constexpr child_type = detail::child_type_of_op_for_parsing<TreeNode>( \
+		constexpr auto child = detail::child_type_of_op_for_parsing<TreeNode>( \
 			boost::hana::type_c<mathutils::tree_expression::op_name> \
 		); \
 		\
-		auto child_rule = lazy_rule_for<typename decltype(+child)::type>(); \
+		auto child_rule = rule_for<typename decltype(+child)::type>(); \
 		auto children_rule = as<child_container>( child_rule % op ); \
 		return boost::spirit::x3::attr( mathutils::tree_expression::op_name{} ) >> children_rule; \
 	} \
 };
 
-PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( power, '^' )
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( product, '*' )
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( quotient, '/' )
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR( sum, '+' )
@@ -119,11 +117,67 @@ struct rule_for_impl<tree::node_incarnation<mathutils::tree_expression::parenthe
 			mathutils::tree_expression::parentheses, TreeNode
 		>::child_container;
 		
-		auto child_rule = lazy_rule_for<typename child_container::value_type>();
+		auto child_rule = rule_for<typename child_container::value_type>();
 		auto children_rule = as<child_container>( '(' >> child_rule >> ')' );
 		return boost::spirit::x3::attr( mathutils::tree_expression::parentheses{} ) >> children_rule;
 	}
 };
+}
+
+
+namespace PQuantum::support::tree {
+template<class TreeNode>
+std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::product, TreeNode> &ni ) {
+	if( ni.children.empty() )
+		throw std::runtime_error( "operator \"*\" has no children" );
+	
+	auto it = std::begin( ni.children );
+	os << *it;
+	for( ++it; it != std::end( ni.children ); ++it )
+		os << " * " << *it;
+	return os;
+}
+
+template<class TreeNode>
+std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::quotient, TreeNode> &ni ) {
+	if( ni.children.empty() )
+		throw std::runtime_error( "operator \"/\" has no children" );
+	
+	auto it = std::begin( ni.children );
+	os << *it;
+	for( ++it; it != std::end( ni.children ); ++it )
+		os << " / " << *it;
+	return os;
+}
+
+template<class TreeNode>
+std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::sum, TreeNode> &ni ) {
+	if( ni.children.empty() )
+		throw std::runtime_error( "operator \"+\" has no children" );
+	
+	auto it = std::begin( ni.children );
+	os << *it;
+	for( ++it; it != std::end( ni.children ); ++it )
+		os << " + " << *it;
+	return os;
+}
+
+template<class TreeNode>
+std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::difference, TreeNode> &ni ) {
+	if( ni.children.empty() )
+		throw std::runtime_error( "operator \"-\" has no children" );
+	
+	auto it = std::begin( ni.children );
+	os << *it;
+	for( ++it; it != std::end( ni.children ); ++it )
+		os << " - " << *it;
+	return os;
+}
+
+template<class TreeNode>
+std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::parentheses, TreeNode> &ni ) {
+	return os << "(" << ni.children.front() << ")";
+}
 }
 
 #endif //PQUANTUM_MATHUTILS_TREE_EXPRESSION_ARITHMETIC_HPP

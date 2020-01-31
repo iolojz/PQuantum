@@ -8,6 +8,12 @@
 #include "parsing_fwd.hpp"
 
 namespace PQuantum::support::parsing {
+// Credits go to https://stackoverflow.com/users/85371/sehe
+template<class T, class Expr>
+static constexpr auto as( Expr &&expr ) {
+	return boost::spirit::x3::rule<struct _, T>{"as"} = boost::spirit::x3::as_parser( std::forward<Expr>(expr) );
+}
+
 namespace detail {
 BOOST_TTI_HAS_TYPE( attribute_type )
 
