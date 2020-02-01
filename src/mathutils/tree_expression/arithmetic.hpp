@@ -124,55 +124,29 @@ struct rule_for_impl<tree::node_incarnation<mathutils::tree_expression::parenthe
 };
 }
 
-
-namespace PQuantum::support::tree {
-template<class TreeNode>
-std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::product, TreeNode> &ni ) {
-	if( ni.children.empty() )
-		throw std::runtime_error( "operator \"*\" has no children" );
-	
-	auto it = std::begin( ni.children );
-	os << *it;
-	for( ++it; it != std::end( ni.children ); ++it )
-		os << " * " << *it;
-	return os;
+#ifdef PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR
+#error "PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR is already defined"
+#define PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(op_name,op_str) \
+namespace PQuantum::support::tree { \
+template<class TreeNode> \
+std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::op_name, TreeNode> &ni ) { \
+    if( ni.children.empty() ) \
+        throw std::runtime_error( "operator \"" op_str "\" has no children" ); \
+    \
+    auto it = std::begin( ni.children ); \
+    os << *it; \
+    for( ++it; it != std::end( ni.children ); ++it ) \
+        os << " * " << *it; \
+    return os; \
+} \
 }
 
-template<class TreeNode>
-std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::quotient, TreeNode> &ni ) {
-	if( ni.children.empty() )
-		throw std::runtime_error( "operator \"/\" has no children" );
-	
-	auto it = std::begin( ni.children );
-	os << *it;
-	for( ++it; it != std::end( ni.children ); ++it )
-		os << " / " << *it;
-	return os;
-}
+PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(product,"*")
+PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(quotient,"/")
+PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(sum,"+")
+PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(difference,"-")
 
-template<class TreeNode>
-std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::sum, TreeNode> &ni ) {
-	if( ni.children.empty() )
-		throw std::runtime_error( "operator \"+\" has no children" );
-	
-	auto it = std::begin( ni.children );
-	os << *it;
-	for( ++it; it != std::end( ni.children ); ++it )
-		os << " + " << *it;
-	return os;
-}
-
-template<class TreeNode>
-std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::difference, TreeNode> &ni ) {
-	if( ni.children.empty() )
-		throw std::runtime_error( "operator \"-\" has no children" );
-	
-	auto it = std::begin( ni.children );
-	os << *it;
-	for( ++it; it != std::end( ni.children ); ++it )
-		os << " - " << *it;
-	return os;
-}
+#undef PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR
 
 template<class TreeNode>
 std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::parentheses, TreeNode> &ni ) {

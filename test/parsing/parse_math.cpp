@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE( parse_math ) {
 	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<terminal_string>( root_difference.children[1] ) );
 	auto c = tree::get_node_incarnation<terminal_string>( root_difference.children[1] );
 	
-	BOOST_TEST( c.data.data == "c" );
+	BOOST_TEST( c.data.str == "c" );
 	
 	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<tree_expression::quotient>( root_difference.children[2] ) );
 	auto tail = tree::get_node_incarnation<tree_expression::quotient>( root_difference.children[2] );
@@ -112,8 +112,8 @@ BOOST_AUTO_TEST_CASE( parse_math ) {
 	
 	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<tree_expression::parentheses>( tail.children[1] ) );
 	auto parentheses = tree::get_node_incarnation<tree_expression::parentheses>( tail.children[1] );
-	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<tree_expression::sum>( parentheses.child ) );
-	auto f_plus_g = tree::get_node_incarnation<tree_expression::sum>( parentheses.child );
+	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<tree_expression::sum>( parentheses.children.front() ) );
+	auto f_plus_g = tree::get_node_incarnation<tree_expression::sum>( parentheses.children.front() );
 	
 	BOOST_TEST_REQUIRE( std::size( a_plus_b.children ) == 2 );
 	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<terminal_string>( a_plus_b.children[0] ) );
@@ -122,8 +122,8 @@ BOOST_AUTO_TEST_CASE( parse_math ) {
 	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<terminal_string>( a_plus_b.children[1] ) );
 	auto b = tree::get_node_incarnation<terminal_string>( a_plus_b.children[1] );
 	
-	BOOST_TEST( a.data.data == "a" );
-	BOOST_TEST( b.data.data == "b" );
+	BOOST_TEST( a.data.str == "a" );
+	BOOST_TEST( b.data.str == "b" );
 	
 	BOOST_TEST_REQUIRE( std::size( d_times_e.children ) == 2 );
 	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<terminal_string>( d_times_e.children[0] ) );
@@ -132,8 +132,8 @@ BOOST_AUTO_TEST_CASE( parse_math ) {
 	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<terminal_string>( d_times_e.children[1] ) );
 	auto e = tree::get_node_incarnation<terminal_string>( d_times_e.children[1] );
 	
-	BOOST_TEST( d.data.data == "d" );
-	BOOST_TEST( e.data.data == "e" );
+	BOOST_TEST( d.data.str == "d" );
+	BOOST_TEST( e.data.str == "e" );
 	
 	BOOST_TEST_REQUIRE( std::size( f_plus_g.children ) == 2 );
 	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<terminal_string>( f_plus_g.children[0] ) );
@@ -142,6 +142,6 @@ BOOST_AUTO_TEST_CASE( parse_math ) {
 	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<terminal_string>( f_plus_g.children[1] ) );
 	auto g = tree::get_node_incarnation<terminal_string>( f_plus_g.children[1] );
 	
-	BOOST_TEST( f.data.data == "f" );
-	BOOST_TEST( g.data.data == "g" );
+	BOOST_TEST( f.data.str == "f" );
+	BOOST_TEST( g.data.str == "g" );
 }
