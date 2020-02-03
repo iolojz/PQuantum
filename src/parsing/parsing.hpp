@@ -6,10 +6,11 @@
 #define PQUANTUM_PARSING_STRING_PARSING_HPP
 
 #include <string>
-#include "mathutils/tree_expression/arithmetic.hpp"
+
+#include "lazy_types.hpp"
 
 namespace PQuantum::parsing {
-mathutils::tree_expression::arithmetic_tree parse_arithmetic_expression( const std::string &str );
+PQUANTUM_PARSING_ARITHMETIC_TREE_NODE parse_arithmetic_expression( const std::string &str );
 }
 
 #endif //PQUANTUM_PARSING_STRING_PARSING_HPP

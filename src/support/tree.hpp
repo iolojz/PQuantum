@@ -13,7 +13,7 @@
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/fusion/include/boost_array.hpp>
 
-#include "variant.hpp"
+#include <boost/variant.hpp>
 
 namespace PQuantum::support::tree {
 struct runtime_arity_t {};
@@ -30,18 +30,19 @@ static constexpr auto is_terminal( boost::hana::basic_type<T> t ) {
 		return boost::hana::bool_c<arity == 0>;
 }
 
-template<class T, class TreeNode, class = void> class node_incarnation {
+template<class T, class TreeTag, class = void> class node_incarnation {
 	static_assert( is_terminal( boost::hana::type_c<T> ), "Internal error" );
 public:
+	using tree_node = TreeTag;
 	using node_data = T;
 	T data;
 };
 
-template<class T, class TreeNode>
-class node_incarnation<T, TreeNode, std::enable_if_t<!is_terminal( boost::hana::type_c<T> )>> {
+template<class T, class TreeTag>
+class node_incarnation<T, TreeTag, std::enable_if_t<!is_terminal( boost::hana::type_c<T> )>> {
 	static constexpr auto child_container_( void ) {
 		constexpr auto arity = arity_for_node_data( boost::hana::type_c<T> );
-		using node = typename TreeNode::type;
+		using node = typename TreeTag::type;
 		
 		if constexpr( boost::hana::typeid_( arity ) == boost::hana::type_c<runtime_arity_t> )
 			return boost::hana::type_c<std::vector<node>>;
@@ -51,6 +52,7 @@ class node_incarnation<T, TreeNode, std::enable_if_t<!is_terminal( boost::hana::
 		}
 	}
 public:
+	using tree_tag = TreeTag;
 	using node_data = T;
 	using child_container = typename decltype(+child_container_())::type;
 	
@@ -58,9 +60,8 @@ public:
 	child_container children;
 };
 
-namespace detail {
 template<class ...NodeTraits>
-class tree_node {
+class tree_tag {
 	static_assert( sizeof...( NodeTraits ) != 0, "No node traits were provided." );
 	
 	static constexpr auto node_data_types = boost::hana::fold_left(
@@ -76,7 +77,7 @@ class tree_node {
 	static_assert( node_data_types == node_data_types2, "Some node data types are not boost::hana types." );
 	
 	static constexpr auto node_incarnation_in_tree = []( auto &&t ) {
-		return boost::hana::type_c<node_incarnation<typename decltype(+t)::type, tree_node>>;
+		return boost::hana::type_c<node_incarnation<typename decltype(+t)::type, tree_tag>>;
 	};
 	
 	static constexpr auto wrapped_node_incarnations = boost::hana::transform(
@@ -96,9 +97,8 @@ public:
 		boost::hana::template_<boost::variant>
 	))::type;
 };
-}
 
-template<class ...NodeTraits> using tree_node = typename detail::tree_node<NodeTraits...>::type;
+template<class ...NodeTraits> using tree_node = typename tree_tag<NodeTraits...>::type;
 
 template<class T, class IncarnationVariant>
 static constexpr int index_of_node_data( boost::hana::basic_type<IncarnationVariant> ) {
@@ -131,16 +131,16 @@ static constexpr auto get_node_incarnation( IncarnationVariant &&iv ) {
 }
 
 BOOST_FUSION_ADAPT_TPL_STRUCT(
-	( T )( TreeNode ),
-	(PQuantum::support::tree::node_incarnation) ( T )( TreeNode )(
+	( T )( TreeTag ),
+	(PQuantum::support::tree::node_incarnation) ( T )( TreeTag )(
 		std::enable_if_t<PQuantum::support::tree::is_terminal( boost::hana::type_c<T> )>
 	),
 	data
 )
 
 BOOST_FUSION_ADAPT_TPL_STRUCT(
-	( T )( TreeNode ),
-	(PQuantum::support::tree::node_incarnation) ( T )( TreeNode )(
+	( T )( TreeTag ),
+	(PQuantum::support::tree::node_incarnation) ( T )( TreeTag )(
 		std::enable_if_t<!PQuantum::support::tree::is_terminal( boost::hana::type_c<T> )>
 	),
 	data,

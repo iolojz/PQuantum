@@ -5,30 +5,20 @@
 #ifndef PQUANTUM_PARSING_TYPE_RULES_VARIANT_HPP
 #define PQUANTUM_PARSING_TYPE_RULES_VARIANT_HPP
 
+#include <boost/hana.hpp>
+
 #include <boost/variant.hpp>
 #include <boost/variant/recursive_wrapper.hpp>
 
+#include "../type_rule.hpp"
+
 namespace PQuantum::parsing {
 template<class ...Alternatives>
-struct rule_for_impl<boost::variant<Alternatives...>> {
-static constexpr const char *name = "boost_variant";
-
-static constexpr auto apply( void ) {
-	static_assert( sizeof...( Alternatives ) != 0 );
-	return (rule_for<typename boost::unwrap_recursive<Alternatives>::type>() | ...);
-}
-};
-}
-
-namespace boost::spirit::x3 {
-template<class Iterator, class Context, class ...Alternatives>
-inline bool parse_rule(
-	PQuantum::parsing::type_rule<boost::variant<Alternatives...>>,
-	Iterator &first, const Iterator &last,
-	const Context &context, boost::variant<Alternatives...> &attr
+auto evaluate_type_rule(
+	boost::hana::basic_type<boost::variant<Alternatives...>>
 ) {
-	static auto const rule_def = PQuantum::parsing::detail::evaluate_type_rule<boost::variant<Alternatives...>>();
-	return rule_def.parse( first, last, context, unused, attr );
+	static_assert( sizeof...( Alternatives ) != 0 );
+	return (lazy_rule_for<typename boost::unwrap_recursive<Alternatives>::type>() | ...);
 }
 }
 

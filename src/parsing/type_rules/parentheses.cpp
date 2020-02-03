@@ -4,7 +4,7 @@
 
 #include "arithmetic.hpp"
 
-namespace PQuantum::support::parsing {
+namespace PQuantum::parsing {
 template<class TreeNode>
 struct rule_for_impl<tree::node_incarnation<mathutils::tree_expression::parentheses, TreeNode>> {
 	static constexpr const char *name = "parentheses";

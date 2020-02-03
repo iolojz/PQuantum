@@ -40,6 +40,5 @@ struct std_variant_over_tuple_types<std::tuple<Types...>> {
 	using type = std::variant<Types...>;
 };
 }
-}
 
 #endif //PQUANTUM_VARIANT_HPP
