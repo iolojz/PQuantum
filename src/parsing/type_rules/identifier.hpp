@@ -1,0 +1,13 @@
+//
+// Created by jayz on 02.02.20.
+//
+
+#ifndef PQUANTUM_PARSING_TYPE_RULES_IDENTIFIER_HPP
+#define PQUANTUM_PARSING_TYPE_RULES_IDENTIFIER_HPP
+
+#include "../type_rule.hpp"
+
+
+
+
+#endif //PQUANTUM_PARSING_TYPE_RULES_IDENTIFIER_HPP

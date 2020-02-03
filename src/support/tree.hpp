@@ -13,7 +13,6 @@
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/fusion/include/boost_array.hpp>
 
-#include "parsing_fwd.hpp"
 #include "variant.hpp"
 
 namespace PQuantum::support::tree {
