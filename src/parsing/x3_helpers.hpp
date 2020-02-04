@@ -27,8 +27,9 @@ template<class T> std::string name_for_type_rule( void ) {
 
 template<class T>
 auto make_type_rule( void ) {
-	auto name = name_for_type_rule<T>();
-	return type_rule<T>{ name.c_str() };
+	// FIXME: ...
+	//static auto name = name_for_type_rule<T>();
+	return type_rule<T>{ /*name.c_str()*/ };
 }
 
 template<class T> struct type_rule_impl;
