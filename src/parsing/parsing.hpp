@@ -7,10 +7,10 @@
 
 #include <string>
 
-#include "lazy_types.hpp"
+#include "instantiations.hpp"
 
 namespace PQuantum::parsing {
-PQUANTUM_PARSING_ARITHMETIC_TREE_NODE parse_arithmetic_expression( const std::string &str );
+typename instantiations::arithmetic_tree_tag::type parse_arithmetic_expression( const std::string &str );
 }
 
 #endif //PQUANTUM_PARSING_STRING_PARSING_HPP

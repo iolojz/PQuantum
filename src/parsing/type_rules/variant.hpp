@@ -5,21 +5,19 @@
 #ifndef PQUANTUM_PARSING_TYPE_RULES_VARIANT_HPP
 #define PQUANTUM_PARSING_TYPE_RULES_VARIANT_HPP
 
-#include <boost/hana.hpp>
-
 #include <boost/variant.hpp>
 #include <boost/variant/recursive_wrapper.hpp>
 
-#include "../type_rule.hpp"
+#include "../x3_helpers.hpp"
 
 namespace PQuantum::parsing {
 template<class ...Alternatives>
-auto evaluate_type_rule(
-	boost::hana::basic_type<boost::variant<Alternatives...>>
-) {
-	static_assert( sizeof...( Alternatives ) != 0 );
-	return (lazy_rule_for<typename boost::unwrap_recursive<Alternatives>::type>() | ...);
-}
+struct type_rule_impl<boost::variant<Alternatives...>> {
+	static auto apply(void) {
+		static_assert(sizeof...(Alternatives) != 0);
+		return (make_type_rule<typename boost::unwrap_recursive<Alternatives>::type>() | ...);
+	}
+};
 }
 
 #endif //PQUANTUM_PARSING_TYPE_RULES_VARIANT_HPP

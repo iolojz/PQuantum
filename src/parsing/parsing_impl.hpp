@@ -8,7 +8,7 @@
 #include "error/error.hpp"
 #include "logging/logging.hpp"
 
-#include "type_rule.hpp"
+#include "x3_helpers.hpp"
 
 namespace PQuantum::parsing {
 namespace detail {
@@ -31,6 +31,18 @@ std::ostream &operator<<( std::ostream &os, printable_range_wrapper<InputIterato
 	
 	return os;
 }
+}
+
+template<class T, class InputIterator>
+std::variant<T, std::tuple<bool, InputIterator, InputIterator>>
+phrase_parse_type_skip_space( InputIterator begin, InputIterator end ) {
+	T t;
+	auto rule = make_type_rule<T>();
+	bool parsing_result = boost::spirit::x3::phrase_parse( begin, end, rule, boost::spirit::x3::ascii::space, t );
+	
+	if( parsing_result && begin == end )
+		return t;
+	return std::make_tuple( parsing_result, begin, end );
 }
 
 template<class T, class InputIterator>

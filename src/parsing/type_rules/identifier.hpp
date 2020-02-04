@@ -9,6 +9,8 @@
 
 #include "support/tree.hpp"
 
+#include "../x3_helpers.hpp"
+
 namespace PQuantum::parsing {
 struct identifier {
 	std::string name;
@@ -18,13 +20,15 @@ struct identifier_node_traits {
 	static constexpr auto node_data_types = boost::hana::tuple_t<identifier>;
 };
 
-template<class TreeNode>
-auto evaluate_type_rule( boost::hana::basic_type<support::tree::node_incarnation<identifier, TreeNode>> );
+template<class TreeTag>
+struct type_rule_impl<support::tree::node_incarnation<PQuantum::parsing::identifier, TreeTag>> {
+	static auto apply( void ) { return as<std::string>(+boost::spirit::x3::alnum); }
+};
 }
 
 namespace PQuantum::support::tree {
-template<class TreeNode>
-std::ostream &operator<<( std::ostream &os, const node_incarnation<PQuantum::parsing::identifier, TreeNode> &ni ) {
+template<class TreeTag>
+std::ostream &operator<<( std::ostream &os, const node_incarnation<PQuantum::parsing::identifier, TreeTag> &ni ) {
 	return os << ni.data.name;
 }
 }
