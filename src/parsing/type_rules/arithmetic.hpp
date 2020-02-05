@@ -10,30 +10,36 @@
 #include "identifier.hpp"
 #include "variant.hpp"
 
+#include "../tree_helpers.hpp"
+
 namespace PQuantum::parsing::detail {
 template<class TreeNode, class Op>
 static constexpr auto child_type_of_op_for_parsing( boost::hana::basic_type<Op> op ) {
 	using child_container = typename support::tree::node_incarnation<
-			Op, TreeNode
+		Op, TreeNode
 	>::child_container;
-	using all_child_incarnations = typename child_container::value_type::types;
+	constexpr auto all_child_incarnations = boost::hana::remove(
+		boost::hana::to_tuple( typename child_container::value_type::types{} ),
+		boost::hana::type_c<boost::blank>
+	);
 	
 	constexpr auto valid_child_incarnations = boost::hana::filter(
-			boost::hana::to_tuple( all_child_incarnations{} ),
-			[op] (auto &&incarnation) {
-				constexpr auto node_data = boost::hana::type_c<
-						typename boost::unwrap_recursive<typename decltype(+incarnation)::type::node_data>::type
-				>;
-				
-				if constexpr( mathutils::tree_expression::is_arithmetic_op( node_data ))
-					return mathutils::tree_expression::has_higher_precedence( node_data, op );
-				else
-					return boost::hana::true_c;
-			} );
+		all_child_incarnations,
+		[op] (auto &&incarnation) {
+			constexpr auto node_data = boost::hana::type_c<
+			    typename boost::unwrap_recursive<typename decltype(+incarnation)::type::node_data>::type
+			>;
+			
+			if constexpr( mathutils::tree_expression::is_arithmetic_op( node_data ))
+				return mathutils::tree_expression::has_higher_precedence( node_data, op );
+			else
+				return boost::hana::true_c;
+		}
+	);
 	
 	return boost::hana::unpack(
-			valid_child_incarnations,
-			boost::hana::template_<boost::variant>
+		valid_child_incarnations,
+		boost::hana::template_<boost::variant>
 	);
 }
 }
@@ -54,11 +60,17 @@ struct type_rule_impl<support::tree::node_incarnation<mathutils::tree_expression
 		); \
 		\
 		auto child_rule = make_type_rule<typename decltype(+child)::type>(); \
-		auto children_rule = as<child_container>( child_rule % op ); \
+		auto children_rule = as<child_container>( child_rule >> +( op >> child_rule )); \
 		return boost::spirit::x3::attr( mathutils::tree_expression::op_name{} ) >> children_rule; \
 	} \
 }; \
 }
+
+PQUANTUM_DEFINE_NAME_FOR_TREE_NODE(mathutils::tree_expression::product)
+PQUANTUM_DEFINE_NAME_FOR_TREE_NODE(mathutils::tree_expression::quotient)
+PQUANTUM_DEFINE_NAME_FOR_TREE_NODE(mathutils::tree_expression::sum)
+PQUANTUM_DEFINE_NAME_FOR_TREE_NODE(mathutils::tree_expression::difference)
+PQUANTUM_DEFINE_NAME_FOR_TREE_NODE(mathutils::tree_expression::parentheses)
 
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR(product,'*')
 PQUANTUM_DEFINE_RULE_FOR_ARITHMETIC_OPERATOR(quotient,'/')

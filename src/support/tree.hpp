@@ -93,7 +93,10 @@ class tree_tag {
 	);
 public:
 	using type = typename decltype(+boost::hana::unpack(
-		wrapped_node_incarnations,
+		boost::hana::prepend(
+			wrapped_node_incarnations,
+			boost::hana::type_c<boost::blank> // Make sure the variant is default-constructible
+		),
 		boost::hana::template_<boost::variant>
 	))::type;
 };
@@ -102,12 +105,15 @@ template<class ...NodeTraits> using tree_node = typename tree_tag<NodeTraits...>
 
 template<class T, class IncarnationVariant>
 static constexpr int index_of_node_data( boost::hana::basic_type<IncarnationVariant> ) {
-	constexpr auto incarnations = typename std::decay_t<IncarnationVariant>::types{};
 	constexpr auto index = boost::hana::index_if(
-		incarnations,
+		typename std::decay_t<IncarnationVariant>::types{},
 		[] ( auto &&t ) {
-			using node_data = typename boost::unwrap_recursive<typename decltype(+t)::type::node_data>::type;
-			return boost::hana::bool_c<std::is_same_v<T, node_data>>;
+			if constexpr( t == boost::hana::type_c<boost::blank> )
+				return boost::hana::bool_c<std::is_same_v<T, boost::blank>>;
+			else {
+				using node_data = typename boost::unwrap_recursive<typename decltype(+t)::type::node_data>::type;
+				return boost::hana::bool_c<std::is_same_v<T, node_data>>;
+			}
 		}
 	);
 	static_assert( boost::hana::is_just( index ),

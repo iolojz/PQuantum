@@ -62,7 +62,7 @@ std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tr
     auto it = std::begin( ni.children ); \
     os << *it; \
     for( ++it; it != std::end( ni.children ); ++it ) \
-        os << " * " << *it; \
+        os << " " op_str " " << *it; \
     return os; \
 } \
 }

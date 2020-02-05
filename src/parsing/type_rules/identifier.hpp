@@ -10,6 +10,7 @@
 #include "support/tree.hpp"
 
 #include "../x3_helpers.hpp"
+#include "../tree_helpers.hpp"
 
 namespace PQuantum::parsing {
 struct identifier {
@@ -36,5 +37,7 @@ std::ostream &operator<<( std::ostream &os, const node_incarnation<PQuantum::par
 BOOST_FUSION_ADAPT_STRUCT(PQuantum::parsing::identifier, name)
 
 PQUANTUM_TREE_DEFINE_NODE_ARITY(PQuantum::parsing::identifier,0)
+
+PQUANTUM_DEFINE_NAME_FOR_TREE_NODE(identifier)
 
 #endif //PQUANTUM_PARSING_TYPE_RULES_IDENTIFIER_HPP

@@ -12,27 +12,32 @@
 #include <boost/type_index/ctti_type_index.hpp>
 
 namespace PQuantum::parsing {
-// Credits go to https://stackoverflow.com/users/85371/sehe
-template<class T, class Expr>
-static constexpr auto as( Expr &&expr ) {
-	return boost::spirit::x3::rule<struct _, T>{"as"} = boost::spirit::x3::as_parser( std::forward<Expr>(expr) );
-}
-
 struct type_rule_tag;
 template<class T> using type_rule = boost::spirit::x3::rule<type_rule_tag, T>;
 
-template<class T> std::string name_for_type_rule( void ) {
-	return boost::typeindex::ctti_type_index::type_id<T>().pretty_name();
-}
+template<class T> struct name_for_type_rule {
+	static std::string apply( void ) {
+		return boost::typeindex::ctti_type_index::type_id<T>().pretty_name();
+	}
+};
 
 template<class T>
 auto make_type_rule( void ) {
-	// FIXME: ...
-	//static auto name = name_for_type_rule<T>();
-	return type_rule<T>{ /*name.c_str()*/ };
+	static auto name = name_for_type_rule<T>::apply(); // BUG: STUPID x3, only stores const char *
+	return type_rule<T>{ name.c_str() };
 }
 
 template<class T> struct type_rule_impl;
+
+// Credits go to https://stackoverflow.com/users/85371/sehe
+template<class T, class Expr>
+auto as( Expr &&expr ) {
+	static auto name = "as " + name_for_type_rule<T>::apply(); // BUG: STUPID x3, only stores const char *
+	return (
+		boost::spirit::x3::rule<struct _, T>{ name.c_str() } =
+		boost::spirit::x3::as_parser( std::forward<Expr>(expr) )
+	);
+}
 }
 
 namespace boost::spirit::x3 {
@@ -42,7 +47,7 @@ bool parse_rule(
     Iterator &first, const Iterator &last,
     const Context &context, T &attr
 ) {
-	auto rule_def = PQuantum::parsing::type_rule_impl<T>::apply();
+	auto rule_def = (PQuantum::parsing::make_type_rule<T>() = PQuantum::parsing::type_rule_impl<T>::apply());
 	return rule_def.parse(first, last, context, unused, attr);
 }
 }
