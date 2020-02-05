@@ -23,7 +23,15 @@ struct identifier_node_traits {
 
 template<class TreeTag>
 struct type_rule_impl<support::tree::node_incarnation<PQuantum::parsing::identifier, TreeTag>> {
-	static auto apply( void ) { return as<std::string>(+boost::spirit::x3::alnum); }
+	static auto apply( void ) {
+		using boost::spirit::x3::alnum;
+		using boost::spirit::x3::char_;
+		using boost::spirit::x3::string;
+		
+		return as<std::string>(
+			+(alnum | char_('\\') | char_('{') | char_('}') | char_('_') | char_('^'))
+		);
+	}
 };
 }
 
