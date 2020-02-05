@@ -9,8 +9,8 @@
 
 namespace PQuantum::parsing::instantiations {
 using arithmetic_tree_tag = support::tree::tree_tag<
-		mathutils::tree_expression::arithmetic_node_traits,
-		identifier_node_traits
+		mathutils::arithmetic_node_traits,
+		arithmetic_core_node_traits
 >;
 }
 

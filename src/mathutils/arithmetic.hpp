@@ -2,8 +2,8 @@
 // Created by jayz on 16.01.20.
 //
 
-#ifndef PQUANTUM_MATHUTILS_TREE_EXPRESSION_ARITHMETIC_HPP
-#define PQUANTUM_MATHUTILS_TREE_EXPRESSION_ARITHMETIC_HPP
+#ifndef PQUANTUM_MATHUTILS_ARITHMETIC_HPP
+#define PQUANTUM_MATHUTILS_ARITHMETIC_HPP
 
 #include "support/tree.hpp"
 
@@ -11,7 +11,7 @@
 
 #include <string>
 
-namespace PQuantum::mathutils::tree_expression {
+namespace PQuantum::mathutils {
 struct product {};
 struct quotient {};
 struct sum {};
@@ -43,11 +43,11 @@ static constexpr auto has_higher_precedence = []( auto hop, auto lop ) {
 };
 }
 
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::tree_expression::product, runtime_arity)
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::tree_expression::quotient, runtime_arity)
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::tree_expression::sum, runtime_arity)
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::tree_expression::difference, runtime_arity)
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::tree_expression::parentheses, 1)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::product, runtime_arity)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::quotient, runtime_arity)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::sum, runtime_arity)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::difference, runtime_arity)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::parentheses, 1)
 
 #ifdef PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR
 #error "PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR is already defined"
@@ -55,7 +55,7 @@ PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::tree_expression::parentheses, 1)
 #define PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(op_name,op_str) \
 namespace PQuantum::support::tree { \
 template<class TreeNode> \
-std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::op_name, TreeNode> &ni ) { \
+std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::op_name, TreeNode> &ni ) { \
     if( ni.children.empty() ) \
         throw std::runtime_error( "operator \"" op_str "\" has no children" ); \
     \
@@ -76,9 +76,9 @@ PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(difference,"-")
 
 namespace PQuantum::support::tree {
 template<class TreeNode>
-std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::tree_expression::parentheses, TreeNode> &ni ) {
+std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::parentheses, TreeNode> &ni ) {
 	return os << "(" << ni.children.front() << ")";
 }
 }
 
-#endif //PQUANTUM_MATHUTILS_TREE_EXPRESSION_ARITHMETIC_HPP
+#endif //PQUANTUM_MATHUTILS_ARITHMETIC_HPP

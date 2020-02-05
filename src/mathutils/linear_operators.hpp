@@ -19,27 +19,20 @@ struct gamma_matrix {
 };
 
 struct spacetime_derivative {
-	static constexpr std::size_t tree_node_arity = 1;
 	spacetime_index index;
 };
-struct dirac_operator {
-	static constexpr std::size_t tree_node_arity = 1;
-};
+struct dirac_operator {};
 
-struct multiplication_operator {
-	static constexpr std::size_t tree_node_arity = 1;
-};
-struct fourier_convolution_operator {
-	static constexpr std::size_t tree_node_arity = 1;
-};
-
-static constexpr auto linear_operators = boost::hana::tuple_t<
-	gamma_matrix, spacetime_derivative, dirac_operator, multiplication_operator, fourier_convolution_operator
->;
+struct multiplication_operator {};
+struct fourier_convolution_operator {};
+}
 }
 
-static constexpr auto linear_operator_types = linear_operators::linear_operators;
-}
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::linear_operators::gamma_matrix, 1)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::linear_operators::spacetime_derivative, 1)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::linear_operators::dirac_operator, 0)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::linear_operators::multiplication_operator, 1)
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::linear_operators::fourier_convolution_operator, 1)
 
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::linear_operators::gamma_matrix, index )
 BOOST_FUSION_ADAPT_STRUCT( PQuantum::mathutils::linear_operators::spacetime_derivative, index )

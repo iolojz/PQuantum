@@ -12,8 +12,13 @@
 #include <boost/type_index/ctti_type_index.hpp>
 
 namespace PQuantum::parsing {
-struct type_rule_tag;
-template<class T> using type_rule = boost::spirit::x3::rule<type_rule_tag, T>;
+template<class T> struct type_rule_tag;
+template<class T> struct attribute {
+	using type = T;
+};
+template<class T> using attribute_t = typename atrtibute<T>::type;
+
+template<class T> using type_rule = boost::spirit::x3::rule<type_rule_tag<T>, attribute_t<T>>;
 
 template<class T> struct name_for_type_rule {
 	static std::string apply( void ) {
@@ -21,7 +26,7 @@ template<class T> struct name_for_type_rule {
 	}
 };
 
-template<class T>
+template<class T, class Attribute = T>
 auto make_type_rule( void ) {
 	static auto name = name_for_type_rule<T>::apply(); // BUG: STUPID x3, only stores const char *
 	return type_rule<T>{ name.c_str() };
@@ -41,13 +46,15 @@ auto as( Expr &&expr ) {
 }
 
 namespace boost::spirit::x3 {
-template<class Iterator, class Context, class T>
+template<class Iterator, class Context, class T, class Attribute>
 bool parse_rule(
-    PQuantum::parsing::type_rule<T>,
+    PQuantum::parsing::type_rule<type_rule_tag<T>, Attribute>,
     Iterator &first, const Iterator &last,
-    const Context &context, T &attr
+    const Context &context, Attribute &attr
 ) {
-	auto rule_def = (PQuantum::parsing::make_type_rule<T>() = PQuantum::parsing::type_rule_impl<T>::apply());
+	auto rule_def = (
+		PQuantum::parsing::make_type_rule<T>() = PQuantum::parsing::type_rule_impl<T>::apply()
+	);
 	return rule_def.parse(first, last, context, unused, attr);
 }
 }
