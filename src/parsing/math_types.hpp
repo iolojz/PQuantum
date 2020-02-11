@@ -55,11 +55,15 @@ using arithmetic_tree_node = support::tree::tree_node<
 using function_call_node = support::tree::node_incarnation<function_call, tree_tag>;
 using arithmetic_node = typename support::tree::rebind_tree_tag<tree_tag, detail::arithmetic_tree_node>::type;
 
+tree_node make_atom_with_optional_indices( atom_with_optional_indices &&indexed_a ) {
+	return support::tree::node_incarnation<atom_with_optional_indices, tree_tag>{ std::move( indexed_a ) };
+}
+
 #ifdef PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC
 #error "PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC is already defined"
 #endif
 #define PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC(name) \
-static arithmetic_node make_arithmetic_ ## name( arithmetic_node &&n1, arithmetic_node &&n2 ) { \
+static tree_node make_arithmetic_ ## name( tree_node &&n1, tree_node &&n2 ) { \
 	if( support::tree::holds_node_incarnation<mathutils::name>( n1 ) ) { \
 		auto n1_ = support::tree::get_node_incarnation<mathutils::name>( std::move( n1 ) ); \
 		\
@@ -85,7 +89,7 @@ static arithmetic_node make_arithmetic_ ## name( arithmetic_node &&n1, arithmeti
 #error "PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC is already defined."
 #endif
 #define PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(name) \
-static arithmetic_node make_arithmetic_ ## name( arithmetic_node &&n1, arithmetic_node &&n2 ) { \
+static tree_node make_arithmetic_ ## name( tree_node &&n1, tree_node &&n2 ) { \
 	return support::tree::node_incarnation<mathutils::name, tree_tag>{ mathutils::name{}, std::move( n1 ), std::move( n2 ) }; \
 }
 
@@ -94,8 +98,9 @@ PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC(product)
 
 PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(difference)
 PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(quotient)
+PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(power)
 
-static arithmetic_node make_arithmetic_negation( arithmetic_node &&n ) { \
+static tree_node make_arithmetic_negation( tree_node &&n ) { \
 	return support::tree::node_incarnation<mathutils::negation, tree_tag>{ mathutils::negation{}, std::move( n ) }; \
 }
 

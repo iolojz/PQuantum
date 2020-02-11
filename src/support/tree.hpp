@@ -33,6 +33,9 @@ static constexpr auto is_terminal( boost::hana::basic_type<T> t ) {
 template<class T, class TreeTag, class = void> class node_incarnation {
 	static_assert( is_terminal( boost::hana::type_c<T> ), "Internal error" );
 public:
+	template<class Data> node_incarnation( Data &&d )
+	: data{ std::forward<Data>( d ) } {}
+	
 	using tree_node = TreeTag;
 	using node_data = T;
 	T data;

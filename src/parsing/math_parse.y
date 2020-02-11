@@ -17,14 +17,16 @@
 %token <atom> INDEX
 %nterm <index_list> index_list
 %nterm <index_spec> index_spec
-%nterm <identifier_with_optional_indices> identifier_with_optional_indices
-%nterm <std::vector<arithmetic_expression>> argument_list
+%nterm <atom_with_optional_indices> atom_with_optional_indices
+%nterm <std::vector<tree_node>> argument_list
 %nterm <function_call_node> function_call
-%nterm <arithmetic_node> arithmetic_expr
+%nterm <tree_node> arithmetic_expr
 %left '-' '+'
 %left '/' '*'
 %precedence NEG
 %right '^'
+
+%start arithmetic_expr
 
 %%
 
@@ -40,8 +42,8 @@ index_spec:
 | '^' '{' index_list '}'                         { $$.lower = std::move($3); }
 ;
 
-identifier_with_optional_indices:
-  ATOM index_spec                                { $$.name = std::move($1); $$.indices = std::move($1); }
+atom_with_optional_indices:
+  ATOM index_spec                                { $$.name = std::move($1); $$.indices = std::move($2); }
 | ATOM                                           { $$.name = std::move($1); }
 ;
 
@@ -51,12 +53,11 @@ argument_list:
 ;
 
 function_call:
-  ATOM '{' argument_list '}'                     { $$.data = std::move($1); $$.data.children = std::move($3) }
+  ATOM '{' argument_list '}'                     { $$.data.name = std::move($1); $$.children.insert( std::end($$.children), std::make_move_iterator( std::begin($3) ), std::make_move_iterator( std::end($3) ) ); }
 ;
 
 arithmetic_expr:
-  ATOM                                           { $$ = std::move($1); }
-| identifier_with_optional_indices               { $$ = std::move($1); }
+  atom_with_optional_indices                     { $$ = make_atom_with_optional_indices( std::move($1) ); }
 | function_call                                  { $$ = std::move($1); }
 | arithmetic_expr '+' arithmetic_expr            { $$ = make_arithmetic_sum( std::move($1), std::move($3) ); }
 | arithmetic_expr '-' arithmetic_expr            { $$ = make_arithmetic_difference( std::move($1), std::move($3) ); }
