@@ -16,20 +16,20 @@ using namespace PQuantum::mathutils;
 
 BOOST_AUTO_TEST_CASE( parse_math ) {
 	std::string test = "a + b - c - d * e / (f + g)";
-	auto root_incarnation = parsing::parse_arithmetic_expression( test );
+	auto root_incarnation = parsing::parse_math( test );
 	
 	std::stringstream ss;
 	ss << root_incarnation;
 	BOOST_TEST( test == ss.str() );
 	
-	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<tree_expression::difference>( root_incarnation ) );
-	auto root_difference = tree::get_node_incarnation<tree_expression::difference>( root_incarnation );
+	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<difference>( root_incarnation ) );
+	auto root_difference = tree::get_node_incarnation<difference>( root_incarnation );
 	
 	BOOST_TEST_REQUIRE( std::size( root_difference.children ) == 3 );
-	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<tree_expression::sum>( root_difference.children[0] ) );
-	auto a_plus_b = tree::get_node_incarnation<tree_expression::sum>( root_difference.children[0] );
+	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<sum>( root_difference.children[0] ) );
+	auto a_plus_b = tree::get_node_incarnation<sum>( root_difference.children[0] );
 	
-	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<parsing::arithmetic_core>( root_difference.children[1] ) );
+	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<parsing::atom>( root_difference.children[1] ) );
 	auto c = tree::get_node_incarnation<parsing::arithmetic_core>( root_difference.children[1] );
 	
 	BOOST_TEST( c.data.name == "c" );

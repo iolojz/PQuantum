@@ -53,7 +53,6 @@ using arithmetic_tree_node = support::tree::tree_node<
 }
 
 using function_call_node = support::tree::node_incarnation<function_call, tree_tag>;
-using arithmetic_node = typename support::tree::rebind_tree_tag<tree_tag, detail::arithmetic_tree_node>::type;
 
 tree_node make_atom_with_optional_indices( atom_with_optional_indices &&indexed_a ) {
 	return support::tree::node_incarnation<atom_with_optional_indices, tree_tag>{ std::move( indexed_a ) };
