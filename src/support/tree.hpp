@@ -35,7 +35,9 @@ template<class T, class TreeTag, class = void> class node_incarnation {
 public:
 	node_incarnation( void ) = default;
 	
-	template<class Data> node_incarnation( Data &&d )
+	template<class Data,
+		class = std::enable_if_t<!std::is_same_v<std::decay_t<Data>, node_incarnation>>
+	> node_incarnation( Data &&d )
 	: data{ std::forward<Data>( d ) } {}
 	
 	using tree_node = TreeTag;
@@ -59,7 +61,9 @@ class node_incarnation<T, TreeTag, std::enable_if_t<!is_terminal( boost::hana::t
 public:
 	node_incarnation( void ) = default;
 	
-	template<class Data, class ...Children> node_incarnation( Data &&d, Children &&...ch )
+	template<class Data, class ...Children,
+	    class = std::enable_if_t<!std::is_same_v<std::decay_t<Data>, node_incarnation>>
+	> node_incarnation( Data &&d, Children &&...ch )
 	: data{ std::forward<Data>( d ) }, children{ std::forward<Children>( ch )... } {}
 	
 	using tree_tag = TreeTag;
@@ -117,7 +121,7 @@ static constexpr int index_of_node_data( boost::hana::basic_type<IncarnationVari
 	constexpr auto index = boost::hana::index_if(
 		typename std::decay_t<IncarnationVariant>::types{},
 		[] ( auto &&t ) {
-			if constexpr( t == boost::hana::type_c<boost::blank> )
+			if constexpr( std::is_same_v<typename decltype(+t)::type, boost::blank> )
 				return boost::hana::bool_c<std::is_same_v<T, boost::blank>>;
 			else {
 				using node_data = typename boost::unwrap_recursive<typename decltype(+t)::type::node_data>::type;

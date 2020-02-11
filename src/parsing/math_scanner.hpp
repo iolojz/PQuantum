@@ -6,7 +6,7 @@
 #define PQUANTUM_PARSING_MATH_SCANNER_HPP
 
 #include "bison_types.hpp"
-#include "${CMAKE_CURRENT_BINARY_DIR}/math_parse.hpp"
+#include "math_parse.hpp"
 
 namespace PQuantum::parsing::bison {
 parser::symbol_type yylex( scanner_state &state );

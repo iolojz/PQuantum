@@ -10,8 +10,8 @@
 %define api.value.type variant
 %define api.token.constructor
 
-%lex-param {PQuantum::parsing::scanner_state& state}
-%parse-param {PQuantum::parsing::scanner_state& state}
+%lex-param {scanner_state &state}
+%parse-param {scanner_state &state} {tree_node &root}
 
 %token <atom> ATOM
 %token <atom> INDEX
@@ -26,7 +26,7 @@
 %precedence NEG
 %right '^'
 
-%start arithmetic_expr
+%start root_rule
 
 %%
 
@@ -43,8 +43,8 @@ index_spec:
 ;
 
 atom_with_optional_indices:
-  ATOM index_spec                                { $$.name = std::move($1); $$.indices = std::move($2); }
-| ATOM                                           { $$.name = std::move($1); }
+  ATOM index_spec                                { $$.name = std::move($1.name); $$.indices = std::move($2); }
+| ATOM                                           { $$.name = std::move($1.name); }
 ;
 
 argument_list:
@@ -53,7 +53,7 @@ argument_list:
 ;
 
 function_call:
-  ATOM '{' argument_list '}'                     { $$.data.name = std::move($1); $$.children.insert( std::end($$.children), std::make_move_iterator( std::begin($3) ), std::make_move_iterator( std::end($3) ) ); }
+  ATOM '{' argument_list '}'                     { $$.data.name = std::move($1.name); $$.children.insert( std::end($$.children), std::make_move_iterator( std::begin($3) ), std::make_move_iterator( std::end($3) ) ); }
 ;
 
 arithmetic_expr:
@@ -67,5 +67,8 @@ arithmetic_expr:
 | '-' arithmetic_expr  %prec NEG                 { $$ = make_arithmetic_negation( std::move($2) ); }
 | '(' arithmetic_expr ')'                        { $$ = std::move($2); }
 ;
+
+root_rule:
+  arithmetic_expr                                { root = $1; }
 
 %%

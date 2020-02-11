@@ -13,7 +13,7 @@
 
 namespace PQuantum::parsing {
 struct atom {
-	std::string data;
+	std::string name;
 };
 
 using index_list = std::vector<atom>;
@@ -23,12 +23,12 @@ struct index_spec {
 };
 
 struct atom_with_optional_indices {
-	atom name;
+	decltype(atom::name) name;
 	index_spec indices;
 };
 
 struct function_call {
-	atom name;
+	decltype(atom::name) name;
 };
 
 struct functions_and_indexed_atoms_node_traits {
@@ -54,7 +54,7 @@ using arithmetic_tree_node = support::tree::tree_node<
 
 using function_call_node = support::tree::node_incarnation<function_call, tree_tag>;
 
-tree_node make_atom_with_optional_indices( atom_with_optional_indices &&indexed_a ) {
+[[maybe_unused]] static tree_node make_atom_with_optional_indices( atom_with_optional_indices &&indexed_a ) {
 	return support::tree::node_incarnation<atom_with_optional_indices, tree_tag>{ std::move( indexed_a ) };
 }
 
@@ -62,7 +62,7 @@ tree_node make_atom_with_optional_indices( atom_with_optional_indices &&indexed_
 #error "PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC is already defined"
 #endif
 #define PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC(name) \
-static tree_node make_arithmetic_ ## name( tree_node &&n1, tree_node &&n2 ) { \
+[[maybe_unused]] static tree_node make_arithmetic_ ## name( tree_node &&n1, tree_node &&n2 ) { \
 	if( support::tree::holds_node_incarnation<mathutils::name>( n1 ) ) { \
 		auto n1_ = support::tree::get_node_incarnation<mathutils::name>( std::move( n1 ) ); \
 		\
@@ -88,7 +88,7 @@ static tree_node make_arithmetic_ ## name( tree_node &&n1, tree_node &&n2 ) { \
 #error "PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC is already defined."
 #endif
 #define PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(name) \
-static tree_node make_arithmetic_ ## name( tree_node &&n1, tree_node &&n2 ) { \
+[[maybe_unused]] static tree_node make_arithmetic_ ## name( tree_node &&n1, tree_node &&n2 ) { \
 	return support::tree::node_incarnation<mathutils::name, tree_tag>{ mathutils::name{}, std::move( n1 ), std::move( n2 ) }; \
 }
 
@@ -99,12 +99,48 @@ PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(difference)
 PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(quotient)
 PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(power)
 
-static tree_node make_arithmetic_negation( tree_node &&n ) { \
+[[maybe_unused]] static tree_node make_arithmetic_negation( tree_node &&n ) { \
 	return support::tree::node_incarnation<mathutils::negation, tree_tag>{ mathutils::negation{}, std::move( n ) }; \
 }
 
 #undef PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC
 #undef PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC
+}
+
+namespace PQuantum::support::tree {
+[[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const parsing::index_spec &is ) {
+	if( is.lower.empty() == false ) {
+		os << "_{" << is.lower.front().name;
+		for( auto it = ++(is.lower.begin()); it != is.lower.end(); ++it )
+			os << ", " << it->name;
+		os << "}";
+	}
+	
+	if( is.upper.empty() == false ) {
+		os << "^{" << is.lower.front().name;
+		for( auto it = ++(is.upper.begin()); it != is.upper.end(); ++it )
+			os << ", " << it->name;
+		os << "}";
+	}
+	
+	return os;
+}
+
+template<class TreeNode>
+std::ostream &operator<<( std::ostream &os, const node_incarnation<parsing::atom_with_optional_indices, TreeNode> &ni ) {
+	return os << ni.data.name << ni.data.indices;
+}
+
+template<class TreeNode>
+std::ostream &operator<<( std::ostream &os, const node_incarnation<parsing::function_call, TreeNode> &ni ) {
+	return os << ni.data.name << "{";
+	if( ni.children.empty() == false ) {
+		os << ni.children.front();
+		for( auto it = ++(ni.children.begin()); it != ni.children.end(); ++it )
+			os << ", " << *it;
+	}
+	return os << "}";
+}
 }
 
 #endif //PQUANTUM_PARSING_MATH_TYPES_HPP
