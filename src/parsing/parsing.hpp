@@ -7,10 +7,15 @@
 
 #include <string>
 
-#include "instantiations.hpp"
+#include "mathutils/arithmetic.hpp"
 
 namespace PQuantum::parsing {
-typename instantiations::arithmetic_tree_tag::type parse_arithmetic_expression( const std::string &str );
+using math_tree_tag = support::tree::tree_tag<
+	mathutils::arithmetic_node_traits,
+	arithmetic_core_node_traits
+>;
+
+parse_math( const std::string &str );
 }
 
 #endif //PQUANTUM_PARSING_STRING_PARSING_HPP

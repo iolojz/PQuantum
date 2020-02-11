@@ -9,8 +9,14 @@
 
 namespace PQuantum::parsing::instantiations {
 using arithmetic_tree_tag = support::tree::tree_tag<
-		mathutils::arithmetic_node_traits,
-		arithmetic_core_node_traits
+	mathutils::arithmetic_node_traits,
+	arithmetic_core_node_traits
+>;
+
+using arithmetic_core_expr = std::vector<
+    std::variant<
+		dirac_operator, classical_field_id, gamma_matrix, spacetime_derivative, variable_id
+    >
 >;
 }
 

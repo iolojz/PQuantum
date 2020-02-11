@@ -11,21 +11,19 @@
 
 namespace PQuantum::parsing {
 template<class TreeTag>
-struct type_rule_impl<support::tree::node_incarnation<mathutils::linear_operators::gamma_matrix, TreeTag>> {
+struct type_rule_impl<mathutils::linear_operators::gamma_matrix> {
 	static auto apply(void) {
 		return "\\gamma" >> make_type_rule<spacetime_index>;
 	}
 };
 
-template<class TreeTag>
-struct type_rule_impl<support::tree::node_incarnation<mathutils::linear_operators::spacetime_derivative, TreeTag>> {
+struct type_rule_impl<mathutils::linear_operators::spacetime_derivative> {
 	static auto apply(void) {
 		return "\\partial" >> make_type_rule<spacetime_index>;
 	}
 };
 
-template<class TreeTag>
-struct type_rule_impl<support::tree::node_incarnation<mathutils::linear_operators::dirac_operator, TreeTag>> {
+struct type_rule_impl<mathutils::linear_operators::dirac_operator>> {
 	static auto apply(void) {
 		return "\\DiracOperator";
 	}

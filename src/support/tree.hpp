@@ -42,7 +42,7 @@ template<class T, class TreeTag>
 class node_incarnation<T, TreeTag, std::enable_if_t<!is_terminal( boost::hana::type_c<T> )>> {
 	static constexpr auto child_container_( void ) {
 		constexpr auto arity = arity_for_node_data( boost::hana::type_c<T> );
-		using node = typename TreeTag::type;
+		using node = typename TreeTag::node;
 		
 		if constexpr( boost::hana::typeid_( arity ) == boost::hana::type_c<runtime_arity_t> )
 			return boost::hana::type_c<std::vector<node>>;
@@ -52,6 +52,9 @@ class node_incarnation<T, TreeTag, std::enable_if_t<!is_terminal( boost::hana::t
 		}
 	}
 public:
+	template<class Data, class ...Children> node_incarnation( Data &&d, Children &&...ch )
+	: data{ std::forward<Data>( d ) }, children{ std::forward<Children>( ch )... } {}
+	
 	using tree_tag = TreeTag;
 	using node_data = T;
 	using child_container = typename decltype(+child_container_())::type;
@@ -79,29 +82,53 @@ class tree_tag {
 	static constexpr auto node_incarnation_in_tree = []( auto &&t ) {
 		return boost::hana::type_c<node_incarnation<typename decltype(+t)::type, tree_tag>>;
 	};
+	static constexpr auto wrap_if_nonterminal = [] ( auto &&t ) {
+		if constexpr( is_terminal( boost::hana::type_c<typename decltype(+t)::type> ) )
+			return node_incarnation_in_tree( boost::hana::type_c<typename decltype(+t)::type> );
+		else
+			return boost::hana::type_c<boost::recursive_wrapper<typename decltype(+node_incarnation_in_tree(t))::type>>;
+	};
 	
 	static constexpr auto wrapped_node_incarnations = boost::hana::transform(
 		node_data_types,
-		[]( auto &&t ) {
-			if constexpr( is_terminal( boost::hana::type_c<typename decltype(+t)::type> ) )
-				return node_incarnation_in_tree( t );
-			else {
-				using type = typename decltype(+node_incarnation_in_tree( t ))::type;
-				return boost::hana::type_c<boost::recursive_wrapper<type>>;
-			}
-		}
+		wrap_if_nonterminal
 	);
 public:
-	using type = typename decltype(+boost::hana::unpack(
-		boost::hana::prepend(
+	using node = typename decltype(+boost::hana::unpack(
+		/*boost::hana::prepend(
 			wrapped_node_incarnations,
 			boost::hana::type_c<boost::blank> // Make sure the variant is default-constructible
-		),
+		),*/
+		wrapped_node_incarnations,
 		boost::hana::template_<boost::variant>
 	))::type;
 };
 
-template<class ...NodeTraits> using tree_node = typename tree_tag<NodeTraits...>::type;
+template<class ...NodeTraits> using tree_node = typename tree_tag<NodeTraits...>::node;
+
+template<class NewTreeTag, class IncarnationVariant> class rebind_tree_tag {
+	// TODO: add some assertions
+	
+	static constexpr auto wrapped_incarnations = boost::hana::to_tuple( typename IncarnationVariant::types{} );
+	static constexpr auto incarnations = boost::hana::transform(
+		wrapped_incarnations,
+		boost::hana::metafunction<boost::unwrap_recursive>
+	);
+	static constexpr auto wrapped_rebound_incarnations = boost::hana::transform(
+		incarnations,
+		[] ( auto &&t ) {
+			if constexpr( is_terminal( boost::hana::type_c<typename decltype(+t)::type::node_data> ) )
+				return boost::hana::type_c<node_incarnation<typename decltype(+t)::type::node_data, NewTreeTag>>;
+			else
+				return boost::hana::type_c<boost::recursive_wrapper<node_incarnation<typename decltype(+t)::type::node_data, NewTreeTag>>>;
+		}
+	);
+	using new_wrapped_incarnations = decltype(boost::hana::to<boost::hana::ext::boost::mpl::vector_tag>(
+		wrapped_rebound_incarnations
+	));
+public:
+	using type = typename boost::make_variant_over<new_wrapped_incarnations>::type;
+};
 
 template<class T, class IncarnationVariant>
 static constexpr int index_of_node_data( boost::hana::basic_type<IncarnationVariant> ) {
