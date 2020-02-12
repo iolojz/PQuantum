@@ -14,6 +14,17 @@
 namespace PQuantum::parsing {
 struct atom {
 	std::string name;
+	
+	atom( void ) = default;
+	atom( const atom & ) = default;
+	atom( atom && ) = default;
+	
+	atom &operator=( const atom & ) = default;
+	atom &operator=( atom && ) = default;
+	
+	template<class Arg1, class ...Args, class = std::enable_if_t<!std::is_same_v<std::decay_t<Arg1>, atom>>>
+	atom( Arg1 &&arg1, Args &&...args )
+	: name{ std::forward<Arg1>( arg1 ), std::forward<Args>( args )... } {}
 };
 
 using index_list = std::vector<atom>;
