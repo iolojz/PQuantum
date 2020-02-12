@@ -33,19 +33,19 @@ BOOST_AUTO_TEST_CASE( parse_math ) {
 	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<sum>( a_plus_b_minus_c.children[0] ) );
 	auto a_plus_b = tree::get_node_incarnation<sum>( a_plus_b_minus_c.children[0] );
 	
-	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<parsing::atom_with_optional_indices>( a_plus_b_minus_c.children[1] ) );
-	auto c = tree::get_node_incarnation<parsing::atom_with_optional_indices>( a_plus_b_minus_c.children[1] );
+	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<atom_with_optional_indices>( a_plus_b_minus_c.children[1] ) );
+	auto c = tree::get_node_incarnation<atom_with_optional_indices>( a_plus_b_minus_c.children[1] );
 	
 	BOOST_TEST( c.data.name == "c" );
 	BOOST_TEST( c.data.indices.lower.size() == 0 );
 	BOOST_TEST( c.data.indices.upper.size() == 0 );
 	
 	BOOST_TEST_REQUIRE( a_plus_b.children.size() == 2 );
-	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<parsing::atom_with_optional_indices>( a_plus_b.children[0] ) );
-	auto a = tree::get_node_incarnation<parsing::atom_with_optional_indices>( a_plus_b.children[0] );
+	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<atom_with_optional_indices>( a_plus_b.children[0] ) );
+	auto a = tree::get_node_incarnation<atom_with_optional_indices>( a_plus_b.children[0] );
 	
-	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<parsing::atom_with_optional_indices>( a_plus_b.children[1] ) );
-	auto b = tree::get_node_incarnation<parsing::atom_with_optional_indices>( a_plus_b.children[1] );
+	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<atom_with_optional_indices>( a_plus_b.children[1] ) );
+	auto b = tree::get_node_incarnation<atom_with_optional_indices>( a_plus_b.children[1] );
 	
 	BOOST_TEST( a.data.name == "a" );
 	BOOST_TEST( a.data.indices.lower.size() == 0 );
@@ -62,11 +62,11 @@ BOOST_AUTO_TEST_CASE( parse_math ) {
 	auto f_plus_g = tree::get_node_incarnation<sum>( d_times_e_over_f_plus_g.children[1] );
 	
 	BOOST_TEST_REQUIRE( d_times_e.children.size() == 2 );
-	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<parsing::atom_with_optional_indices>( d_times_e.children[0] ) );
-	auto d = tree::get_node_incarnation<parsing::atom_with_optional_indices>( d_times_e.children[0] );
+	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<atom_with_optional_indices>( d_times_e.children[0] ) );
+	auto d = tree::get_node_incarnation<atom_with_optional_indices>( d_times_e.children[0] );
 	
-	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<parsing::atom_with_optional_indices>( d_times_e.children[1] ) );
-	auto e = tree::get_node_incarnation<parsing::atom_with_optional_indices>( d_times_e.children[1] );
+	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<atom_with_optional_indices>( d_times_e.children[1] ) );
+	auto e = tree::get_node_incarnation<atom_with_optional_indices>( d_times_e.children[1] );
 	
 	BOOST_TEST( d.data.name == "d" );
 	BOOST_TEST( d.data.indices.lower.size() == 0 );
@@ -77,11 +77,11 @@ BOOST_AUTO_TEST_CASE( parse_math ) {
 	BOOST_TEST( e.data.indices.upper.size() == 0 );
 	
 	BOOST_TEST_REQUIRE( f_plus_g.children.size() == 2 );
-	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<parsing::atom_with_optional_indices>( f_plus_g.children[0] ) );
-	auto f = tree::get_node_incarnation<parsing::atom_with_optional_indices>( f_plus_g.children[0] );
+	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<atom_with_optional_indices>( f_plus_g.children[0] ) );
+	auto f = tree::get_node_incarnation<atom_with_optional_indices>( f_plus_g.children[0] );
 	
-	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<parsing::atom_with_optional_indices>( f_plus_g.children[1] ) );
-	auto g = tree::get_node_incarnation<parsing::atom_with_optional_indices>( f_plus_g.children[1] );
+	BOOST_TEST_REQUIRE( tree::holds_node_incarnation<atom_with_optional_indices>( f_plus_g.children[1] ) );
+	auto g = tree::get_node_incarnation<atom_with_optional_indices>( f_plus_g.children[1] );
 	
 	BOOST_TEST( f.data.name == "f" );
 	BOOST_TEST( f.data.indices.lower.size() == 0 );

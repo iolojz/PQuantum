@@ -63,6 +63,6 @@ parser::symbol_type yylex( scanner_state &state ) {
 	}
 	
 	current_location.end = current;
-	return parser::make_ATOM( atom{ first, current }, std::move( current_location ) );
+	return parser::make_ATOM( mathutils::atom{ first, current }, std::move( current_location ) );
 }
 }

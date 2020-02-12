@@ -17,8 +17,8 @@
 %lex-param {scanner_state &state}
 %parse-param {scanner_state &state} {tree_node &root}
 
-%token <atom> ATOM;
-%token <atom> INDEX;
+%token <mathutils::atom> ATOM;
+%token <mathutils::atom> INDEX;
 %token PLUS;
 %token MINUS;
 %token ASTERISK;
@@ -31,9 +31,9 @@
 %token LEFT_CURLY_BRACE;
 %token RIGHT_CURLY_BRACE;
 %token END_OF_INPUT 0;
-%nterm <index_list> index_list;
-%nterm <index_spec> index_spec;
-%nterm <atom_with_optional_indices> atom_with_optional_indices;
+%nterm <mathutils::index_list> index_list;
+%nterm <mathutils::index_spec> index_spec;
+%nterm <mathutils::atom_with_optional_indices> atom_with_optional_indices;
 %nterm <std::vector<tree_node>> argument_list;
 %nterm <function_call_node> function_call;
 %nterm <tree_node> arithmetic_expr;

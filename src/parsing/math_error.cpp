@@ -4,7 +4,7 @@
 
 #include "logging/logging.hpp"
 
-#include "math_types.hpp"
+#include "bison_types.hpp"
 #include "math_scanner.hpp"
 #include "math_parse.hpp"
 
