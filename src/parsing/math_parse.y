@@ -6,6 +6,8 @@
 %require "3.2"
 %language "c++"
 
+%define parse.trace
+
 %define api.namespace {PQuantum::parsing::bison}
 %define api.value.type variant
 %define api.token.constructor
@@ -28,7 +30,7 @@
 %token RIGHT_ROUND_BRACE;
 %token LEFT_CURLY_BRACE;
 %token RIGHT_CURLY_BRACE;
-%token END_OF_INPUT;
+%token END_OF_INPUT 0;
 %nterm <index_list> index_list;
 %nterm <index_spec> index_spec;
 %nterm <atom_with_optional_indices> atom_with_optional_indices;
@@ -83,6 +85,6 @@ arithmetic_expr:
 ;
 
 root_rule:
-  arithmetic_expr END_OF_INPUT                        { root = $1; }
+  arithmetic_expr                                     { root = $1; }
 
 %%

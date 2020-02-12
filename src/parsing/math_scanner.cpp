@@ -16,6 +16,9 @@ parser::symbol_type yylex( scanner_state &state ) {
 	auto &current = state.current;
 	const auto &end = state.end;
 	
+	while( std::isspace( *current ) )
+		++current;
+	
 	if( current == end )
 		return parser::make_END_OF_INPUT( input_location{ end, end } );
 	
@@ -52,7 +55,11 @@ parser::symbol_type yylex( scanner_state &state ) {
 	} );
 	
 	if( current == first ) {
-		// Error reporting
+		std::string error_message = "Unrecognized character '";
+		error_message.push_back( *first );
+		error_message.push_back( '\'' );
+		
+		throw parser::syntax_error( std::move( current_location ), std::move( error_message ) );
 	}
 	
 	current_location.end = current;
