@@ -22,7 +22,7 @@ struct input_location {
 }
 }
 
-#include "math_parse.hpp"
+#include "math_parser.hpp"
 
 namespace PQuantum::parsing::bison {
 parser::symbol_type yylex( scanner_state &state );

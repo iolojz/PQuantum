@@ -2,6 +2,7 @@
 #define PQUANTUM_PARSING_BISON_TYPES_HPP
 
 #include "mathutils/arithmetic.hpp"
+#include "mathutils/string_atom.hpp"
 #include "mathutils/atom_indices.hpp"
 #include "mathutils/function_call.hpp"
 
@@ -10,24 +11,24 @@
 #include "support/tree.hpp"
 
 namespace PQuantum::parsing {
-using tree_tag = support::tree::tree_tag<
-		mathutils::function_call_node_traits,
-		mathutils::indexed_atoms_node_traits,
-		mathutils::arithmetic_node_traits
+using math_tree_tag = support::tree::tree_tag<
+	mathutils::function_call_node_traits<mathutils::string_atom>,
+	mathutils::indexed_atoms_node_traits<mathutils::string_atom>,
+	mathutils::arithmetic_node_traits
 >;
-using tree_node = typename tree_tag::node;
+using math_tree_node = typename math_tree_tag::node;
 
-using function_call_node = support::tree::node_incarnation<mathutils::function_call, tree_tag>;
+using function_call_node = support::tree::node_incarnation<mathutils::function_call<mathutils::string_atom>, math_tree_tag>;
 
-[[maybe_unused]] static tree_node make_atom_with_optional_indices( mathutils::atom_with_optional_indices &&indexed_a ) {
-	return support::tree::node_incarnation<mathutils::atom_with_optional_indices, tree_tag>{ std::move( indexed_a ) };
+[[maybe_unused]] static math_tree_node make_atom_with_optional_indices( mathutils::atom_with_optional_indices<mathutils::string_atom> &&indexed_a ) {
+	return support::tree::node_incarnation<mathutils::atom_with_optional_indices<mathutils::string_atom>, math_tree_tag>{ std::move( indexed_a ) };
 }
 
 #ifdef PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC
 #error "PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC is already defined"
 #endif
 #define PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC(name) \
-[[maybe_unused]] static tree_node make_arithmetic_ ## name( tree_node &&n1, tree_node &&n2 ) { \
+[[maybe_unused]] static math_tree_node make_arithmetic_ ## name( math_tree_node &&n1, math_tree_node &&n2 ) { \
 	if( support::tree::holds_node_incarnation<mathutils::name>( n1 ) ) { \
 		auto n1_ = support::tree::get_node_incarnation<mathutils::name>( std::move( n1 ) ); \
 		\
@@ -46,15 +47,15 @@ using function_call_node = support::tree::node_incarnation<mathutils::function_c
 		return n2_; \
 	} \
 	\
-	return support::tree::node_incarnation<mathutils::name, tree_tag>{ mathutils::name{}, std::move( n1 ), std::move( n2 ) }; \
+	return support::tree::node_incarnation<mathutils::name, math_tree_tag>{ mathutils::name{}, std::move( n1 ), std::move( n2 ) }; \
 }
 
 #ifdef PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC
 #error "PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC is already defined."
 #endif
 #define PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(name) \
-[[maybe_unused]] static tree_node make_arithmetic_ ## name( tree_node &&n1, tree_node &&n2 ) { \
-	return support::tree::node_incarnation<mathutils::name, tree_tag>{ mathutils::name{}, std::move( n1 ), std::move( n2 ) }; \
+[[maybe_unused]] static math_tree_node make_arithmetic_ ## name( math_tree_node &&n1, math_tree_node &&n2 ) { \
+	return support::tree::node_incarnation<mathutils::name, math_tree_tag>{ mathutils::name{}, std::move( n1 ), std::move( n2 ) }; \
 }
 
 PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC(sum)
@@ -64,8 +65,8 @@ PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(difference)
 PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(quotient)
 PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC(power)
 
-[[maybe_unused]] static tree_node make_arithmetic_negation( tree_node &&n ) { \
-	return support::tree::node_incarnation<mathutils::negation, tree_tag>{ mathutils::negation{}, std::move( n ) }; \
+[[maybe_unused]] static math_tree_node make_arithmetic_negation( math_tree_node &&n ) { \
+	return support::tree::node_incarnation<mathutils::negation, math_tree_tag>{ mathutils::negation{}, std::move( n ) }; \
 }
 
 #undef PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC

@@ -6,7 +6,7 @@
 
 #include "bison_types.hpp"
 #include "math_scanner.hpp"
-#include "math_parse.hpp"
+#include "math_parser.hpp"
 
 namespace PQuantum::parsing::bison {
 void parser::error( const input_location &loc, const std::string &error_message ) {

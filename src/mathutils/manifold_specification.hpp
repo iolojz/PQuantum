@@ -24,7 +24,7 @@ struct spacetime_dimension
 	{ return false; }
 };
 
-std::ostream &operator<<( std::ostream &os, const spacetime_dimension & ) {
+[[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const spacetime_dimension & ) {
 	return os << "D";
 }
 
@@ -79,7 +79,7 @@ struct vector_space
 	}
 };
 
-std::ostream &
+[[maybe_unused]] static std::ostream &
 operator<<( std::ostream &os, const PQuantum::mathutils::manifold_types::vector_space::algebraic_field &field )
 {
 	switch( field ) {
@@ -97,7 +97,7 @@ operator<<( std::ostream &os, const PQuantum::mathutils::manifold_types::vector_
 	return os;
 }
 
-std::ostream &
+[[maybe_unused]] static std::ostream &
 operator<<( std::ostream &os, const PQuantum::mathutils::manifold_types::vector_space::vector_space_metric &metric )
 {
 	switch( metric ) {

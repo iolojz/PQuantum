@@ -18,7 +18,7 @@
 			{
 				"name": "\\psi",
 				"algebraic field": "complex grassmann numbers",
-				"dimension": 4,
+				"dimension": "clifford algebra target space",
 				"layout": "vector"
 			},
 			{

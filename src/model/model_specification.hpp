@@ -25,31 +25,31 @@ namespace model
 class model_specification {
 	std::string model_name;
 	mathutils::manifold_specification spacetime_manifold;
-	std::map<classical_field_id, classical_field_specification> field_id_map;
-	std::map<mathutils::variable_id, std::string> parameter_id_map;
-	lagrangian_tree lag;
+	std::map<support::uuid, classical_field_specification> field_id_map;
+	std::map<support::uuid, std::string> parameter_id_map;
+	lagrangian_node lag;
 public:
 	model_specification( std::string &&n, mathutils::manifold_specification &&m,
-						 std::map<classical_field_id, classical_field_specification> &&fi,
-						 std::map<mathutils::variable_id, std::string> &&pi, lagrangian_tree &&l );
+						 std::map<support::uuid, classical_field_specification> &&fi,
+						 std::map<support::uuid, std::string> &&pi, lagrangian_node &&l );
 	
 	const std::string &name( void ) const { return model_name; }
 	
 	const mathutils::manifold_specification &spacetime( void ) const { return spacetime_manifold; }
 	
-	std::vector<classical_field_id> field_ids( void ) const
+	std::vector<support::uuid> field_ids( void ) const
 	{
-		std::vector<classical_field_id> fields;
+		std::vector<support::uuid> fields;
 		for( const auto &id_entry : field_id_map )
 			fields.push_back( id_entry.first );
 		return fields;
 	}
 	
-	const classical_field_specification &field_specification_for_id( const classical_field_id &id ) const {
+	const classical_field_specification &field_specification_for_id( const support::uuid &id ) const {
 		return field_id_map.at( id );
 	}
 	
-	const lagrangian_tree &model_lagrangian( void ) const { return lag; }
+	const lagrangian_node &model_lagrangian( void ) const { return lag; }
 };
 }
 }

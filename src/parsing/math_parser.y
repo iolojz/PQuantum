@@ -15,10 +15,10 @@
 %define api.location.type {input_location}
 
 %lex-param {scanner_state &state}
-%parse-param {scanner_state &state} {tree_node &root}
+%parse-param {scanner_state &state} {math_tree_node &root}
 
-%token <mathutils::atom> ATOM;
-%token <mathutils::atom> INDEX;
+%token <mathutils::string_atom> ATOM;
+%token <mathutils::string_atom> INDEX;
 %token PLUS;
 %token MINUS;
 %token ASTERISK;
@@ -31,12 +31,12 @@
 %token LEFT_CURLY_BRACE;
 %token RIGHT_CURLY_BRACE;
 %token END_OF_INPUT 0;
-%nterm <mathutils::index_list> index_list;
-%nterm <mathutils::index_spec> index_spec;
-%nterm <mathutils::atom_with_optional_indices> atom_with_optional_indices;
-%nterm <std::vector<tree_node>> argument_list;
+%nterm <mathutils::index_list<mathutils::string_atom>> index_list;
+%nterm <mathutils::index_spec<mathutils::string_atom>> index_spec;
+%nterm <mathutils::atom_with_optional_indices<mathutils::string_atom>> atom_with_optional_indices;
+%nterm <std::vector<math_tree_node>> argument_list;
 %nterm <function_call_node> function_call;
-%nterm <tree_node> arithmetic_expr;
+%nterm <math_tree_node> arithmetic_expr;
 %left MINUS PLUS;
 %left SLASH ASTERISK
 %precedence NEG
@@ -59,8 +59,8 @@ index_spec:
 ;
 
 atom_with_optional_indices:
-  ATOM index_spec                                  { $$.name = std::move($1.name); $$.indices = std::move($2); }
-| ATOM                                             { $$.name = std::move($1.name); }
+  ATOM index_spec                                  { $$.atom = std::move($1); $$.indices = std::move($2); }
+| ATOM                                             { $$.atom = std::move($1); }
 ;
 
 argument_list:
@@ -69,7 +69,7 @@ argument_list:
 ;
 
 function_call:
-  ATOM LEFT_CURLY_BRACE argument_list RIGHT_CURLY_BRACE       { $$.data.name = std::move($1.name); $$.children.insert( std::end($$.children), std::make_move_iterator( std::begin($3) ), std::make_move_iterator( std::end($3) ) ); }
+  ATOM LEFT_CURLY_BRACE argument_list RIGHT_CURLY_BRACE       { $$.data.atom = std::move($1.name); $$.children.insert( std::end($$.children), std::make_move_iterator( std::begin($3) ), std::make_move_iterator( std::end($3) ) ); }
 ;
 
 arithmetic_expr:

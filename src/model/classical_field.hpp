@@ -6,13 +6,14 @@
 #define PQUANTUM_CLASSICAL_FIELD_HPP
 
 #include "mathutils/manifold_specification.hpp"
+#include "mathutils/atom_indices.hpp"
+
+#include "spacetime_index.hpp"
 
 #include <string>
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/fusion/include/adapt_struct.hpp>
+#include "support/tree.hpp"
+#include "support/uuid.hpp"
 
 namespace PQuantum
 {
@@ -25,26 +26,13 @@ struct classical_field_specification
 	std::variant<int, mathutils::spacetime_dimension> dimension;
 };
 
-struct classical_field_id
-{
-	boost::uuids::uuid id;
-	
-	bool operator<( const classical_field_id &field_id ) const
-	{
-		return id < field_id.id;
-	}
-	
-	bool operator==(const classical_field_id &field_id) const {
-		return id == field_id.id;
-	}
+struct indexed_field {
+	support::uuid id;
+	mathutils::index_spec<support::uuid> indices;
 };
-
-std::ostream &operator<<( std::ostream &os, const classical_field_id &id ) {
-	return os << id.id;
-}
 }
 }
 
-BOOST_FUSION_ADAPT_STRUCT( PQuantum::model::classical_field_id, id )
+PQUANTUM_TREE_DEFINE_NODE_ARITY(model::indexed_field, 0)
 
 #endif //PQUANTUM_CLASSICAL_FIELD_HPP

@@ -14,6 +14,8 @@
 
 using namespace PQuantum;
 
+BOOST_TEST_DONT_PRINT_LOG_VALUE( typename std::decay_t<decltype(std::declval<model::model_specification>().field_ids())>::iterator )
+
 BOOST_AUTO_TEST_CASE(parse_qed) {
 	logging::setup_logging_facilities();
 	auto parser = parsing::qft_json_parser::parse(std::filesystem::path{PQUANTUM_EXAMPLES_DIRECTORY} / "qed.json");
@@ -29,24 +31,23 @@ BOOST_AUTO_TEST_CASE(parse_qed) {
 	auto field_ids = model.field_ids();
 	BOOST_TEST( field_ids.size() == 3 );
 	
-	model::classical_field_id psi_id, a_id, bar_psi_id;
-	bool has_psi = false, has_a = false, has_bar_psi = false;
-	for( const auto &field_id : field_ids ) {
-		if( model.field_specification_for_id( field_id ).name == "\\psi" ) {
-			psi_id = field_id;
-			has_psi = true;
-		} else if( model.field_specification_for_id( field_id ).name == "A" ) {
-			a_id = field_id;
-			has_a = true;
-		} else if( model.field_specification_for_id( field_id ).name == "\\bar{\\psi}" ) {
-			bar_psi_id = field_id;
-			has_bar_psi = true;
-		}
-	}
+	auto psi_id_it = std::find_if( std::begin( field_ids ), std::end( field_ids ), [&model] ( const auto &id ) {
+		return model.field_specification_for_id( id ).name == "\\psi";
+	} );
+	auto bar_psi_id_it = std::find_if( std::begin( field_ids ), std::end( field_ids ), [&model] ( const auto &id ) {
+		return model.field_specification_for_id( id ).name == "\\bar{\\psi}";
+	} );
+	auto a_id_it = std::find_if( std::begin( field_ids ), std::end( field_ids ), [&model] ( const auto &id ) {
+		return model.field_specification_for_id( id ).name == "A";
+	} );
 	
-	BOOST_TEST(has_psi);
-	BOOST_TEST(has_a);
-	BOOST_TEST(has_bar_psi);
+	BOOST_TEST_REQUIRE(psi_id_it != std::end( field_ids ));
+	BOOST_TEST_REQUIRE(bar_psi_id_it != std::end( field_ids ));
+	BOOST_TEST_REQUIRE(a_id_it != std::end( field_ids ));
+	
+	support::uuid psi_id = *psi_id_it;
+	support::uuid bar_psi_id = *bar_psi_id_it;
+	support::uuid a_id = *a_id_it;
 	
 	auto psi_specification = model.field_specification_for_id( psi_id );
 	auto a_specification = model.field_specification_for_id( a_id );

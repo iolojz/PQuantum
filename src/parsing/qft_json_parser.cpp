@@ -2,34 +2,17 @@
 // Created by jayz on 01.08.19.
 //
 
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/mpl/bool.hpp>
-
-// FIXME: remove this when done
-// #define BOOST_SPIRIT_X3_DEBUG
-
-// FIXME: wtf?!
-namespace boost::spirit::x3::traits::detail {
-template<class T, class U> struct has_type_value_type;
-
-template<class U> struct has_type_value_type<boost::uuids::uuid, U> {
-	static constexpr bool value = false;
-	using type = boost::mpl::false_;
-};
-}
-
 #include <iostream>
 
 #include "qft_json_parser.hpp"
-
-#include "support/parsing.hpp"
-#include "parsing/type_rules/linear_operators.hpp"
+#include "parse_math.hpp"
+#include "math_to_lagrangian.hpp"
 
 #include "logging/logging.hpp"
+#include "error/error.hpp"
 
 #include "model/model_specification.hpp"
 #include "model/lagrangian.hpp"
-#include "error/error.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -38,27 +21,27 @@ template<class U> struct has_type_value_type<boost::uuids::uuid, U> {
 
 namespace PQuantum::parsing {
 static auto make_qft_parsing_context( boost::uuids::random_generator &uuid_generator,
-									  const std::map<std::string, model::classical_field_id> &field_id_map,
-									  const std::map<std::string, mathutils::variable_id> &parameter_id_map,
-									  std::map<std::string, boost::uuids::uuid> &index_id_map ) {
-	auto field_id_lookup = [&field_id_map]( auto &&str ) -> std::pair<bool, boost::uuids::uuid> {
+									  const std::map<std::string, support::uuid> &field_id_map,
+									  const std::map<std::string, support::uuid> &parameter_id_map,
+									  std::map<std::string, support::uuid> &index_id_map ) {
+	auto field_id_lookup = [&field_id_map]( auto &&str ) -> std::optional<support::uuid> {
 		auto field_id_it = field_id_map.find( str );
 		if( field_id_it != field_id_map.end())
-			return { true, field_id_it->second.id };
+			return { field_id_it->second };
 		
-		return { false, {}};
+		return {};
 	};
-	auto parameter_id_lookup = [&parameter_id_map] (auto &&str) -> std::pair<bool, boost::uuids::uuid> {
+	auto parameter_id_lookup = [&parameter_id_map] (auto &&str) -> std::optional<support::uuid> {
 		auto parameter_id_it = parameter_id_map.find(str);
 		if( parameter_id_it != parameter_id_map.end())
-			return { true, parameter_id_it->second.id };
+			return { parameter_id_it->second };
 		
-		return { false, {}};
+		return {};
 	};
 	auto index_id_lookup_and_generate = [&uuid_generator, &index_id_map](
-		auto &&str ) -> std::pair<bool, boost::uuids::uuid> {
-		auto result = index_id_map.emplace( std::move( str ), uuid_generator());
-		return { true, result.first->second };
+		auto &&str ) -> support::uuid {
+		auto result = index_id_map.emplace( std::move( str ), uuid_generator );
+		return { result.first->second };
 	};
 	
 	return qft_parsing_context{ field_id_lookup, parameter_id_lookup, index_id_lookup_and_generate };
@@ -134,11 +117,10 @@ model::model_specification qft_json_parser::parse_model_specification(const json
 	);
 	
 	
-	std::map<model::classical_field_id, model::classical_field_specification> field_id_map;
-	std::map<std::string, model::classical_field_id> field_name_map;
+	std::map<support::uuid, model::classical_field_specification> field_id_map;
+	std::map<std::string, support::uuid> field_name_map;
 	for(auto &&spec : field_specifications) {
-		auto id = model::classical_field_id{uuid_generator()};
-		
+		support::uuid id{ uuid_generator };
 		field_name_map.emplace(spec.name, id);
 		field_id_map.emplace(id, std::move(spec));
 	}
@@ -149,11 +131,11 @@ model::model_specification qft_json_parser::parse_model_specification(const json
 		return node.second.template get<std::string>("");
 	});
 	
-	std::map<mathutils::variable_id, std::string> parameter_id_map;
-	std::map<std::string, mathutils::variable_id> parameter_name_map;
+	std::map<support::uuid, std::string> parameter_id_map;
+	std::map<std::string, support::uuid> parameter_name_map;
 	for(auto &&p : parameters) {
-		parameter_id_map.emplace(mathutils::variable_id{uuid_generator()}, p);
-		parameter_name_map.emplace(std::move(p), mathutils::variable_id{uuid_generator()});
+		parameter_id_map.emplace(uuid_generator, p);
+		parameter_name_map.emplace(std::move(p), uuid_generator);
 	}
 	
 	auto lagrangian = parse_lagrangian(property_tree.get_child("lagrangian"), std::move(field_name_map),
@@ -247,27 +229,25 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 	return { std::move( field ), std::move( dimension ), std::move( metric ) };
 }
 
-model::lagrangian_tree qft_json_parser::parse_lagrangian( const boost::property_tree::ptree &property_tree,
-														  const std::map<std::string, model::classical_field_id> &field_id_map,
-														  const std::map<std::string, mathutils::variable_id> &parameter_id_map ) {
+model::lagrangian_node qft_json_parser::parse_lagrangian( const boost::property_tree::ptree &property_tree,
+														  const std::map<std::string, support::uuid> &field_id_map,
+														  const std::map<std::string, support::uuid> &parameter_id_map ) {
 	BOOST_LOG_NAMED_SCOPE( "model::parse_lagrangian()" );
 	logging::severity_logger logger;
 	
-	std::vector<model::lagrangian_tree> lagrangian_parts;
+	support::tree::node_incarnation<mathutils::sum, model::lagrangian_tree_tag> lagrangian;
 	std::transform( property_tree.begin(), property_tree.end(),
-					std::back_inserter( lagrangian_parts ), [&]( const auto &key_value_pair ) {
+					std::back_inserter( lagrangian.children ), [&]( const auto &key_value_pair ) {
 			const boost::property_tree::ptree &node = key_value_pair.second;
 			std::string term = node.get<std::string>( "" );
 			
-			std::map<std::string, boost::uuids::uuid> index_id_map;
+			std::map<std::string, support::uuid> index_id_map;
 			qft_parsing_context context = make_qft_parsing_context( uuid_generator, field_id_map, parameter_id_map,
 																	index_id_map );
 			
-			auto arithmetic_tree = parse_arithmetic_tree( term );
-			return support::tree::transform_tree( arithmetic_tree,  )
-			return PQuantum::support::parsing::parse<model::lagrangian_tree>( term.begin(), term.end(), context );
+			math_tree_node math_term = parse_math( term );
+			return math_to_lagrangian( std::move( math_term ), std::move( context ) );
 		} );
-	
-	return model::lagrangian_tree{ mathutils::linear_operators::sum{}, std::move( lagrangian_parts ) };
+	return lagrangian;
 }
 }

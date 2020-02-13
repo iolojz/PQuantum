@@ -5,21 +5,26 @@
 #ifndef PQUANTUM_SUPPORT_TREE_HPP
 #define PQUANTUM_SUPPORT_TREE_HPP
 
-#include <boost/array.hpp>
-
 #include <boost/hana.hpp>
 #include <boost/hana/ext/boost/mpl.hpp>
 
-#include <boost/fusion/include/adapt_struct.hpp>
-#include <boost/fusion/include/boost_array.hpp>
-
 #include <boost/variant.hpp>
+
+#include "bool_v.hpp"
 
 namespace PQuantum::support::tree {
 struct runtime_arity_t {};
 static constexpr auto runtime_arity = runtime_arity_t{};
 
-template<class T> constexpr auto arity_for_node_data( boost::hana::basic_type<T> );
+template<class T> struct arity_for_node_data_impl {
+	static constexpr auto apply( void ) {
+		static_assert( false_v<T>, "Arity not specified for given type." );
+	}
+};
+
+template<class T> constexpr decltype(auto) arity_for_node_data( boost::hana::basic_type<T> ) {
+	return arity_for_node_data_impl<T>::apply();
+}
 
 template<class T>
 static constexpr auto is_terminal( boost::hana::basic_type<T> t ) {
@@ -55,20 +60,25 @@ class node_incarnation<T, TreeTag, std::enable_if_t<!is_terminal( boost::hana::t
 			return boost::hana::type_c<std::vector<node>>;
 		else {
 			static_assert( arity != 0, "Internal error" );
-			return boost::hana::type_c<boost::array<node, arity>>;
+			return boost::hana::type_c<std::array<node, arity>>;
 		}
 	}
 public:
-	node_incarnation( void ) = default;
-	
-	template<class Data, class ...Children,
-	    class = std::enable_if_t<!std::is_same_v<std::decay_t<Data>, node_incarnation>>
-	> node_incarnation( Data &&d, Children &&...ch )
-	: data{ std::forward<Data>( d ) }, children{ std::forward<Children>( ch )... } {}
-	
 	using tree_tag = TreeTag;
 	using node_data = T;
 	using child_container = typename decltype(+child_container_())::type;
+	
+	node_incarnation( void ) = default;
+	node_incarnation( const node_incarnation & ) = default;
+	node_incarnation( node_incarnation && ) = default;
+	
+	node_incarnation &operator=( const node_incarnation & ) = default;
+	node_incarnation &operator=( node_incarnation && ) = default;
+	
+	template<class ...ChildArgs> node_incarnation( const node_data &d, ChildArgs &&...ch )
+	: data{ d }, children{ std::forward<ChildArgs>( ch )... } {}
+	template<class ...ChildArgs> node_incarnation( node_data &&d, ChildArgs &&...ch )
+	: data{ std::move( d ) }, children{ std::forward<ChildArgs>( ch )... } {}
 	
 	node_data data;
 	child_container children;
@@ -149,28 +159,13 @@ static constexpr auto get_node_incarnation( IncarnationVariant &&iv ) {
 }
 }
 
-BOOST_FUSION_ADAPT_TPL_STRUCT(
-	( T )( TreeTag ),
-	(PQuantum::support::tree::node_incarnation) ( T )( TreeTag )(
-		std::enable_if_t<PQuantum::support::tree::is_terminal( boost::hana::type_c<T> )>
-	),
-	data
-)
-
-BOOST_FUSION_ADAPT_TPL_STRUCT(
-	( T )( TreeTag ),
-	(PQuantum::support::tree::node_incarnation) ( T )( TreeTag )(
-		std::enable_if_t<!PQuantum::support::tree::is_terminal( boost::hana::type_c<T> )>
-	),
-	data,
-	children
-)
-
 #define PQUANTUM_TREE_DEFINE_NODE_ARITY(type,arity) \
 namespace PQuantum::support::tree { \
-template<> constexpr auto arity_for_node_data<type>( boost::hana::basic_type<type> ) { \
-    return arity; \
-} \
+template<> struct arity_for_node_data_impl<type> { \
+    static constexpr auto apply( void ) { \
+        return arity; \
+    } \
+}; \
 }
 
 #endif //PQUANTUM_SUPPORT_TREE_HPP
