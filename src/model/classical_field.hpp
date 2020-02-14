@@ -28,7 +28,7 @@ struct classical_field_specification
 
 struct indexed_field {
 	support::uuid id;
-	mathutils::index_spec<support::uuid> indices;
+	mathutils::index_spec<std::variant<int, support::uuid>> indices;
 };
 }
 }

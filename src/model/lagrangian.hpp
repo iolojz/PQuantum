@@ -32,7 +32,7 @@ namespace PQuantum::model {
 struct lagrangian_atoms_traits {
 	static constexpr auto node_data_types = boost::hana::tuple_t<
 	    indexed_field,
-	    parameter,
+	    indexed_parameter,
 		gamma_matrix,
 		spacetime_derivative,
 		dirac_operator

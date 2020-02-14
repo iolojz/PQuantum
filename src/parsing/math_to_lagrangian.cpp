@@ -13,6 +13,38 @@ using namespace PQuantum;
 namespace {
 BOOST_TTI_HAS_STATIC_MEMBER_DATA(value)
 
+std::optional<int> string_to_int( const std::string &str ) {
+	BOOST_LOG_NAMED_SCOPE( "string_to_int()" );
+	logging::severity_logger logger;
+	std::size_t num_chars_processed;
+	int value;
+	
+	try {
+		value = std::stoi(str, &num_chars_processed);
+	} catch( const std::invalid_argument & ) {
+		return {};
+	} catch( const std::out_of_range & ) {
+		BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Integer overflow upon converting \"" <<
+			str << "\" to an int.";
+		error::exit_upon_error();
+	}
+	
+	if( num_chars_processed != str.length() ) {
+		BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Identifier names may not begin with digits (\"" <<
+			str << "\").";
+		error::exit_upon_error();
+	}
+	
+	return value;
+}
+
+std::variant<int, support::uuid> string_to_index( const std::string &str, parsing::qft_parsing_context &context ) {
+	std::optional<int> as_int = string_to_int( str );
+	if( as_int )
+		return *as_int;
+	return context.index_id_lookup_and_generate( str );
+}
+
 class converter : public boost::static_visitor<model::lagrangian_node> {
 	template<class T> using old_node_incarnation = support::tree::node_incarnation<T, parsing::math_tree_tag>;
 	template<class T> using new_node_incarnation = support::tree::node_incarnation<T, model::lagrangian_tree_tag>;
@@ -84,36 +116,100 @@ public:
 template<> auto converter::operator()<mathutils::atom_with_optional_indices<mathutils::string_atom>>(
 	old_node_incarnation<mathutils::atom_with_optional_indices<mathutils::string_atom>> &&indexed_atom_node
 ) const {
+	BOOST_LOG_NAMED_SCOPE( "converter::operator()()" );
+	logging::severity_logger logger;
+
 	using new_node_type = boost::variant<
 	    new_node_incarnation<model::indexed_field>,
-		new_node_incarnation<model::parameter>
+		new_node_incarnation<model::indexed_parameter>,
+		new_node_incarnation<model::gamma_matrix>,
+		new_node_incarnation<model::spacetime_derivative>,
+		new_node_incarnation<model::dirac_operator>
 	>;
-	mathutils::index_spec<support::uuid> indices;
+	mathutils::index_spec<std::variant<int, support::uuid>> indices;
 	
-	for( auto &&index : indexed_atom_node.data.indices.lower ) {
-		// TODO: Assert the index to be an identifier and not a number
-		indices.lower.push_back( context.index_id_lookup_and_generate( index.name ) );
-	}
-	for( auto &&index : indexed_atom_node.data.indices.upper ) {
-		// TODO: Assert the index to be an identifier and not a number
-		indices.upper.push_back( context.index_id_lookup_and_generate( index.name ) );
-	}
+	for( auto &&index : indexed_atom_node.data.indices.lower )
+		indices.lower.push_back( string_to_index( index.name, context ) );
+	for( auto &&index : indexed_atom_node.data.indices.upper )
+		indices.upper.push_back( string_to_index( index.name, context ) );
 	
 	std::optional<support::uuid> id;
 	if( (id = context.field_id_lookup( indexed_atom_node.data.atom.name )) )
 		return new_node_type{ new_node_incarnation<model::indexed_field>{ model::indexed_field{ *id, std::move( indices ) } } };
-	else if( (id = context.field_id_lookup( indexed_atom_node.data.atom.name )) ) {
-		// TODO: Assert the indices to be empty
-		return new_node_type{ new_node_incarnation<model::parameter>{ model::parameter{ *id } } };
+	else if( (id = context.parameter_id_lookup( indexed_atom_node.data.atom.name )) )
+		return new_node_type{ new_node_incarnation<model::indexed_parameter>{ model::indexed_parameter{ *id, std::move( indices ) } } };
+	else if( indexed_atom_node.data.atom.name == "\\gamma" ) {
+		if( indices.lower.empty() ) {
+			if( indices.upper.empty() ) {
+				BOOST_LOG_SEV(logger, logging::severity_level::error) << "Gamma matrix without indices";
+				error::exit_upon_error();
+			}
+			if( indices.upper.size() != 1 ) {
+				BOOST_LOG_SEV(logger, logging::severity_level::error) << "Gamma matrix with too many indices";
+				error::exit_upon_error();
+			}
+
+			return new_node_type{ new_node_incarnation<model::gamma_matrix>{
+				model::gamma_matrix{ { model::spacetime_index::index_variance::upper, std::move( indices.upper.front() ) } }
+			} };
+		} else if( indices.upper.empty() ) {
+			if( indices.lower.size() != 1 ) {
+				BOOST_LOG_SEV(logger, logging::severity_level::error) << "Gamma matrix with too many indices";
+				error::exit_upon_error();
+			}
+			
+			return new_node_type{ new_node_incarnation<model::gamma_matrix>{
+				model::gamma_matrix{ { model::spacetime_index::index_variance::lower, std::move( indices.upper.front() ) } }
+			} };
+		}
+
+		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Gamma matrix with too many indices";
+		error::exit_upon_error();
+	} else if( indexed_atom_node.data.atom.name == "\\SpacetimeDerivative" ) {
+		if( indices.lower.empty() ) {
+			if( indices.upper.empty() ) {
+				BOOST_LOG_SEV(logger, logging::severity_level::error) << "Spacetime derivative without indices";
+				error::exit_upon_error();
+			}
+			if( indices.upper.size() != 1 ) {
+				BOOST_LOG_SEV(logger, logging::severity_level::error) << "Spacetime derivative with too many indices";
+				error::exit_upon_error();
+			}
+			
+			return new_node_type{ new_node_incarnation<model::spacetime_derivative>{
+				model::spacetime_derivative{ { model::spacetime_index::index_variance::upper, std::move( indices.upper.front() ) } }
+			} };
+		} else if( indices.upper.empty() ) {
+			if( indices.lower.size() != 1 ) {
+				BOOST_LOG_SEV(logger, logging::severity_level::error) << "Spacetime derivative with too many indices";
+				error::exit_upon_error();
+			}
+			
+			return new_node_type{ new_node_incarnation<model::spacetime_derivative>{
+				model::spacetime_derivative{ { model::spacetime_index::index_variance::lower, std::move( indices.upper.front() ) } }
+			} };
+		}
+		
+		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Spacetime derivative with too many indices";
+		error::exit_upon_error();
+	} else if( indexed_atom_node.data.atom.name == "\\DiracOperator" ) {
+		if( !(indices.lower.empty() && indices.upper.empty()) ) {
+			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Dirac operator with indices";
+			error::exit_upon_error();
+		}
+
+		return new_node_type{ new_node_incarnation<model::dirac_operator>{} };
 	}
 	
-	// TODO: Report some meaningful error
-	throw( "foo" );
+	BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Unrecognized field or parameter identifier \"" <<
+		indexed_atom_node.data.atom.name << "\".";
+	error::exit_upon_error();
 }
 }
 
 namespace PQuantum::parsing {
 model::lagrangian_node math_to_lagrangian( math_tree_node &&math_node, qft_parsing_context &&qft_context ) {
+	BOOST_LOG_NAMED_SCOPE( "parsing::math_to_lagrangian()" );
 	return boost::apply_visitor( converter{ qft_context }, std::move( math_node ) );
 }
 }
