@@ -113,6 +113,63 @@ public:
 	}
 };
 
+template<> auto converter::operator()<mathutils::function_call<mathutils::string_atom>>(
+	old_node_incarnation<mathutils::function_call<mathutils::string_atom>> &&fcall_node
+) const {
+	BOOST_LOG_NAMED_SCOPE( "converter::operator()()" );
+	logging::severity_logger logger;
+
+	using new_node_type = boost::variant<
+		new_node_incarnation<model::indexed_field>,
+		new_node_incarnation<mathutils::function_call<mathutils::string_atom>>
+	>;
+	
+	if( fcall_node.data.atom.name == "\\bar" ) {
+		if( std::empty( fcall_node.children ) ) {
+			BOOST_LOG_SEV(logger, logging::severity_level::error) << "\\bar{} without arguments";
+			error::exit_upon_error();
+		}
+		if( std::size( fcall_node.children ) != 1 ) {
+			BOOST_LOG_SEV(logger, logging::severity_level::error) << "\\bar{} with too many arguments";
+			error::exit_upon_error();
+		}
+		
+		auto &&child_variant = fcall_node.children.front();
+		if( !support::tree::holds_node_incarnation<mathutils::atom_with_optional_indices<mathutils::string_atom>>( child_variant ) ) {
+			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Argument to \\bar{} must be a field";
+			error::exit_upon_error();
+		}
+		auto &&child = support::tree::get_node_incarnation<mathutils::atom_with_optional_indices<mathutils::string_atom>>( std::move( child_variant ) );
+		if( !context.field_id_lookup( child.data.atom.name ) ) {
+			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Argument to \\bar{} must be a field";
+			error::exit_upon_error();
+		}
+		
+		std::string barred_name = "\\bar{";
+		barred_name += std::move( child.data.atom.name );
+		barred_name.push_back( '}' );
+
+		std::optional<support::uuid> id = context.field_id_lookup( barred_name );
+		if( !id ) {
+			BOOST_LOG_SEV(logger, logging::severity_level::error) << "The field \"" << child.data.atom.name << "\" cannot be barred.";
+			error::exit_upon_error();
+		}
+		
+		// TODO: currently, there is no way to specify indices of a barred field
+		if( !(child.data.indices.lower.empty() && child.data.indices.upper.empty()) ) {
+			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Only unindexed fields can be barred.";
+			error::exit_upon_error();
+		}
+		
+		return new_node_type{ new_node_incarnation<model::indexed_field>{ model::indexed_field{ *id, {} } } };
+	}
+
+	using new_child_container = typename new_node_incarnation<mathutils::function_call<mathutils::string_atom>>::child_container;
+	return new_node_type{ new_node_incarnation<mathutils::function_call<mathutils::string_atom>>{
+		std::move(fcall_node.data), convert_container<new_child_container>(std::move(fcall_node.children))
+	}};
+}
+
 template<> auto converter::operator()<mathutils::atom_with_optional_indices<mathutils::string_atom>>(
 	old_node_incarnation<mathutils::atom_with_optional_indices<mathutils::string_atom>> &&indexed_atom_node
 ) const {
