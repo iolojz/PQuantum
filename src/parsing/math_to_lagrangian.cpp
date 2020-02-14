@@ -118,13 +118,14 @@ template<> auto converter::operator()<mathutils::atom_with_optional_indices<math
 ) const {
 	BOOST_LOG_NAMED_SCOPE( "converter::operator()()" );
 	logging::severity_logger logger;
-
+	
 	using new_node_type = boost::variant<
 	    new_node_incarnation<model::indexed_field>,
 		new_node_incarnation<model::indexed_parameter>,
 		new_node_incarnation<model::gamma_matrix>,
 		new_node_incarnation<model::spacetime_derivative>,
-		new_node_incarnation<model::dirac_operator>
+		new_node_incarnation<model::dirac_operator>,
+		new_node_incarnation<mathutils::number>
 	>;
 	mathutils::index_spec<std::variant<int, support::uuid>> indices;
 	
@@ -159,7 +160,7 @@ template<> auto converter::operator()<mathutils::atom_with_optional_indices<math
 			}
 			
 			return new_node_type{ new_node_incarnation<model::gamma_matrix>{
-				model::gamma_matrix{ { model::spacetime_index::index_variance::lower, std::move( indices.upper.front() ) } }
+				model::gamma_matrix{ { model::spacetime_index::index_variance::lower, std::move( indices.lower.front() ) } }
 			} };
 		}
 
@@ -186,7 +187,7 @@ template<> auto converter::operator()<mathutils::atom_with_optional_indices<math
 			}
 			
 			return new_node_type{ new_node_incarnation<model::spacetime_derivative>{
-				model::spacetime_derivative{ { model::spacetime_index::index_variance::lower, std::move( indices.upper.front() ) } }
+				model::spacetime_derivative{ { model::spacetime_index::index_variance::lower, std::move( indices.lower.front() ) } }
 			} };
 		}
 		
@@ -199,6 +200,17 @@ template<> auto converter::operator()<mathutils::atom_with_optional_indices<math
 		}
 
 		return new_node_type{ new_node_incarnation<model::dirac_operator>{} };
+	} else if( indexed_atom_node.data.atom.name == "\\ImaginaryUnit" ) {
+		if( !(indices.lower.empty() && indices.upper.empty()) ) {
+			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Imaginary unit with indices";
+			error::exit_upon_error();
+		}
+
+		return new_node_type{ new_node_incarnation<mathutils::number>{ mathutils::number{ 0, 1 } } };
+	} else {
+		auto as_int = string_to_int( indexed_atom_node.data.atom.name );
+		if( as_int )
+			return new_node_type{ new_node_incarnation<mathutils::number>{ mathutils::number{ *as_int, 0 } } };
 	}
 	
 	BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Unrecognized field or parameter identifier \"" <<

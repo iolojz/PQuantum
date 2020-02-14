@@ -18,7 +18,7 @@
 			{
 				"name": "\\psi",
 				"algebraic field": "complex grassmann numbers",
-				"dimension": "clifford algebra target space",
+				"dimension": "clifford algebra target dimension",
 				"layout": "vector"
 			},
 			{
@@ -38,9 +38,9 @@
 		"lagrangian": [
 			"\\ImaginaryUnit Z_\\psi \\bar{\\psi} \\DiracOperator \\psi",
 			"- \\ImaginaryUnit m \\bar{\\psi} \\psi",
-			"1/4 Z_A * (\\partial_\\mu A_\\nu - \\partial_\\nu A_\\mu) * (\\partial^\\mu A^\\nu - \\partial^\\nu A^\\mu)",
-			"- e \\bar{\\psi} \\gamma_\\mu A^\\mu \\psi",
-			"\\xi (\\partial_\\mu A^\\mu) * (\\partial_\\nu A^\\nu)"
+			"1/4 Z_A (\\SpacetimeDerivative_{\\mu} A_{\\nu} - \\SpacetimeDerivative_{\\nu} A_{\\mu}) (\\SpacetimeDerivative^{\\mu} A^{\\nu} - \\SpacetimeDerivative^{\\nu} A^{\\mu})",
+			"- e \\bar{\\psi} \\gamma_{\\mu} A^{\\mu} \\psi",
+			"\\xi (\\SpacetimeDerivative_{\\mu} A^{\\mu}) * (\\SpacetimeDerivative_{\\nu} A^{\\nu})"
 		]
 	}
 }

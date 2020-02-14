@@ -37,6 +37,9 @@ parser::symbol_type yylex( scanner_state &state ) {
 		case '^':
 			return parser::make_CARET( std::move( current_location ) );
 		case '_':
+			// We allow for '_'s in identifiers.
+			if( current == end || *current != '{' )
+				break;
 			return parser::make_UNDERSCORE( std::move( current_location ) );
 		case ',':
 			return parser::make_COMMA( std::move( current_location ) );
@@ -50,9 +53,16 @@ parser::symbol_type yylex( scanner_state &state ) {
 			return parser::make_RIGHT_CURLY_BRACE( std::move( current_location ) );
 	}
 	
-	current = std::find_if_not( first, end, [] ( const auto &c ) {
-		return is_valid_atom_character( c );
-	} );
+	for( current = first; current != end; ++current ) {
+		if( *current == '_' ) {
+			auto next = std::next( current );
+			if( next != end && *next == '{' )
+				break;
+			continue;
+		}
+		if( is_valid_atom_character( *current ) == false )
+			break;
+	}
 	
 	if( current == first ) {
 		std::string error_message = "Unrecognized character '";
@@ -63,6 +73,6 @@ parser::symbol_type yylex( scanner_state &state ) {
 	}
 	
 	current_location.end = current;
-	return parser::make_ATOM(mathutils::string_atom{first, current }, std::move(current_location ) );
+	return parser::make_ATOM(mathutils::string_atom{first, current}, std::move( current_location ) );
 }
 }

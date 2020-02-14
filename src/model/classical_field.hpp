@@ -23,7 +23,7 @@ struct classical_field_specification
 {
 	std::string name;
 	mathutils::manifold_types::vector_space::algebraic_field algebraic_field;
-	std::variant<int, mathutils::spacetime_dimension> dimension;
+	std::variant<int, mathutils::spacetime_dimension, mathutils::clifford_algebra_target_dimension> dimension;
 };
 
 struct indexed_field {

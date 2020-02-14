@@ -56,8 +56,7 @@ BOOST_AUTO_TEST_CASE(parse_qed) {
 	BOOST_TEST( psi_specification.name == "\\psi" );
 	BOOST_TEST(
 	psi_specification.algebraic_field == mathutils::manifold_types::vector_space::algebraic_field::complex_grassmann );
-	BOOST_TEST( std::holds_alternative<int>( psi_specification.dimension ));
-	BOOST_TEST( std::get<int>( psi_specification.dimension ) == 4 );
+	BOOST_TEST( std::holds_alternative<mathutils::clifford_algebra_target_dimension>( psi_specification.dimension ));
 	
 	BOOST_TEST( a_specification.name == "A" );
 	BOOST_TEST( a_specification.algebraic_field == mathutils::manifold_types::vector_space::algebraic_field::real );
@@ -66,8 +65,7 @@ BOOST_AUTO_TEST_CASE(parse_qed) {
 	BOOST_TEST( bar_psi_specification.name == "\\bar{\\psi}" );
 	BOOST_TEST(
 			bar_psi_specification.algebraic_field == mathutils::manifold_types::vector_space::algebraic_field::complex_grassmann );
-	BOOST_TEST( std::holds_alternative<int>( bar_psi_specification.dimension ));
-	BOOST_TEST( std::get<int>( bar_psi_specification.dimension ) == 4 );
+	BOOST_TEST( std::holds_alternative<mathutils::clifford_algebra_target_dimension>( bar_psi_specification.dimension ));
 	
 	const auto &spacetime = model.spacetime();
 	BOOST_TEST( std::holds_alternative<mathutils::manifold_types::vector_space>( spacetime ));

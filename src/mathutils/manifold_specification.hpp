@@ -24,8 +24,14 @@ struct spacetime_dimension
 	{ return false; }
 };
 
+struct clifford_algebra_target_dimension {};
+
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const spacetime_dimension & ) {
 	return os << "D";
+}
+
+[[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const clifford_algebra_target_dimension & ) {
+	return os << "d_{\\gamma}";
 }
 
 namespace manifold_types
@@ -36,7 +42,7 @@ struct vector_space
 	{
 		real, complex, complex_grassmann
 	} field;
-	std::variant<int, spacetime_dimension> dimension;
+	std::variant<int, spacetime_dimension, clifford_algebra_target_dimension> dimension;
 	
 	enum class vector_space_metric
 	{
@@ -45,9 +51,8 @@ struct vector_space
 		complex_nondegenerate
 	} metric;
 	
-	vector_space( algebraic_field f, std::variant<int, spacetime_dimension> d, vector_space_metric m ) : field{ f },
-																										 dimension{ d },
-																										 metric{ m } {
+	vector_space( algebraic_field f, std::variant<int, spacetime_dimension, clifford_algebra_target_dimension> d, vector_space_metric m )
+	: field{ f }, dimension{ d },  metric{ m } {
 		BOOST_LOG_NAMED_SCOPE("vector_space::vector_space()");
 		logging::severity_logger logger;
 		

@@ -187,10 +187,12 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 		error::exit_upon_error();
 	}
 	
-	std::variant<int, mathutils::spacetime_dimension> dimension;
+	std::variant<int, mathutils::spacetime_dimension, mathutils::clifford_algebra_target_dimension> dimension;
 	std::string dimension_string = property_tree.get<std::string>( "dimension" );
 	if( dimension_string == "spacetime dimension" )
 		dimension = mathutils::spacetime_dimension{};
+	else if( dimension_string == "clifford algebra target dimension" )
+		dimension = mathutils::clifford_algebra_target_dimension{};
 	else {
 		boost::optional<int> dim_boost = property_tree.get_optional<int>( "dimension" );
 		if( dim_boost )

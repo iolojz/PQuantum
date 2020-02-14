@@ -9,6 +9,8 @@
 
 #include <cxxmath/cxxmath.hpp>
 
+#include "support/tree.hpp"
+
 namespace PQuantum::mathutils
 {
 struct number_tag {};
@@ -107,5 +109,7 @@ template<> struct default_ring<PQuantum::mathutils::number_tag> {
 	>;
 };
 }
+
+PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::number, 0)
 
 #endif //PQUANTUM_NUMBER_HPP

@@ -12,6 +12,7 @@
 #include "mathutils/string_atom.hpp"
 #include "mathutils/arithmetic.hpp"
 #include "mathutils/function_call.hpp"
+#include "mathutils/number.hpp"
 
 namespace PQuantum::model {
 struct gamma_matrix {
@@ -35,7 +36,8 @@ struct lagrangian_atoms_traits {
 	    indexed_parameter,
 		gamma_matrix,
 		spacetime_derivative,
-		dirac_operator
+		dirac_operator,
+		mathutils::number
 	>;
 };
 
