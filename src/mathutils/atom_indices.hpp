@@ -35,15 +35,17 @@ template<class IndexAtom>
 std::ostream &operator<<( std::ostream &os, const index_spec<IndexAtom> &is ) {
 	if( is.lower.empty() == false ) {
 		os << "_{" << is.lower.front();
-		for( auto it = ++(is.lower.begin()); it != is.lower.end(); ++it )
+		for( auto it = ++( is.lower.begin() ); it != is.lower.end(); ++it ) {
 			os << ", " << *it;
+		}
 		os << "}";
 	}
 	
 	if( is.upper.empty() == false ) {
 		os << "^{" << is.lower.front();
-		for( auto it = ++(is.upper.begin()); it != is.upper.end(); ++it )
+		for( auto it = ++( is.upper.begin() ); it != is.upper.end(); ++it ) {
 			os << ", " << *it;
+		}
 		os << "}";
 	}
 	
@@ -52,15 +54,23 @@ std::ostream &operator<<( std::ostream &os, const index_spec<IndexAtom> &is ) {
 }
 
 namespace PQuantum::support::tree {
-template<class Atom, class IndexAtom> struct arity_for_node_data_impl<mathutils::atom_with_optional_indices<Atom, IndexAtom>> {
+template<class Atom, class IndexAtom>
+struct arity_for_node_data_impl<mathutils::atom_with_optional_indices<Atom, IndexAtom>> {
 	static constexpr auto apply( void ) {
 		return 0;
 	}
 };
 
+template<class Atom>
+std::ostream &
+operator<<( std::ostream &os, const mathutils::atom_with_optional_indices<Atom> &indexed_atom ) {
+	return os << indexed_atom.atom << indexed_atom.indices;
+}
+
 template<class Atom, class TreeNode>
-std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::atom_with_optional_indices<Atom>, TreeNode> &ni ) {
-	return os << ni.data << ni.data.indices;
+std::ostream &
+operator<<( std::ostream &os, const node_incarnation<mathutils::atom_with_optional_indices<Atom>, TreeNode> &ni ) {
+	return os << ni.data;
 }
 }
 

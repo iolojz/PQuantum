@@ -37,6 +37,7 @@
 %nterm <std::vector<math_tree_node>> argument_list;
 %nterm <function_call_node> function_call;
 %nterm <math_tree_node> arithmetic_expr;
+%nterm <math_tree_node> root_arithmetic_expr;
 %left MINUS PLUS;
 %left SLASH ASTERISK
 %precedence NEG
@@ -66,8 +67,8 @@ atom_with_optional_indices:
 
 argument_list:
   %empty                                           {}
-| arithmetic_expr COMMA argument_list              { $$.push_back(std::move($1)); $$.insert( std::end($$), std::make_move_iterator( std::begin($3) ), std::make_move_iterator( std::end($3) ) ); }
-| arithmetic_expr                                  { $$.push_back(std::move($1)); }
+| root_arithmetic_expr COMMA argument_list         { $$.push_back(std::move($1)); $$.insert( std::end($$), std::make_move_iterator( std::begin($3) ), std::make_move_iterator( std::end($3) ) ); }
+| root_arithmetic_expr                             { $$.push_back(std::move($1)); }
 ;
 
 function_call:
@@ -75,19 +76,22 @@ function_call:
 ;
 
 arithmetic_expr:
-  atom_with_optional_indices                          { $$ = make_atom_with_optional_indices( std::move($1) ); }
-| function_call                                       { $$ = std::move($1); }
-| arithmetic_expr PLUS arithmetic_expr                { $$ = make_arithmetic_sum( std::move($1), std::move($3) ); }
-| arithmetic_expr MINUS arithmetic_expr               { $$ = make_arithmetic_difference( std::move($1), std::move($3) ); }
-| arithmetic_expr ASTERISK arithmetic_expr            { $$ = make_arithmetic_product( std::move($1), std::move($3) ); }
-| arithmetic_expr arithmetic_expr  %prec ASTERISK     { $$ = make_arithmetic_product( std::move($1), std::move($2) ); }
-| arithmetic_expr SLASH arithmetic_expr               { $$ = make_arithmetic_quotient( std::move($1), std::move($3) ); }
-| arithmetic_expr CARET arithmetic_expr               { $$ = make_arithmetic_power( std::move($1), std::move($3) ); }
-| MINUS arithmetic_expr  %prec NEG                    { $$ = make_arithmetic_negation( std::move($2) ); }
-| LEFT_ROUND_BRACE arithmetic_expr RIGHT_ROUND_BRACE  { $$ = std::move($2); }
+  atom_with_optional_indices                               { $$ = make_atom_with_optional_indices( std::move($1) ); }
+| function_call                                            { $$ = std::move($1); }
+| arithmetic_expr PLUS arithmetic_expr                     { $$ = make_arithmetic_sum( std::move($1), std::move($3) ); }
+| arithmetic_expr MINUS arithmetic_expr                    { $$ = make_arithmetic_difference( std::move($1), std::move($3) ); }
+| arithmetic_expr ASTERISK arithmetic_expr                 { $$ = make_arithmetic_product( std::move($1), std::move($3) ); }
+| arithmetic_expr arithmetic_expr  %prec ASTERISK          { $$ = make_arithmetic_product( std::move($1), std::move($2) ); }
+| arithmetic_expr SLASH arithmetic_expr                    { $$ = make_arithmetic_quotient( std::move($1), std::move($3) ); }
+| arithmetic_expr CARET arithmetic_expr                    { $$ = make_arithmetic_power( std::move($1), std::move($3) ); }
+| LEFT_ROUND_BRACE root_arithmetic_expr RIGHT_ROUND_BRACE  { $$ = std::move($2); }
 ;
 
+root_arithmetic_expr:
+  MINUS arithmetic_expr                               { $$ = make_arithmetic_negation( std::move($2) ); }
+| arithmetic_expr                                     { $$ = std::move($1); }
+
 root_rule:
-  arithmetic_expr                                     { root = $1; }
+  root_arithmetic_expr                                { root = $1; }
 
 %%

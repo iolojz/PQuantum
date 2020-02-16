@@ -15,12 +15,8 @@
 #include "support/tree.hpp"
 #include "support/uuid.hpp"
 
-namespace PQuantum
-{
-namespace model
-{
-struct classical_field_specification
-{
+namespace PQuantum::model {
+struct classical_field_specification {
 	std::string name;
 	mathutils::manifold_types::vector_space::algebraic_field algebraic_field;
 	std::variant<int, mathutils::spacetime_dimension, mathutils::clifford_algebra_target_dimension> dimension;
@@ -31,8 +27,7 @@ struct indexed_field {
 	mathutils::index_spec<std::variant<int, support::uuid>> indices;
 };
 }
-}
 
-PQUANTUM_TREE_DEFINE_NODE_ARITY(model::indexed_field, 0)
+PQUANTUM_TREE_DEFINE_NODE_ARITY( model::indexed_field, 0 )
 
 #endif //PQUANTUM_CLASSICAL_FIELD_HPP

@@ -11,8 +11,7 @@
 
 #include "support/tree.hpp"
 
-namespace PQuantum::mathutils
-{
+namespace PQuantum::mathutils {
 struct number_tag {};
 
 // FIXME: This should be a complex rational number!
@@ -20,42 +19,42 @@ struct number_tag {};
 using number = boost::multiprecision::cpp_complex<50>;
 
 namespace model_number {
-struct equal : cxxmath::supports_tag_helper<number_tag> {
+struct equal: cxxmath::supports_tag_helper<number_tag> {
 	template<class N1, class N2>
-	static constexpr decltype(auto) apply( N1 &&n1, N2 &&n2 ) {
+	static constexpr decltype( auto ) apply( N1 &&n1, N2 &&n2 ) {
 		return std::forward<N1>( n1 ) == std::forward<N2>( n2 );
 	}
 };
 
-struct add_assign : cxxmath::supports_tag_helper<number_tag> {
+struct add_assign: cxxmath::supports_tag_helper<number_tag> {
 	template<class N1, class N2>
-	static constexpr decltype(auto) apply( N1 &&n1, N2 &&n2 ) {
+	static constexpr decltype( auto ) apply( N1 &&n1, N2 &&n2 ) {
 		return std::forward<N1>( n1 ) += std::forward<N2>( n2 );
 	}
 };
 
-struct negate_in_place : cxxmath::supports_tag_helper<number_tag> {
+struct negate_in_place: cxxmath::supports_tag_helper<number_tag> {
 	template<class N>
-	static constexpr decltype(auto) apply( N &&n ) {
+	static constexpr decltype( auto ) apply( N &&n ) {
 		return std::forward<N>( n ).backend().negate();
 	}
 };
 
 struct zero {
 	static auto apply( void ) {
-		return number{ 0 };
+		return number{0};
 	}
 };
 
 struct one {
 	static auto apply( void ) {
-		return number{ 1 };
+		return number{1};
 	}
 };
 
-struct multiply_assign : cxxmath::supports_tag_helper<number_tag> {
+struct multiply_assign: cxxmath::supports_tag_helper<number_tag> {
 	template<class N1, class N2>
-	static constexpr decltype(auto) apply( N1 &&n1, N2 &&n2 ) {
+	static constexpr decltype( auto ) apply( N1 &&n1, N2 &&n2 ) {
 		return std::forward<N1>( n1 ) *= std::forward<N2>( n2 );
 	}
 };
@@ -85,7 +84,7 @@ template<> struct default_set<PQuantum::mathutils::number_tag> {
 
 template<> struct default_monoid<PQuantum::mathutils::number_tag> {
 	using type = cxxmath::concepts::assignable_monoid<
-	    PQuantum::mathutils::model_number::multiply_assign,
+		PQuantum::mathutils::model_number::multiply_assign,
 		PQuantum::mathutils::model_number::one,
 		true_implementation
 	>;
@@ -93,7 +92,7 @@ template<> struct default_monoid<PQuantum::mathutils::number_tag> {
 
 template<> struct default_group<PQuantum::mathutils::number_tag> {
 	using type = cxxmath::concepts::assignable_group<
-	    cxxmath::concepts::assignable_monoid<
+		cxxmath::concepts::assignable_monoid<
 			PQuantum::mathutils::model_number::multiply_assign,
 			PQuantum::mathutils::model_number::zero,
 			true_implementation
@@ -110,6 +109,6 @@ template<> struct default_ring<PQuantum::mathutils::number_tag> {
 };
 }
 
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::number, 0)
+PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::number, 0 )
 
 #endif //PQUANTUM_NUMBER_HPP

@@ -13,15 +13,12 @@
 
 #include "mathutils/manifold_specification.hpp"
 
-namespace PQuantum
-{
-namespace io
-{
+namespace PQuantum {
+namespace io {
 struct json_schema_header;
 }
 
-namespace model
-{
+namespace model {
 class model_specification {
 	std::string model_name;
 	mathutils::manifold_specification spacetime_manifold;
@@ -30,18 +27,19 @@ class model_specification {
 	lagrangian_node lag;
 public:
 	model_specification( std::string &&n, mathutils::manifold_specification &&m,
-						 std::map<support::uuid, classical_field_specification> &&fi,
-						 std::map<support::uuid, std::string> &&pi, lagrangian_node &&l );
+		std::map<support::uuid, classical_field_specification> &&fi,
+		std::map<support::uuid, std::string> &&pi, lagrangian_node &&l
+	);
 	
 	const std::string &name( void ) const { return model_name; }
 	
 	const mathutils::manifold_specification &spacetime( void ) const { return spacetime_manifold; }
 	
-	std::vector<support::uuid> field_ids( void ) const
-	{
+	std::vector<support::uuid> field_ids( void ) const {
 		std::vector<support::uuid> fields;
-		for( const auto &id_entry : field_id_map )
+		for( const auto &id_entry : field_id_map ) {
 			fields.push_back( id_entry.first );
+		}
 		return fields;
 	}
 	

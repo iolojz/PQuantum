@@ -10,9 +10,9 @@
 
 namespace PQuantum::parsing::bison {
 void parser::error( const input_location &loc, const std::string &error_message ) {
-	BOOST_LOG_NAMED_SCOPE("parsing::bison::yyerror()");
+	BOOST_LOG_NAMED_SCOPE( "parsing::bison::yyerror()" );
 	logging::severity_logger logger;
 	BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Cannot parse string \"" <<
-		std::string{ loc.begin, loc.end } << "\": " << error_message;
+			std::string{loc.begin, loc.end} << "\": " << error_message;
 }
 }

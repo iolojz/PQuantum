@@ -10,10 +10,10 @@
 namespace PQuantum::model {
 struct indexed_parameter {
 	support::uuid id;
-	mathutils::index_spec<std::variant<int, support::uuid>> indices;
+	mathutils::index_spec <std::variant<int, support::uuid>> indices;
 };
 }
 
-PQUANTUM_TREE_DEFINE_NODE_ARITY(model::indexed_parameter, 0)
+PQUANTUM_TREE_DEFINE_NODE_ARITY( model::indexed_parameter, 0 )
 
 #endif //PQUANTUM_MODEL_PARAMETER_HPP

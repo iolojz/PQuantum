@@ -21,7 +21,7 @@ public:
 	uuid &operator=( uuid && ) = default;
 	
 	uuid( boost::uuids::random_generator &gen )
-	: data_( gen() ) {}
+		: data_( gen() ) {}
 	
 	bool operator<( const uuid &id ) const {
 		return data_ < id.data_;

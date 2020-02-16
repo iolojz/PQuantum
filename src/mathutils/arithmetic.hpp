@@ -23,22 +23,22 @@ static constexpr auto ops_by_precedence = boost::hana::tuple_t<power, product, q
 
 struct arithmetic_node_traits {
 	static constexpr auto node_data_types = boost::hana::tuple_t<
-	    power, product, quotient, sum, difference, negation
+		power, product, quotient, sum, difference, negation
 	>;
 };
 }
 
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::power, 2)
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::product, runtime_arity)
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::quotient, 2)
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::sum, runtime_arity)
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::difference, 2)
-PQUANTUM_TREE_DEFINE_NODE_ARITY(mathutils::negation, 1)
+PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::power, 2 )
+PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::product, runtime_arity )
+PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::quotient, 2 )
+PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::sum, runtime_arity )
+PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::difference, 2 )
+PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::negation, 1 )
 
 #ifdef PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR
 #error "PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR is already defined"
 #endif
-#define PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(op_name,op_str) \
+#define PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( op_name, op_str ) \
 namespace PQuantum::support::tree { \
 template<class TreeNode> \
 std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::op_name, TreeNode> &ni ) { \
@@ -53,17 +53,17 @@ std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::op
 } \
 }
 
-PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(power,"^")
-PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(product,"*")
-PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(quotient,"/")
-PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(sum,"+")
-PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR(difference,"-")
+PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( power, "^" )
+PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( product, "*" )
+PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( quotient, "/" )
+PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( sum, "+" )
+PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( difference, "-" )
 
 #undef PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR
 
 namespace PQuantum::support::tree {
 template<class TreeNode>
-std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::negation, TreeNode> &ni ) {
+std::ostream &operator<<( std::ostream &os, const node_incarnation <mathutils::negation, TreeNode> &ni ) {
 	return os << "- " << ni.children.front();
 }
 }

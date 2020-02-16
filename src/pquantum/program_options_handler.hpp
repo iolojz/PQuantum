@@ -11,8 +11,7 @@
 
 #include <string>
 
-namespace PQuantum
-{
+namespace PQuantum {
 class program_options_handler {
 	boost::program_options::options_description program_options_description;
 	boost::program_options::variables_map program_options;
@@ -22,9 +21,8 @@ class program_options_handler {
 	
 	logging::severity_logger logger;
 public:
-	program_options_handler(int argc, const char **argv);
-	
-	void take_action(void);
+	program_options_handler( int argc, const char **argv );
+	void take_action( void );
 };
 }
 

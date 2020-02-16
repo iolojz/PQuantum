@@ -29,12 +29,13 @@ template<class Atom> struct arity_for_node_data_impl<mathutils::function_call<At
 };
 
 template<class Atom, class TreeNode>
-std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::function_call<Atom>, TreeNode> &ni ) {
-	return os << ni.atom << "{";
+std::ostream &operator<<( std::ostream &os, const node_incarnation <mathutils::function_call<Atom>, TreeNode> &ni ) {
+	return os << ni.data.atom << "{";
 	if( ni.children.empty() == false ) {
 		os << ni.children.front();
-		for( auto it = ++(ni.children.begin()); it != ni.children.end(); ++it )
+		for( auto it = ++( ni.children.begin() ); it != ni.children.end(); ++it ) {
 			os << ", " << *it;
+		}
 	}
 	return os << "}";
 }

@@ -14,8 +14,8 @@ math_tree_node parse_math( const std::string &str ) {
 	logging::severity_logger logger;
 	
 	math_tree_node result;
-	scanner_state state{ str.cbegin(), str.cend() };
-	bison::parser parser{ state, result };
+	scanner_state state{str.cbegin(), str.cend()};
+	bison::parser parser{state, result};
 	
 	// DEBUG: Enables bison trace
 	// parser.set_debug_level( 1 );

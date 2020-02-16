@@ -11,7 +11,7 @@
 using namespace PQuantum;
 
 namespace {
-BOOST_TTI_HAS_STATIC_MEMBER_DATA(value)
+BOOST_TTI_HAS_STATIC_MEMBER_DATA( value )
 
 std::optional<int> string_to_int( const std::string &str ) {
 	BOOST_LOG_NAMED_SCOPE( "string_to_int()" );
@@ -20,18 +20,18 @@ std::optional<int> string_to_int( const std::string &str ) {
 	int value;
 	
 	try {
-		value = std::stoi(str, &num_chars_processed);
+		value = std::stoi( str, &num_chars_processed );
 	} catch( const std::invalid_argument & ) {
 		return {};
 	} catch( const std::out_of_range & ) {
 		BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Integer overflow upon converting \"" <<
-			str << "\" to an int.";
+				str << "\" to an int.";
 		error::exit_upon_error();
 	}
 	
 	if( num_chars_processed != str.length() ) {
 		BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Identifier names may not begin with digits (\"" <<
-			str << "\").";
+				str << "\").";
 		error::exit_upon_error();
 	}
 	
@@ -40,12 +40,13 @@ std::optional<int> string_to_int( const std::string &str ) {
 
 std::variant<int, support::uuid> string_to_index( const std::string &str, parsing::qft_parsing_context &context ) {
 	std::optional<int> as_int = string_to_int( str );
-	if( as_int )
+	if( as_int ) {
 		return *as_int;
+	}
 	return context.index_id_lookup_and_generate( str );
 }
 
-class converter : public boost::static_visitor<model::lagrangian_node> {
+class converter: public boost::static_visitor<model::lagrangian_node> {
 	template<class T> using old_node_incarnation = support::tree::node_incarnation<T, parsing::math_tree_tag>;
 	template<class T> using new_node_incarnation = support::tree::node_incarnation<T, model::lagrangian_tree_tag>;
 	
@@ -53,14 +54,15 @@ class converter : public boost::static_visitor<model::lagrangian_node> {
 	
 	template<class NewContainer, class OldContainer, class ...Unpacked>
 	auto self_apply_unpack( OldContainer &&old_container, Unpacked &&...unpacked ) const {
-		if constexpr( sizeof...(Unpacked) == std::tuple_size<std::decay_t<OldContainer>>::value )
-			return NewContainer{ boost::apply_visitor( *this, std::move( unpacked ) )... };
-		else
+		if constexpr( sizeof...( Unpacked ) == std::tuple_size<std::decay_t<OldContainer>>::value ) {
+			return NewContainer{boost::apply_visitor( *this, std::move( unpacked ) )...};
+		} else {
 			return self_apply_unpack<NewContainer>(
 				std::forward<OldContainer>( old_container ),
 				std::forward<Unpacked>( unpacked )...,
-				std::get<sizeof...(Unpacked)>( std::forward<OldContainer>( old_container ) )
+				std::get<sizeof...( Unpacked )>( std::forward<OldContainer>( old_container ) )
 			);
+		}
 	}
 	
 	template<class NewContainer, class OldContainer>
@@ -71,35 +73,40 @@ class converter : public boost::static_visitor<model::lagrangian_node> {
 	template<class NewContainer, class OldContainer>
 	auto convert_runtime_size_container( OldContainer &&old_container ) const {
 		NewContainer new_container;
-		if constexpr( std::is_rvalue_reference_v<OldContainer &&> )
+		if constexpr( std::is_rvalue_reference_v<OldContainer &&> ) {
 			std::transform(
 				std::make_move_iterator( std::begin( old_container ) ),
 				std::make_move_iterator( std::end( old_container ) ),
 				std::back_inserter( new_container ),
-				[this] ( auto &&v ) { return boost::apply_visitor( *this, std::forward<decltype(v)>( v ) ); }
+				[this]( auto &&v ) { return boost::apply_visitor( *this, std::forward<decltype( v )>( v ) ); }
 			);
-		else
+		} else {
 			std::transform(
 				std::begin( old_container ),
 				std::end( old_container ),
 				std::back_inserter( new_container ),
-				[this] ( auto &&v ) { return boost::apply_visitor( *this, std::forward<decltype(v)>( v ) ); }
+				[this]( auto &&v ) { return boost::apply_visitor( *this, std::forward<decltype( v )>( v ) ); }
 			);
+		}
 		return new_container;
 	}
 	
 	template<class NewContainer, class OldContainer>
 	auto convert_container( OldContainer &&old_container ) const {
 		if constexpr( has_static_member_data_value<std::tuple_size<OldContainer>, const std::size_t>::value ) {
-			static_assert( has_static_member_data_value<std::tuple_size<NewContainer>, const std::size_t>::value, "Internal error" );
+			static_assert(
+				has_static_member_data_value<std::tuple_size<NewContainer>, const std::size_t>::value, "Internal error"
+			);
 			return convert_constant_size_container<NewContainer>( std::forward<OldContainer>( old_container ) );
 		} else {
-			static_assert( !has_static_member_data_value<std::tuple_size<NewContainer>, const std::size_t>::value, "Internal error" );
+			static_assert(
+				!has_static_member_data_value<std::tuple_size<NewContainer>, const std::size_t>::value, "Internal error"
+			);
 			return convert_runtime_size_container<NewContainer>( std::forward<OldContainer>( old_container ) );
 		}
 	}
 public:
-	converter( parsing::qft_parsing_context &c ) : context{ c } {}
+	converter( parsing::qft_parsing_context &c ) : context{c} {}
 	
 	constexpr auto operator()( boost::blank ) const {
 		return boost::blank{};
@@ -109,7 +116,9 @@ public:
 		using new_node_type = new_node_incarnation<OldNodeData>;
 		using new_child_container = typename new_node_type::child_container;
 		
-		return new_node_type{ std::move(node.data), convert_container<new_child_container>(std::move(node.children)) };
+		return new_node_type{
+			std::move( node.data ), convert_container<new_child_container>( std::move( node.children ) )
+		};
 	}
 };
 

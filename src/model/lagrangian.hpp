@@ -25,15 +25,15 @@ struct spacetime_derivative {
 struct dirac_operator {};
 }
 
-PQUANTUM_TREE_DEFINE_NODE_ARITY(model::gamma_matrix, 0)
-PQUANTUM_TREE_DEFINE_NODE_ARITY(model::spacetime_derivative, 0)
-PQUANTUM_TREE_DEFINE_NODE_ARITY(model::dirac_operator, 0)
+PQUANTUM_TREE_DEFINE_NODE_ARITY( model::gamma_matrix, 0 )
+PQUANTUM_TREE_DEFINE_NODE_ARITY( model::spacetime_derivative, 0 )
+PQUANTUM_TREE_DEFINE_NODE_ARITY( model::dirac_operator, 0 )
 
 namespace PQuantum::model {
 struct lagrangian_atoms_traits {
 	static constexpr auto node_data_types = boost::hana::tuple_t<
-	    indexed_field,
-	    indexed_parameter,
+		indexed_field,
+		indexed_parameter,
 		gamma_matrix,
 		spacetime_derivative,
 		dirac_operator,

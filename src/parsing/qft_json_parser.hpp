@@ -31,17 +31,15 @@ class qft_json_parser {
 	parse_vector_space_specification( const boost::property_tree::ptree &property_tree );
 	
 	model::lagrangian_node parse_lagrangian( const boost::property_tree::ptree &property_tree,
-											 const std::map<std::string, support::uuid> &field_id_map,
-											 const std::map<std::string, support::uuid> &parameter_id_map );
+		const std::map<std::string, support::uuid> &field_id_map,
+		const std::map<std::string, support::uuid> &parameter_id_map
+	);
 	
 	model::classical_field_specification parse_field_specification( const boost::property_tree::ptree &property_tree );
 public:
 	static qft_json_parser parse( const std::string &path_to_file );
-	
 	const json_schema_header &json_header( void ) const { return header; }
-	
-	const model::model_specification &model( void ) const
-	{ return model_specification; }
+	const model::model_specification &model( void ) const { return model_specification; }
 };
 }
 

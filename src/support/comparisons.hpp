@@ -7,8 +7,8 @@
 
 namespace PQuantum::support {
 template<class T, class U, class Less>
-static bool equal(const T &t, const U &u, Less less) {
-	return (!less(t, u) && !less(u, t));
+static bool equal( const T &t, const U &u, Less less ) {
+	return ( !less( t, u ) && !less( u, t ) );
 }
 
 namespace detail {
@@ -17,12 +17,12 @@ struct less_to_equal {
 	static constexpr Less less;
 	
 	template<class T, class U>
-	auto operator()(T &&t, U &&u) const { return equal(std::forward<T>(t), std::forward<U>(u), less); }
+	auto operator()( T &&t, U &&u ) const { return equal( std::forward<T>( t ), std::forward<U>( u ), less ); }
 };
 }
 
 template<class Less>
-static constexpr auto less_to_equal(Less &&less) { return detail::less_to_equal{std::forward<Less>(less)}; }
+static constexpr auto less_to_equal( Less &&less ) { return detail::less_to_equal{std::forward<Less>( less )}; }
 }
 
 #endif //PQUANTUM_COMPARISONS_HPP

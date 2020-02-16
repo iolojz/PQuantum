@@ -14,11 +14,11 @@ struct scanner_state {
 };
 
 struct input_location {
-	std::decay_t<decltype(std::declval<scanner_state>().current)> begin, end;
+	std::decay_t<decltype( std::declval<scanner_state>().current )> begin, end;
 };
 
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const input_location &loc ) {
-	return os << std::string{ loc.begin, loc.end };
+	return os << std::string{loc.begin, loc.end};
 }
 }
 

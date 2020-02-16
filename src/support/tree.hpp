@@ -22,17 +22,18 @@ template<class T> struct arity_for_node_data_impl {
 	}
 };
 
-template<class T> constexpr decltype(auto) arity_for_node_data( boost::hana::basic_type<T> ) {
+template<class T> constexpr decltype( auto ) arity_for_node_data( boost::hana::basic_type<T> ) {
 	return arity_for_node_data_impl<T>::apply();
 }
 
 template<class T>
 static constexpr auto is_terminal( boost::hana::basic_type<T> t ) {
 	constexpr auto arity = arity_for_node_data( t );
-	if constexpr( boost::hana::typeid_( arity ) == boost::hana::type_c<runtime_arity_t> )
+	if constexpr( boost::hana::typeid_( arity ) == boost::hana::type_c<runtime_arity_t> ) {
 		return boost::hana::false_c;
-	else
+	} else {
 		return boost::hana::bool_c<arity == 0>;
+	}
 }
 
 template<class T, class TreeTag, class = void> class node_incarnation {
@@ -40,10 +41,11 @@ template<class T, class TreeTag, class = void> class node_incarnation {
 public:
 	node_incarnation( void ) = default;
 	
-	template<class Data,
+	template<
+		class Data,
 		class = std::enable_if_t<!std::is_same_v<std::decay_t<Data>, node_incarnation>>
 	> node_incarnation( Data &&d )
-	: data{ std::forward<Data>( d ) } {}
+		: data{std::forward<Data>( d )} {}
 	
 	using tree_node = TreeTag;
 	using node_data = T;
@@ -56,9 +58,9 @@ class node_incarnation<T, TreeTag, std::enable_if_t<!is_terminal( boost::hana::t
 		constexpr auto arity = arity_for_node_data( boost::hana::type_c<T> );
 		using node = typename TreeTag::node;
 		
-		if constexpr( boost::hana::typeid_( arity ) == boost::hana::type_c<runtime_arity_t> )
+		if constexpr( boost::hana::typeid_( arity ) == boost::hana::type_c<runtime_arity_t> ) {
 			return boost::hana::type_c<std::vector<node>>;
-		else {
+		} else {
 			static_assert( arity != 0, "Internal error" );
 			return boost::hana::type_c<std::array<node, arity>>;
 		}
@@ -76,9 +78,9 @@ public:
 	node_incarnation &operator=( node_incarnation && ) = default;
 	
 	template<class ...ChildArgs> node_incarnation( const node_data &d, ChildArgs &&...ch )
-	: data{ d }, children{ std::forward<ChildArgs>( ch )... } {}
+		: data{d}, children{std::forward<ChildArgs>( ch )...} {}
 	template<class ...ChildArgs> node_incarnation( node_data &&d, ChildArgs &&...ch )
-	: data{ std::move( d ) }, children{ std::forward<ChildArgs>( ch )... } {}
+		: data{std::move( d )}, children{std::forward<ChildArgs>( ch )...} {}
 	
 	node_data data;
 	child_container children;
@@ -103,11 +105,13 @@ class tree_tag {
 	static constexpr auto node_incarnation_in_tree = []( auto &&t ) {
 		return boost::hana::type_c<node_incarnation<typename decltype(+t)::type, tree_tag>>;
 	};
-	static constexpr auto wrap_if_nonterminal = [] ( auto &&t ) {
-		if constexpr( is_terminal( boost::hana::type_c<typename decltype(+t)::type> ) )
+	static constexpr auto wrap_if_nonterminal = []( auto &&t ) {
+		if constexpr( is_terminal( boost::hana::type_c<typename decltype(+t)::type> ) ) {
 			return node_incarnation_in_tree( boost::hana::type_c<typename decltype(+t)::type> );
-		else
-			return boost::hana::type_c<boost::recursive_wrapper<typename decltype(+node_incarnation_in_tree(t))::type>>;
+		} else {
+			return boost::hana::type_c<
+				boost::recursive_wrapper<typename decltype(+node_incarnation_in_tree( t ))::type>>;
+		}
 	};
 	
 	static constexpr auto wrapped_node_incarnations = boost::hana::transform(
@@ -130,24 +134,26 @@ template<class T, class IncarnationVariant>
 static constexpr int index_of_node_data( boost::hana::basic_type<IncarnationVariant> ) {
 	constexpr auto index = boost::hana::index_if(
 		typename std::decay_t<IncarnationVariant>::types{},
-		[] ( auto &&t ) {
-			if constexpr( std::is_same_v<typename decltype(+t)::type, boost::blank> )
+		[]( auto &&t ) {
+			if constexpr( std::is_same_v<typename decltype(+t)::type, boost::blank> ) {
 				return boost::hana::bool_c<std::is_same_v<T, boost::blank>>;
-			else {
+			} else {
 				using node_data = typename boost::unwrap_recursive<typename decltype(+t)::type::node_data>::type;
 				return boost::hana::bool_c<std::is_same_v<T, node_data>>;
 			}
 		}
 	);
-	static_assert( boost::hana::is_just( index ),
-		"The given node data type does not appear in the given incarnation variant." );
+	static_assert(
+		boost::hana::is_just( index ),
+		"The given node data type does not appear in the given incarnation variant."
+	);
 	return *index;
 }
 
 template<class T, class IncarnationVariant>
 static constexpr bool holds_node_incarnation( const IncarnationVariant &iv ) {
 	constexpr auto node_type_index = index_of_node_data<T>( boost::hana::type_c<IncarnationVariant> );
-	return (node_type_index == iv.which());
+	return ( node_type_index == iv.which() );
 }
 
 template<class T, class IncarnationVariant>
@@ -159,7 +165,7 @@ static constexpr auto get_node_incarnation( IncarnationVariant &&iv ) {
 }
 }
 
-#define PQUANTUM_TREE_DEFINE_NODE_ARITY(type,arity) \
+#define PQUANTUM_TREE_DEFINE_NODE_ARITY( type, arity ) \
 namespace PQuantum::support::tree { \
 template<> struct arity_for_node_data_impl<type> { \
     static constexpr auto apply( void ) { \
