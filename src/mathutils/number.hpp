@@ -19,21 +19,21 @@ struct number_tag {};
 using number = boost::multiprecision::cpp_complex<50>;
 
 namespace model_number {
-struct equal: cxxmath::supports_tag_helper<number_tag> {
+struct equal {
 	template<class N1, class N2>
 	static constexpr decltype( auto ) apply( N1 &&n1, N2 &&n2 ) {
 		return std::forward<N1>( n1 ) == std::forward<N2>( n2 );
 	}
 };
 
-struct add_assign: cxxmath::supports_tag_helper<number_tag> {
+struct add_assign {
 	template<class N1, class N2>
 	static constexpr decltype( auto ) apply( N1 &&n1, N2 &&n2 ) {
 		return std::forward<N1>( n1 ) += std::forward<N2>( n2 );
 	}
 };
 
-struct negate_in_place: cxxmath::supports_tag_helper<number_tag> {
+struct negate_in_place {
 	template<class N>
 	static constexpr decltype( auto ) apply( N &&n ) {
 		return std::forward<N>( n ).backend().negate();
@@ -52,7 +52,7 @@ struct one {
 	}
 };
 
-struct multiply_assign: cxxmath::supports_tag_helper<number_tag> {
+struct multiply_assign {
 	template<class N1, class N2>
 	static constexpr decltype( auto ) apply( N1 &&n1, N2 &&n2 ) {
 		return std::forward<N1>( n1 ) *= std::forward<N2>( n2 );
@@ -76,8 +76,8 @@ template<> struct tag_of<PQuantum::mathutils::number> {
 	}
 };*/
 
-template<> struct default_set<PQuantum::mathutils::number_tag> {
-	using type = cxxmath::concepts::set<
+template<> struct default_comparable<PQuantum::mathutils::number_tag> {
+	using type = cxxmath::concepts::comparable<
 		PQuantum::mathutils::model_number::equal
 	>;
 };
@@ -86,7 +86,7 @@ template<> struct default_monoid<PQuantum::mathutils::number_tag> {
 	using type = cxxmath::concepts::assignable_monoid<
 		PQuantum::mathutils::model_number::multiply_assign,
 		PQuantum::mathutils::model_number::one,
-		true_implementation
+		impl::true_
 	>;
 };
 
@@ -95,7 +95,7 @@ template<> struct default_group<PQuantum::mathutils::number_tag> {
 		cxxmath::concepts::assignable_monoid<
 			PQuantum::mathutils::model_number::multiply_assign,
 			PQuantum::mathutils::model_number::zero,
-			true_implementation
+			impl::true_
 		>,
 		PQuantum::mathutils::model_number::negate_in_place
 	>;
