@@ -5,9 +5,7 @@
 #ifndef PQUANTUM_MATHUTILS_FUNCTION_CALL_HPP
 #define PQUANTUM_MATHUTILS_FUNCTION_CALL_HPP
 
-#include "support/tree.hpp"
-
-#include <string>
+#include <ostream>
 
 namespace PQuantum::mathutils {
 template<class Atom>
@@ -16,28 +14,13 @@ struct function_call {
 };
 
 template<class Atom>
-struct function_call_node_traits {
-	static constexpr auto node_data_types = boost::hana::tuple_t<function_call<Atom>>;
-};
-}
+static constexpr auto function_call_arity_map = boost::hana::make_map(
+	boost::hana::make_pair( boost::hana::type_c<function_call<Atom>>, cxxmath::runtime_arity )
+);
 
-namespace PQuantum::support::tree {
-template<class Atom> struct arity_for_node_data_impl<mathutils::function_call<Atom>> {
-	static constexpr auto apply( void ) {
-		return runtime_arity;
-	}
-};
-
-template<class Atom, class TreeNode>
-std::ostream &operator<<( std::ostream &os, const node_incarnation <mathutils::function_call<Atom>, TreeNode> &ni ) {
-	return os << ni.data.atom << "{";
-	if( ni.children.empty() == false ) {
-		os << ni.children.front();
-		for( auto it = ++( ni.children.begin() ); it != ni.children.end(); ++it ) {
-			os << ", " << *it;
-		}
-	}
-	return os << "}";
+template<class Atom>
+std::ostream &operator<<( std::ostream &os, const function_call<Atom> &fc ) {
+	return os << fc.atom;
 }
 }
 

@@ -12,7 +12,6 @@
 
 #include <string>
 
-#include "support/tree.hpp"
 #include "support/uuid.hpp"
 
 namespace PQuantum::model {
@@ -27,7 +26,5 @@ struct indexed_field {
 	mathutils::index_spec<std::variant<int, support::uuid>> indices;
 };
 }
-
-PQUANTUM_TREE_DEFINE_NODE_ARITY( model::indexed_field, 0 )
 
 #endif //PQUANTUM_CLASSICAL_FIELD_HPP

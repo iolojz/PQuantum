@@ -23,30 +23,23 @@ struct spacetime_derivative {
 	spacetime_index index;
 };
 struct dirac_operator {};
-}
 
-PQUANTUM_TREE_DEFINE_NODE_ARITY( model::gamma_matrix, 0 )
-PQUANTUM_TREE_DEFINE_NODE_ARITY( model::spacetime_derivative, 0 )
-PQUANTUM_TREE_DEFINE_NODE_ARITY( model::dirac_operator, 0 )
-
-namespace PQuantum::model {
-struct lagrangian_atoms_traits {
-	static constexpr auto node_data_types = boost::hana::tuple_t<
-		indexed_field,
-		indexed_parameter,
-		gamma_matrix,
-		spacetime_derivative,
-		dirac_operator,
-		mathutils::number
-	>;
-};
-
-using lagrangian_tree_tag = support::tree::tree_tag<
-	mathutils::function_call_node_traits<mathutils::string_atom>,
-	mathutils::arithmetic_node_traits,
-	lagrangian_atoms_traits
->;
-using lagrangian_node = typename lagrangian_tree_tag::node;
+static constexpr auto lagrangian_atom_arity_map = boost::hana::make_map(
+	boost::hana::make_pair( boost::hana::type_c<indexed_field>, boost::hana::int_c<0> ),
+	boost::hana::make_pair( boost::hana::type_c<indexed_parameter>, boost::hana::int_c<0> ),
+	boost::hana::make_pair( boost::hana::type_c<gamma_matrix>, boost::hana::int_c<0> ),
+	boost::hana::make_pair( boost::hana::type_c<spacetime_derivative>, boost::hana::int_c<0> ),
+	boost::hana::make_pair( boost::hana::type_c<dirac_operator>, boost::hana::int_c<0> ),
+	boost::hana::make_pair( boost::hana::type_c<mathutils::number>, boost::hana::int_c<0> )
+);
+static constexpr auto lagrangian_arity_map = boost::hana::union_(
+	boost::hana::union_(
+		mathutils::function_call_arity_map<mathutils::string_atom>,
+		mathutils::arithmetic_arity_map
+	),
+	lagrangian_atom_arity_map
+);
+using lagrangian_tree = cxxmath::typesafe_tree<decltype(lagrangian_arity_map)>;
 }
 
 #endif //PQUANTUM_MODEL_LAGRANGIAN_HPP

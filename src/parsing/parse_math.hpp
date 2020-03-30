@@ -8,7 +8,7 @@
 #include "bison_types.hpp"
 
 namespace PQuantum::parsing {
-math_tree_node parse_math( const std::string &str );
+math_tree parse_math( const std::string &str );
 }
 
 #endif //PQUANTUM_PARSING_STRING_PARSING_HPP

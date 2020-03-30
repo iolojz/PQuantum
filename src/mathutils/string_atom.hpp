@@ -18,7 +18,7 @@ struct string_atom {
 	
 	template<class Arg1, class ...Args, class = std::enable_if_t<!std::is_same_v<std::decay_t<Arg1>, string_atom>>>
 	string_atom( Arg1 &&arg1, Args &&...args )
-		: name{std::forward<Arg1>( arg1 ), std::forward<Args>( args )...} {}
+	: name{std::forward<Arg1>( arg1 ), std::forward<Args>( args )...} {}
 };
 
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const string_atom &str_atom ) {

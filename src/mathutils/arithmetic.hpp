@@ -5,11 +5,10 @@
 #ifndef PQUANTUM_MATHUTILS_ARITHMETIC_HPP
 #define PQUANTUM_MATHUTILS_ARITHMETIC_HPP
 
-#include "support/tree.hpp"
-
 #include <boost/hana.hpp>
+#include <cxxmath/cxxmath.hpp>
 
-#include <string>
+#include <ostream>
 
 namespace PQuantum::mathutils {
 struct power {};
@@ -21,36 +20,22 @@ struct negation {};
 
 static constexpr auto ops_by_precedence = boost::hana::tuple_t<power, product, quotient, sum, difference>;
 
-struct arithmetic_node_traits {
-	static constexpr auto node_data_types = boost::hana::tuple_t<
-		power, product, quotient, sum, difference, negation
-	>;
-};
-}
-
-PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::power, 2 )
-PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::product, runtime_arity )
-PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::quotient, 2 )
-PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::sum, runtime_arity )
-PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::difference, 2 )
-PQUANTUM_TREE_DEFINE_NODE_ARITY( mathutils::negation, 1 )
+static constexpr auto arithmetic_arity_map = boost::hana::make_map(
+	boost::hana::make_pair( boost::hana::type_c<power>, boost::hana::int_c<2> ),
+	boost::hana::make_pair( boost::hana::type_c<product>, cxxmath::runtime_arity ),
+	boost::hana::make_pair( boost::hana::type_c<quotient>, boost::hana::int_c<2> ),
+	boost::hana::make_pair( boost::hana::type_c<sum>, cxxmath::runtime_arity ),
+	boost::hana::make_pair( boost::hana::type_c<difference>, boost::hana::int_c<2> ),
+	boost::hana::make_pair( boost::hana::type_c<negation>, boost::hana::int_c<1> )
+);
 
 #ifdef PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR
 #error "PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR is already defined"
 #endif
 #define PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( op_name, op_str ) \
-namespace PQuantum::support::tree { \
 template<class TreeNode> \
-std::ostream &operator<<( std::ostream &os, const node_incarnation<mathutils::op_name, TreeNode> &ni ) { \
-    if( ni.children.empty() ) \
-        throw std::runtime_error( "operator \"" op_str "\" has no children" ); \
-    \
-    auto it = std::begin( ni.children ); \
-    os << *it; \
-    for( ++it; it != std::end( ni.children ); ++it ) \
-        os << " " op_str " " << *it; \
-    return os; \
-} \
+std::ostream &operator<<( std::ostream &os, op_name ) { \
+    return os << op_str; \
 }
 
 PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( power, "^" )
@@ -58,14 +43,9 @@ PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( product, "*" )
 PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( quotient, "/" )
 PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( sum, "+" )
 PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( difference, "-" )
+PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( negation, "-" )
 
 #undef PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR
-
-namespace PQuantum::support::tree {
-template<class TreeNode>
-std::ostream &operator<<( std::ostream &os, const node_incarnation <mathutils::negation, TreeNode> &ni ) {
-	return os << "- " << ni.children.front();
-}
 }
 
 #endif //PQUANTUM_MATHUTILS_ARITHMETIC_HPP

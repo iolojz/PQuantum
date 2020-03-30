@@ -252,17 +252,18 @@ qft_json_parser::parse_vector_space_specification( const boost::property_tree::p
 	return {std::move( field ), std::move( dimension ), std::move( metric )};
 }
 
-model::lagrangian_node qft_json_parser::parse_lagrangian( const boost::property_tree::ptree &property_tree,
+model::lagrangian_tree qft_json_parser::parse_lagrangian(
+	const boost::property_tree::ptree &property_tree,
 	const std::map<std::string, support::uuid> &field_id_map,
 	const std::map<std::string, support::uuid> &parameter_id_map
 ) {
 	BOOST_LOG_NAMED_SCOPE( "model::parse_lagrangian()" );
 	logging::severity_logger logger;
 	
-	support::tree::node_incarnation<mathutils::sum, model::lagrangian_tree_tag> lagrangian;
+	std::vector<model::lagrangian_tree> lagrangian_parts;
 	std::transform(
 		property_tree.begin(), property_tree.end(),
-		std::back_inserter( lagrangian.children ), [&]( const auto &key_value_pair ) {
+		std::back_inserter( lagrangian_parts ), [&]( const auto &key_value_pair ) {
 			const boost::property_tree::ptree &node = key_value_pair.second;
 			std::string term = node.get<std::string>( "" );
 			
@@ -272,10 +273,10 @@ model::lagrangian_node qft_json_parser::parse_lagrangian( const boost::property_
 				index_id_map
 			);
 			
-			math_tree_node math_term = parse_math( term );
+			math_tree math_term = parse_math( term );
 			return math_to_lagrangian( std::move( math_term ), std::move( context ) );
 		}
 	);
-	return lagrangian;
+	return { mathutils::sum{}, std::move( lagrangian_parts ) };
 }
 }

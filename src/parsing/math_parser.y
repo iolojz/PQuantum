@@ -15,7 +15,7 @@
 %define api.location.type {input_location}
 
 %lex-param {scanner_state &state}
-%parse-param {scanner_state &state} {math_tree_node &root}
+%parse-param {scanner_state &state} {math_tree &root}
 
 %token <mathutils::string_atom> ATOM;
 %token <mathutils::string_atom> INDEX;
@@ -34,10 +34,10 @@
 %nterm <mathutils::index_list<mathutils::string_atom>> index_list;
 %nterm <mathutils::index_spec<mathutils::string_atom>> index_spec;
 %nterm <mathutils::atom_with_optional_indices<mathutils::string_atom>> atom_with_optional_indices;
-%nterm <std::vector<math_tree_node>> argument_list;
+%nterm <std::vector<math_tree>> argument_list;
 %nterm <function_call_node> function_call;
-%nterm <math_tree_node> arithmetic_expr;
-%nterm <math_tree_node> root_arithmetic_expr;
+%nterm <math_tree> arithmetic_expr;
+%nterm <math_tree> root_arithmetic_expr;
 %left MINUS PLUS;
 %left SLASH ASTERISK
 %precedence NEG
@@ -76,7 +76,7 @@ function_call:
 ;
 
 arithmetic_expr:
-  atom_with_optional_indices                               { $$ = make_atom_with_optional_indices( std::move($1) ); }
+  atom_with_optional_indices                               { $$ = std::move($1); }
 | function_call                                            { $$ = std::move($1); }
 | arithmetic_expr PLUS arithmetic_expr                     { $$ = make_arithmetic_sum( std::move($1), std::move($3) ); }
 | arithmetic_expr MINUS arithmetic_expr                    { $$ = make_arithmetic_difference( std::move($1), std::move($3) ); }

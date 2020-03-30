@@ -9,11 +9,11 @@
 #include "logging/logging.hpp"
 
 namespace PQuantum::parsing {
-math_tree_node parse_math( const std::string &str ) {
+math_tree parse_math( const std::string &str ) {
 	BOOST_LOG_NAMED_SCOPE( "parsing::parse_math()" );
 	logging::severity_logger logger;
 	
-	math_tree_node result;
+	math_tree result;
 	scanner_state state{str.cbegin(), str.cend()};
 	bison::parser parser{state, result};
 	

@@ -14,6 +14,4 @@ struct indexed_parameter {
 };
 }
 
-PQUANTUM_TREE_DEFINE_NODE_ARITY( model::indexed_parameter, 0 )
-
 #endif //PQUANTUM_MODEL_PARAMETER_HPP

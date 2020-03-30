@@ -46,16 +46,16 @@ std::variant<int, support::uuid> string_to_index( const std::string &str, parsin
 	return context.index_id_lookup_and_generate( str );
 }
 
-class converter: public boost::static_visitor<model::lagrangian_node> {
-	template<class T> using old_node_incarnation = support::tree::node_incarnation<T, parsing::math_tree_tag>;
-	template<class T> using new_node_incarnation = support::tree::node_incarnation<T, model::lagrangian_tree_tag>;
+class converter: public boost::static_visitor<model::lagrangian_tree> {
+	template<class T> using old_node = cxxmath::typesafe_tree_node<T, parsing::math_tree>;
+	template<class T> using new_node = cxxmath::typesafe_tree_node<T, model::lagrangian_tree>;
 	
 	parsing::qft_parsing_context &context;
 	
 	template<class NewContainer, class OldContainer, class ...Unpacked>
 	auto self_apply_unpack( OldContainer &&old_container, Unpacked &&...unpacked ) const {
 		if constexpr( sizeof...( Unpacked ) == std::tuple_size<std::decay_t<OldContainer>>::value ) {
-			return NewContainer{boost::apply_visitor( *this, std::move( unpacked ) )...};
+			return NewContainer{ cxxmath::visit( *this, std::move( unpacked ) )...};
 		} else {
 			return self_apply_unpack<NewContainer>(
 				std::forward<OldContainer>( old_container ),
@@ -78,14 +78,14 @@ class converter: public boost::static_visitor<model::lagrangian_node> {
 				std::make_move_iterator( std::begin( old_container ) ),
 				std::make_move_iterator( std::end( old_container ) ),
 				std::back_inserter( new_container ),
-				[this]( auto &&v ) { return boost::apply_visitor( *this, std::forward<decltype( v )>( v ) ); }
+				[this]( auto &&v ) { return cxxmath::visit( *this, std::forward<decltype( v )>( v ) ); }
 			);
 		} else {
 			std::transform(
 				std::begin( old_container ),
 				std::end( old_container ),
 				std::back_inserter( new_container ),
-				[this]( auto &&v ) { return boost::apply_visitor( *this, std::forward<decltype( v )>( v ) ); }
+				[this]( auto &&v ) { return cxxmath::visit( *this, std::forward<decltype( v )>( v ) ); }
 			);
 		}
 		return new_container;
@@ -108,12 +108,8 @@ class converter: public boost::static_visitor<model::lagrangian_node> {
 public:
 	converter( parsing::qft_parsing_context &c ) : context{c} {}
 	
-	constexpr auto operator()( boost::blank ) const {
-		return boost::blank{};
-	}
-	
-	template<class OldNodeData> auto operator()( old_node_incarnation<OldNodeData> &&node ) const {
-		using new_node_type = new_node_incarnation<OldNodeData>;
+	template<class OldNodeData> model::lagrangian_tree operator()( old_node<OldNodeData> &&node ) const {
+		using new_node_type = new_node<OldNodeData>;
 		using new_child_container = typename new_node_type::child_container;
 		
 		return new_node_type{
@@ -122,16 +118,11 @@ public:
 	}
 };
 
-template<> auto converter::operator()<mathutils::function_call<mathutils::string_atom>>(
-	old_node_incarnation<mathutils::function_call<mathutils::string_atom>> &&fcall_node
+template<> model::lagrangian_tree converter::operator()<mathutils::function_call<mathutils::string_atom>>(
+	old_node<mathutils::function_call<mathutils::string_atom>> &&fcall_node
 ) const {
 	BOOST_LOG_NAMED_SCOPE( "converter::operator()()" );
 	logging::severity_logger logger;
-
-	using new_node_type = boost::variant<
-		new_node_incarnation<model::indexed_field>,
-		new_node_incarnation<mathutils::function_call<mathutils::string_atom>>
-	>;
 	
 	if( fcall_node.data.atom.name == "\\bar" ) {
 		if( std::empty( fcall_node.children ) ) {
@@ -144,11 +135,11 @@ template<> auto converter::operator()<mathutils::function_call<mathutils::string
 		}
 		
 		auto &&child_variant = fcall_node.children.front();
-		if( !support::tree::holds_node_incarnation<mathutils::atom_with_optional_indices<mathutils::string_atom>>( child_variant ) ) {
+		if( !cxxmath::holds_node<mathutils::atom_with_optional_indices<mathutils::string_atom>>( child_variant ) ) {
 			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Argument to \\bar{} must be a field";
 			error::exit_upon_error();
 		}
-		auto &&child = support::tree::get_node_incarnation<mathutils::atom_with_optional_indices<mathutils::string_atom>>( std::move( child_variant ) );
+		auto &&child = cxxmath::get_node<mathutils::atom_with_optional_indices<mathutils::string_atom>>( std::move( child_variant ) );
 		if( !context.field_id_lookup( child.data.atom.name ) ) {
 			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Argument to \\bar{} must be a field";
 			error::exit_upon_error();
@@ -170,29 +161,19 @@ template<> auto converter::operator()<mathutils::function_call<mathutils::string
 			error::exit_upon_error();
 		}
 		
-		return new_node_type{ new_node_incarnation<model::indexed_field>{ model::indexed_field{ *id, {} } } };
+		return { model::indexed_field{ *id, {} } };
 	}
 
-	using new_child_container = typename new_node_incarnation<mathutils::function_call<mathutils::string_atom>>::child_container;
-	return new_node_type{ new_node_incarnation<mathutils::function_call<mathutils::string_atom>>{
-		std::move(fcall_node.data), convert_container<new_child_container>(std::move(fcall_node.children))
-	}};
+	using new_child_container = typename new_node<mathutils::function_call<mathutils::string_atom>>::child_container;
+	return { std::move(fcall_node.data), convert_container<new_child_container>(std::move(fcall_node.children)) };
 }
 
-template<> auto converter::operator()<mathutils::atom_with_optional_indices<mathutils::string_atom>>(
-	old_node_incarnation<mathutils::atom_with_optional_indices<mathutils::string_atom>> &&indexed_atom_node
+template<> model::lagrangian_tree converter::operator()<mathutils::atom_with_optional_indices<mathutils::string_atom>>(
+	old_node<mathutils::atom_with_optional_indices<mathutils::string_atom>> &&indexed_atom_node
 ) const {
 	BOOST_LOG_NAMED_SCOPE( "converter::operator()()" );
 	logging::severity_logger logger;
 	
-	using new_node_type = boost::variant<
-	    new_node_incarnation<model::indexed_field>,
-		new_node_incarnation<model::indexed_parameter>,
-		new_node_incarnation<model::gamma_matrix>,
-		new_node_incarnation<model::spacetime_derivative>,
-		new_node_incarnation<model::dirac_operator>,
-		new_node_incarnation<mathutils::number>
-	>;
 	mathutils::index_spec<std::variant<int, support::uuid>> indices;
 	
 	for( auto &&index : indexed_atom_node.data.indices.lower )
@@ -202,9 +183,9 @@ template<> auto converter::operator()<mathutils::atom_with_optional_indices<math
 	
 	std::optional<support::uuid> id;
 	if( (id = context.field_id_lookup( indexed_atom_node.data.atom.name )) )
-		return new_node_type{ new_node_incarnation<model::indexed_field>{ model::indexed_field{ *id, std::move( indices ) } } };
+		return model::indexed_field{ *id, std::move( indices ) };
 	else if( (id = context.parameter_id_lookup( indexed_atom_node.data.atom.name )) )
-		return new_node_type{ new_node_incarnation<model::indexed_parameter>{ model::indexed_parameter{ *id, std::move( indices ) } } };
+		return model::indexed_parameter{ *id, std::move( indices ) };
 	else if( indexed_atom_node.data.atom.name == "\\gamma" ) {
 		if( indices.lower.empty() ) {
 			if( indices.upper.empty() ) {
@@ -216,18 +197,19 @@ template<> auto converter::operator()<mathutils::atom_with_optional_indices<math
 				error::exit_upon_error();
 			}
 
-			return new_node_type{ new_node_incarnation<model::gamma_matrix>{
-				model::gamma_matrix{ { model::spacetime_index::index_variance::upper, std::move( indices.upper.front() ) } }
-			} };
+			return model::gamma_matrix{
+				model::spacetime_index::index_variance::upper,
+				std::move( indices.upper.front() )
+			};
 		} else if( indices.upper.empty() ) {
 			if( indices.lower.size() != 1 ) {
 				BOOST_LOG_SEV(logger, logging::severity_level::error) << "Gamma matrix with too many indices";
 				error::exit_upon_error();
 			}
 			
-			return new_node_type{ new_node_incarnation<model::gamma_matrix>{
-				model::gamma_matrix{ { model::spacetime_index::index_variance::lower, std::move( indices.lower.front() ) } }
-			} };
+			return model::gamma_matrix{
+				{ model::spacetime_index::index_variance::lower, std::move( indices.lower.front() ) }
+			};
 		}
 
 		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Gamma matrix with too many indices";
@@ -243,18 +225,18 @@ template<> auto converter::operator()<mathutils::atom_with_optional_indices<math
 				error::exit_upon_error();
 			}
 			
-			return new_node_type{ new_node_incarnation<model::spacetime_derivative>{
-				model::spacetime_derivative{ { model::spacetime_index::index_variance::upper, std::move( indices.upper.front() ) } }
-			} };
+			return model::spacetime_derivative{
+				{ model::spacetime_index::index_variance::upper, std::move( indices.upper.front() ) }
+			};
 		} else if( indices.upper.empty() ) {
 			if( indices.lower.size() != 1 ) {
 				BOOST_LOG_SEV(logger, logging::severity_level::error) << "Spacetime derivative with too many indices";
 				error::exit_upon_error();
 			}
 			
-			return new_node_type{ new_node_incarnation<model::spacetime_derivative>{
-				model::spacetime_derivative{ { model::spacetime_index::index_variance::lower, std::move( indices.lower.front() ) } }
-			} };
+			return model::spacetime_derivative{
+				{ model::spacetime_index::index_variance::lower, std::move( indices.lower.front() ) }
+			};
 		}
 		
 		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Spacetime derivative with too many indices";
@@ -265,18 +247,18 @@ template<> auto converter::operator()<mathutils::atom_with_optional_indices<math
 			error::exit_upon_error();
 		}
 
-		return new_node_type{ new_node_incarnation<model::dirac_operator>{} };
+		return model::dirac_operator{};
 	} else if( indexed_atom_node.data.atom.name == "\\ImaginaryUnit" ) {
 		if( !(indices.lower.empty() && indices.upper.empty()) ) {
 			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Imaginary unit with indices";
 			error::exit_upon_error();
 		}
 
-		return new_node_type{ new_node_incarnation<mathutils::number>{ mathutils::number{ 0, 1 } } };
+		return mathutils::number{ 0, 1 };
 	} else {
 		auto as_int = string_to_int( indexed_atom_node.data.atom.name );
 		if( as_int )
-			return new_node_type{ new_node_incarnation<mathutils::number>{ mathutils::number{ *as_int, 0 } } };
+			return mathutils::number{ *as_int, 0 };
 	}
 	
 	BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Unrecognized field or parameter identifier \"" <<
@@ -286,8 +268,8 @@ template<> auto converter::operator()<mathutils::atom_with_optional_indices<math
 }
 
 namespace PQuantum::parsing {
-model::lagrangian_node math_to_lagrangian( math_tree_node &&math_node, qft_parsing_context &&qft_context ) {
+model::lagrangian_tree math_to_lagrangian( math_tree &&mtree, qft_parsing_context &&qft_context ) {
 	BOOST_LOG_NAMED_SCOPE( "parsing::math_to_lagrangian()" );
-	return boost::apply_visitor( converter{ qft_context }, std::move( math_node ) );
+	return cxxmath::visit( converter{ qft_context }, std::move( mtree ) );
 }
 }
