@@ -25,6 +25,10 @@ struct indexed_field {
 	support::uuid id;
 	mathutils::index_spec<std::variant<int, support::uuid>> indices;
 };
+
+[[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const indexed_field &ifield ) {
+	return os << ifield.id << ifield.indices;
+}
 }
 
 #endif //PQUANTUM_CLASSICAL_FIELD_HPP

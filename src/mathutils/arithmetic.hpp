@@ -33,8 +33,7 @@ static constexpr auto arithmetic_arity_map = boost::hana::make_map(
 #error "PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR is already defined"
 #endif
 #define PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( op_name, op_str ) \
-template<class TreeNode> \
-std::ostream &operator<<( std::ostream &os, op_name ) { \
+[[maybe_unused]] static std::ostream &operator<<( std::ostream &os, op_name ) { \
     return os << op_str; \
 }
 

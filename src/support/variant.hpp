@@ -2,41 +2,19 @@
 // Created by jayz on 25.08.19.
 //
 
-#ifndef PQUANTUM_VARIANT_HPP
-#define PQUANTUM_VARIANT_HPP
+#ifndef PQUANTUM_SUPPORT_VARIANT_HPP
+#define PQUANTUM_SUPPORT_VARIANT_HPP
 
 #include <variant>
 
 namespace PQuantum::support {
-namespace detail {
 template<class ...Alternatives>
-class to_std_visitor: public boost::static_visitor<void> {
-	std::variant<Alternatives...> &std_v;
-public:
-	to_std_visitor( std::variant<Alternatives...> &v ) : std_v{v} {}
-	
-	template<class Alternative>
-	void operator()( Alternative &&a ) const {
-		std_v = std::forward<Alternative>( a );
-	}
-};
+std::ostream &operator<<( std::ostream &os, const std::variant<Alternatives...> &v ) {
+	auto printer = [&os] ( const auto &x ) -> std::ostream & {
+		return os << x;
+	};
+	return std::visit( printer, v );
+}
 }
 
-template<class ...Alternatives, class BoostVariant>
-std::variant<Alternatives...> to_std_variant( BoostVariant &&v ) {
-	std::variant<Alternatives...> std_v;
-	detail::to_std_visitor<Alternatives...> visitor{std_v};
-	
-	boost::apply_visitor( visitor, std::forward<BoostVariant>( v ) );
-	return std_v;
-}
-
-template<class Tuple>
-struct std_variant_over_tuple_types;
-template<class ...Types>
-struct std_variant_over_tuple_types<std::tuple<Types...>> {
-	using type = std::variant<Types...>;
-};
-}
-
-#endif //PQUANTUM_VARIANT_HPP
+#endif //PQUANTUM_SUPPORT_VARIANT_HPP
