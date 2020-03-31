@@ -47,6 +47,18 @@ public:
 		return field_id_map.at( id );
 	}
 	
+	std::vector<support::uuid> parameter_ids( void ) const {
+		std::vector<support::uuid> parameters;
+		for( const auto &id_entry : parameter_id_map ) {
+			parameters.push_back( id_entry.first );
+		}
+		return parameters;
+	}
+	
+	const std::string &parameter_name_for_id( const support::uuid &id ) const {
+		return parameter_id_map.at( id );
+	}
+	
 	const lagrangian_tree &model_lagrangian( void ) const { return lagrangian; }
 };
 }
