@@ -25,7 +25,7 @@ struct logging_setup {
 
 BOOST_TEST_GLOBAL_FIXTURE( logging_setup );
 
-BOOST_AUTO_TEST_CASE( parse_math ) {
+BOOST_AUTO_TEST_CASE( parse_math_binary ) {
 	using indexed_string_atom = atom_with_optional_indices<string_atom>;
 	
 	std::string test = "a + b - c - d * e / (f + g)";
@@ -100,4 +100,47 @@ BOOST_AUTO_TEST_CASE( parse_math ) {
 	BOOST_TEST( g.data.atom.name == "g" );
 	BOOST_TEST( g.data.indices.lower.size() == 0 );
 	BOOST_TEST( g.data.indices.upper.size() == 0 );
+}
+
+BOOST_AUTO_TEST_CASE( parse_math_associative ) {
+	using indexed_string_atom = atom_with_optional_indices<string_atom>;
+	
+	std::string test = "a b c d e";
+	auto root_incarnation = parsing::parse_math( test );
+	
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<product>( root_incarnation ) );
+	auto root_product = cxxmath::get_node<product>( root_incarnation );
+	auto factors = cxxmath::children( root_product );
+	
+	parsing::math_tree tree_a = { indexed_string_atom{ "a", {} } };
+	parsing::math_tree tree_b = { indexed_string_atom{ "b", {} } };
+	parsing::math_tree tree_c = { indexed_string_atom{ "c", {} } };
+	parsing::math_tree tree_d = { indexed_string_atom{ "d", {} } };
+	parsing::math_tree tree_e = { indexed_string_atom{ "e", {} } };
+	
+	std::vector<parsing::math_tree> compare_factors = { tree_a, tree_b, tree_c, tree_d, tree_e };
+	BOOST_TEST( compare_factors == factors );
+}
+
+BOOST_AUTO_TEST_CASE( parse_math_precedence ) {
+	using indexed_string_atom = atom_with_optional_indices<string_atom>;
+	
+	std::string test = "a / b c";
+	auto root_incarnation = parsing::parse_math( test );
+	
+	parsing::math_tree tree_a = { indexed_string_atom{ "a", {} } };
+	parsing::math_tree tree_b = { indexed_string_atom{ "b", {} } };
+	parsing::math_tree tree_c = { indexed_string_atom{ "c", {} } };
+	
+	parsing::math_tree compare = {
+		mathutils::product{},
+		parsing::math_tree{
+			mathutils::quotient{},
+			tree_a,
+			tree_b
+		},
+		tree_c
+	};
+	
+	BOOST_TEST( compare == root_incarnation );
 }

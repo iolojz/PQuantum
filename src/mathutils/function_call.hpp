@@ -11,6 +11,10 @@ namespace PQuantum::mathutils {
 template<class Atom>
 struct function_call {
 	Atom atom;
+	
+	bool operator==( const function_call &other ) const {
+    	return atom == other.atom;
+	}
 };
 
 template<class Atom>

@@ -7,6 +7,7 @@
 #include "mathutils/function_call.hpp"
 
 #include <string>
+#include <iostream>
 
 namespace PQuantum::parsing {
 static constexpr auto math_atom_arity_map = boost::hana::make_map(
@@ -46,6 +47,7 @@ using function_call_node = cxxmath::typesafe_tree_node<mathutils::function_call<
     } else if( cxxmath::holds_node<mathutils::name>( n2 ) ) { \
         auto n2_ = cxxmath::get_node<mathutils::name>( std::move( n2 ) ); \
         n2_.children.emplace_back( std::move( n1 ) ); \
+        std::rotate( std::begin(n2_.children), --std::end(n2_.children), std::end(n2_.children) ); \
         return n2_; \
     } \
     \
