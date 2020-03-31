@@ -38,10 +38,11 @@
 %nterm <function_call_node> function_call;
 %nterm <math_tree> arithmetic_expr;
 %nterm <math_tree> root_arithmetic_expr;
-%left MINUS PLUS;
-%left SLASH ASTERISK
-%precedence NEG
-%right CARET
+%left PLUS
+%left MINUS;
+%left ASTERISK
+%left SLASH;
+%right CARET;
 
 %start root_rule
 
