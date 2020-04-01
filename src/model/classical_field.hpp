@@ -24,6 +24,10 @@ struct classical_field_specification {
 struct indexed_field {
 	support::uuid id;
 	mathutils::index_spec<std::variant<int, support::uuid>> indices;
+	
+	constexpr bool operator==( const indexed_field &other ) const {
+		return (id == other.id && indices == other.indices);
+	}
 };
 
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const indexed_field &ifield ) {

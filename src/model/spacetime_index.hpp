@@ -14,7 +14,23 @@ struct spacetime_index {
 		lower, upper
 	} variance;
 	std::variant<int, support::uuid> id;
+	
+	constexpr bool operator==( const spacetime_index &other ) const {
+		return (variance == other.variance && id == other.id);
+	}
 };
+
+[[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const spacetime_index::index_variance &v ) {
+	switch( v ) {
+	case spacetime_index::index_variance::lower:
+		return os << "lower";
+	case spacetime_index::index_variance::upper:
+		return os << "upper";
+	}
+	
+	throw std::runtime_error("unreachable");
+	return os;
+}
 
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const spacetime_index &index ) {
 	switch( index.variance ) {

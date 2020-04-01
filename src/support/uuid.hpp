@@ -14,14 +14,14 @@ class uuid {
 	boost::uuids::uuid data_;
 public:
 	uuid( void ) = delete;
-	uuid( const uuid & ) = default;
-	uuid( uuid && ) = default;
+	constexpr uuid( const uuid & ) = default;
+	constexpr uuid( uuid && ) = default;
 	
-	uuid &operator=( const uuid & ) = default;
-	uuid &operator=( uuid && ) = default;
+	constexpr uuid &operator=( const uuid & ) = default;
+	constexpr uuid &operator=( uuid && ) = default;
 	
 	uuid( boost::uuids::random_generator &gen )
-		: data_( gen() ) {}
+	: data_( gen() ) {}
 	
 	bool operator<( const uuid &id ) const {
 		return data_ < id.data_;
@@ -31,12 +31,12 @@ public:
 		return data_ <= id.data_;
 	}
 	
-	bool operator==( const uuid &id ) const {
-		return data_ == id.data_;
+	constexpr bool operator==( const uuid &id ) const {
+		return data_.data == id.data_.data;
 	}
 	
-	bool operator!=( const uuid &id ) const {
-		return data_ != id.data_;
+	constexpr bool operator!=( const uuid &id ) const {
+		return data_.data != id.data_.data;
 	}
 	
 	bool operator>=( const uuid &id ) const {
@@ -47,7 +47,7 @@ public:
 		return data_ > id.data_;
 	}
 	
-	boost::uuids::uuid data( void ) const {
+	constexpr boost::uuids::uuid data( void ) const {
 		return data_;
 	}
 };

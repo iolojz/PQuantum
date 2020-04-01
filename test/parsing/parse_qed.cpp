@@ -92,27 +92,27 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	
 	auto zpsi_id_it = std::find_if(
 		std::begin( parameter_ids ), std::end( parameter_ids ), [&model]( const auto &id ) {
-			return model.parameter_for_id( id ).name == "Z_\\psi";
+			return model.parameter_name_for_id( id ) == "Z_\\psi";
 		}
 	);
 	auto m_id_it = std::find_if(
 		std::begin( parameter_ids ), std::end( parameter_ids ), [&model]( const auto &id ) {
-			return model.parameter_for_id( id ).name == "m";
+			return model.parameter_name_for_id( id ) == "m";
 		}
 	);
 	auto za_id_it = std::find_if(
 		std::begin( parameter_ids ), std::end( parameter_ids ), [&model]( const auto &id ) {
-			return model.parameter_for_id( id ).name == "Z_A";
+			return model.parameter_name_for_id( id ) == "Z_A";
 		}
 	);
 	auto e_id_it = std::find_if(
 		std::begin( parameter_ids ), std::end( parameter_ids ), [&model]( const auto &id ) {
-			return model.parameter_for_id( id ).name == "e";
+			return model.parameter_name_for_id( id ) == "e";
 		}
 	);
 	auto xi_id_it = std::find_if(
 		std::begin( parameter_ids ), std::end( parameter_ids ), [&model]( const auto &id ) {
-			return model.parameter_for_id( id ).name == "\\xi";
+			return model.parameter_name_for_id( id ) == "\\xi";
 		}
 	);
 	
@@ -125,37 +125,37 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	support::uuid zpsi_id = *zpsi_id_it;
 	support::uuid m_id = *m_id_it;
 	support::uuid za_id = *za_id_it;
-	support::uuid e_id = *e_id_it;
-	support::uuid xi_id = *xi_id_it;
+	/*support::uuid e_id = *e_id_it;
+	support::uuid xi_id = *xi_id_it;*/
 	
 	auto lagrangian = model.model_lagrangian();
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::sum>( lagrangian ) );
 	auto lagrangian_sum_node = cxxmath::get_node<mathutils::sum>( lagrangian );
-	BOOST_TEST_REQUIRE( std::size( lagrangian.children ) == 5 );
+	BOOST_TEST_REQUIRE( std::size( lagrangian_sum_node.children ) == 5 );
 	
-	lagrangian_tree compare_fermion_kinetic_term = {
+	model::lagrangian_tree compare_fermion_kinetic_term = {
 		mathutils::product{},
 		mathutils::number{ 0, 1 },
-		indexed_parameter{ zpsi_id, {} },
-		indexed_field{ bar_psi_id, {} },
-		dirac_operator{},
-		indexed_field{ psi_id, {} }
+		model::indexed_parameter{ zpsi_id, {} },
+		model::indexed_field{ bar_psi_id, {} },
+		model::dirac_operator{},
+		model::indexed_field{ psi_id, {} }
 	};
-	BOOST_TEST( lagrangian.children[0] == compare_fermion_kinetic_term );
+	BOOST_TEST( lagrangian_sum_node.children[0] == compare_fermion_kinetic_term );
 	
-	lagrangian_tree compare_fermion_mass_term = {
+	model::lagrangian_tree compare_fermion_mass_term = {
 		mathutils::negation{},
-		lagrangian_tree {
+		model::lagrangian_tree {
 			mathutils::product{},
 			mathutils::number{ 0, 1 },
-			indexed_parameter{ m_id, {} },
-			indexed_field{ bar_psi_id, {} },
-			indexed_field{ psi_id, {} }
+			model::indexed_parameter{ m_id, {} },
+			model::indexed_field{ bar_psi_id, {} },
+			model::indexed_field{ psi_id, {} }
 		}
 	};
-	BOOST_TEST( lagrangian.children[1] == compare_fermion_mass_term );
+	BOOST_TEST( lagrangian_sum_node.children[1] == compare_fermion_mass_term );
 	
-	auto photon_kinetic_term = lagrangian.children[2];
+	auto photon_kinetic_term = lagrangian_sum_node.children[2];
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( photon_kinetic_term ) );
 	auto photon_kinetic_term_node = cxxmath::get_node<mathutils::product>( photon_kinetic_term );
 	BOOST_TEST_REQUIRE( std::size( photon_kinetic_term_node.children ) == 4 );
@@ -168,78 +168,76 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	auto d_mu_a_nu_tree = f_mu_nu_node.children[0];
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( d_mu_a_nu_tree ) );
 	auto d_mu_a_nu_node = cxxmath::get_node<mathutils::product>( d_mu_a_nu_tree );
-	BOOST_TEST_REQUIRE( std::size( d_mu_a_nu_tree.children ) == 2 );
+	BOOST_TEST_REQUIRE( std::size( d_mu_a_nu_node.children ) == 2 );
 	
-	auto d_mu_tree = d_mu_a_nu_tree.children[0];
-	auto a_nu_tree = d_mu_a_nu_tree.children[1];
+	auto d_mu_tree = d_mu_a_nu_node.children[0];
+	auto a_nu_tree = d_mu_a_nu_node.children[1];
 	
-	BOOST_TEST_REQUIRE( cxxmath::holds_node<spacetime_derivative>( d_mu_tree ) );
-	BOOST_TEST_REQUIRE( cxxmath::holds_node<indexed_field>( a_mu_tree ) );
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::spacetime_derivative>( d_mu_tree ) );
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::indexed_field>( a_nu_tree ) );
 	
-	auto d_mu = cxxmath::data( cxxmath::get_node<spacetime_derivative>( d_mu_tree ) );
-	auto a_nu = cxxmath::data( cxxmath::get_node<indexed_field>( a_nu_tree ) );
+	auto d_mu = cxxmath::get_node<model::spacetime_derivative>( d_mu_tree ).data;
+	auto a_nu = cxxmath::get_node<model::indexed_field>( a_nu_tree ).data;
 	
 	auto lower_mu_index = d_mu.index;
-	BOOST_TEST_REQUIRE( lower_mu_index.variance == spacetime_index::index_variance::lower );
+	BOOST_TEST_REQUIRE( lower_mu_index.variance == model::spacetime_index::index_variance::lower );
 	auto mu_index = lower_mu_index.id;
-	
-	spacetime_index upper_mu_index = { spacetime_index::index_variance::upper, mu_index };
 	
 	BOOST_TEST_REQUIRE( std::size( a_nu.indices.lower ) == 1 );
 	BOOST_TEST_REQUIRE( std::size( a_nu.indices.upper ) == 0 );
 	auto nu_index = a_nu.indices.lower.front();
 	
-	spacetime_index lower_nu_index = { spacetime_index::index_variance::lower, nu_index };
-	spacetime_index upper_mu_index = { spacetime_index::index_variance::upper, mu_index };
-	spacetime_index upper_nu_index = { spacetime_index::index_variance::upper, nu_index };
+	model::spacetime_index lower_nu_index = { model::spacetime_index::index_variance::lower, nu_index };
+	model::spacetime_index upper_mu_index = { model::spacetime_index::index_variance::upper, mu_index };
+	model::spacetime_index upper_nu_index = { model::spacetime_index::index_variance::upper, nu_index };
 	
 	decltype(a_nu.indices) lower_nu_index_spec = a_nu.indices;
 	
 	decltype(a_nu.indices) lower_mu_index_spec = lower_nu_index_spec;
-	lower_mu_index_spec.indices.lower.front() = mu_index;
+	lower_mu_index_spec.lower.front() = mu_index;
 	
 	decltype(a_nu.indices) upper_nu_index_spec = lower_nu_index_spec;
-	std::swap( upper_nu_index_spec.indices.lower, upper_nu_index_spec.indices.upper );
+	std::swap( upper_nu_index_spec.lower, upper_nu_index_spec.upper );
 	
 	decltype(a_nu.indices) upper_mu_index_spec = lower_mu_index_spec;
-	std::swap( upper_mu_index_spec.indices.lower, upper_mu_index_spec.indices.upper );
+	std::swap( upper_mu_index_spec.lower, upper_mu_index_spec.upper );
 	
-	lagrangian_tree compare_photon_kinetic_term = {
+	model::lagrangian_tree compare_photon_kinetic_term = {
 		mathutils::product{},
-		lagrangian_tree {
+		model::lagrangian_tree {
 			mathutils::quotient{},
 			mathutils::number{ 1, 0 },
 			mathutils::number{ 4, 0 }
 		},
-		indexed_parameter{ za_id, {} },
-		lagrangian_tree{
+		model::indexed_parameter{ za_id, {} },
+		model::lagrangian_tree{
 			mathutils::difference{},
-			lagrangian_tree{
+			model::lagrangian_tree{
 				mathutils::product{},
-				mathutils::spacetime_derivative{ lower_mu_index },
-				indexed_field{ a_id, lower_nu_index_spec }
+				model::spacetime_derivative{ lower_mu_index },
+				model::indexed_field{ a_id, lower_nu_index_spec }
 			},
-			lagrangian_tree{
+			model::lagrangian_tree{
 				mathutils::product{},
-				mathutils::spacetime_derivative{ lower_nu_index },
-				indexed_field{ a_id, lower_mu_index_spec }
+				model::spacetime_derivative{ lower_nu_index },
+				model::indexed_field{ a_id, lower_mu_index_spec }
 			}
 		},
-		lagrangian_tree{
+		model::lagrangian_tree{
 			mathutils::difference{},
-			lagrangian_tree{
+			model::lagrangian_tree{
 				mathutils::product{},
-				mathutils::spacetime_derivative{ upper_mu_index },
-				indexed_field{ a_id, upper_nu_index_spec }
+				model::spacetime_derivative{ upper_mu_index },
+				model::indexed_field{ a_id, upper_nu_index_spec }
 			},
-			lagrangian_tree{
+			model::lagrangian_tree{
 				mathutils::product{},
-				mathutils::spacetime_derivative{ upper_nu_index },
-				indexed_field{ a_id, upper_mu_index_spec }
+				model::spacetime_derivative{ upper_nu_index },
+				model::indexed_field{ a_id, upper_mu_index_spec }
 			}
 		}
 	};
-	BOOST_TEST( lagrangian.children[2 == photon_kinetic_term );
+	BOOST_TEST( lagrangian_sum_node.children[2] == photon_kinetic_term );
 	
 	
 }

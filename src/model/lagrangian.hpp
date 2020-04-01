@@ -17,12 +17,22 @@
 namespace PQuantum::model {
 struct gamma_matrix {
 	spacetime_index index;
+	
+	constexpr bool operator==( const gamma_matrix &other ) const {
+		return index == other.index;
+	}
 };
 
 struct spacetime_derivative {
 	spacetime_index index;
+	
+	constexpr bool operator==( const spacetime_derivative &other ) const {
+		return index == other.index;
+	}
 };
-struct dirac_operator {};
+struct dirac_operator {
+	constexpr bool operator==( const dirac_operator & ) const { return true; }
+};
 
 static constexpr auto lagrangian_atom_arity_map = boost::hana::make_map(
 	boost::hana::make_pair( boost::hana::type_c<indexed_field>, boost::hana::int_c<0> ),
