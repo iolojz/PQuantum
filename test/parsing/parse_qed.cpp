@@ -125,8 +125,8 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	support::uuid zpsi_id = *zpsi_id_it;
 	support::uuid m_id = *m_id_it;
 	support::uuid za_id = *za_id_it;
-	/*support::uuid e_id = *e_id_it;
-	support::uuid xi_id = *xi_id_it;*/
+	support::uuid e_id = *e_id_it;
+	support::uuid xi_id = *xi_id_it;
 	
 	auto lagrangian = model.model_lagrangian();
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::sum>( lagrangian ) );
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 		model::dirac_operator{},
 		model::indexed_field{ psi_id, {} }
 	};
-	BOOST_TEST( lagrangian_sum_node.children[0] == compare_fermion_kinetic_term );
+	BOOST_TEST( lagrangian_sum_node.children.at(0) == compare_fermion_kinetic_term );
 	
 	model::lagrangian_tree compare_fermion_mass_term = {
 		mathutils::negation{},
@@ -153,28 +153,26 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 			model::indexed_field{ psi_id, {} }
 		}
 	};
-	BOOST_TEST( lagrangian_sum_node.children[1] == compare_fermion_mass_term );
+	BOOST_TEST( lagrangian_sum_node.children.at(1) == compare_fermion_mass_term );
 	
-	auto photon_kinetic_term = lagrangian_sum_node.children[2];
+	auto photon_kinetic_term = lagrangian_sum_node.children.at(2);
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( photon_kinetic_term ) );
 	auto photon_kinetic_term_node = cxxmath::get_node<mathutils::product>( photon_kinetic_term );
 	
-	std::cout << photon_kinetic_term_node << std::endl;
-	
 	BOOST_TEST_REQUIRE( std::size( photon_kinetic_term_node.children ) == 4 );
 	
-	auto f_mu_nu_tree = photon_kinetic_term_node.children[2];
+	auto f_mu_nu_tree = photon_kinetic_term_node.children.at(2);
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::difference>( f_mu_nu_tree ) );
 	auto f_mu_nu_node = cxxmath::get_node<mathutils::difference>( f_mu_nu_tree );
 	BOOST_TEST_REQUIRE( std::size( f_mu_nu_node.children ) == 2 );
 	
-	auto d_mu_a_nu_tree = f_mu_nu_node.children[0];
+	auto d_mu_a_nu_tree = f_mu_nu_node.children.at(0);
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( d_mu_a_nu_tree ) );
 	auto d_mu_a_nu_node = cxxmath::get_node<mathutils::product>( d_mu_a_nu_tree );
 	BOOST_TEST_REQUIRE( std::size( d_mu_a_nu_node.children ) == 2 );
 	
-	auto d_mu_tree = d_mu_a_nu_node.children[0];
-	auto a_nu_tree = d_mu_a_nu_node.children[1];
+	auto d_mu_tree = d_mu_a_nu_node.children.at(0);
+	auto a_nu_tree = d_mu_a_nu_node.children.at(1);
 	
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::spacetime_derivative>( d_mu_tree ) );
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::indexed_field>( a_nu_tree ) );
@@ -185,10 +183,12 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	auto lower_mu_index = d_mu.index;
 	BOOST_TEST_REQUIRE( lower_mu_index.variance == model::spacetime_index::index_variance::lower );
 	auto mu_index = lower_mu_index.id;
+	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( mu_index ) );
 	
 	BOOST_TEST_REQUIRE( std::size( a_nu.indices.lower ) == 1 );
 	BOOST_TEST_REQUIRE( std::size( a_nu.indices.upper ) == 0 );
 	auto nu_index = a_nu.indices.lower.front();
+	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( nu_index ) );
 	
 	model::spacetime_index lower_nu_index = { model::spacetime_index::index_variance::lower, nu_index };
 	model::spacetime_index upper_mu_index = { model::spacetime_index::index_variance::upper, mu_index };
@@ -240,7 +240,66 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 			}
 		}
 	};
-	BOOST_TEST( lagrangian_sum_node.children[2] == photon_kinetic_term );
+	BOOST_TEST( lagrangian_sum_node.children.at(2) == photon_kinetic_term );
 	
+	auto interaction_term = lagrangian_sum_node.children.at(3);
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::negation>( interaction_term ) );
+	auto interaction_term_node = cxxmath::get_node<mathutils::negation>( interaction_term );
 	
+	BOOST_TEST_REQUIRE( std::size( interaction_term_node.children ) == 1 );
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( interaction_term_node.children.front() ) );
+	auto interaction_product = cxxmath::get_node<mathutils::product>( interaction_term_node.children.front() );
+	
+	BOOST_TEST_REQUIRE( std::size( interaction_product.children ) == 5 );
+	auto gamma_mu_tree = interaction_product.children.at(2);
+	
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::gamma_matrix>( gamma_mu_tree ) );
+	auto gamma_mu = cxxmath::get_node<model::gamma_matrix>( gamma_mu_tree ).data;
+	mu_index = gamma_mu.index.id;
+	upper_mu_index_spec.upper.at(0) = mu_index;
+	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( mu_index ) );
+	
+	model::lagrangian_tree compare_interaction_term = {
+		mathutils::negation{},
+		model::lagrangian_tree{
+			mathutils::product{},
+			model::indexed_parameter{ e_id, {} },
+			model::indexed_field{ bar_psi_id, {} },
+			model::gamma_matrix{ model::spacetime_index::index_variance::lower, mu_index },
+			model::indexed_field{ bar_psi_id, upper_mu_index_spec },
+			model::indexed_field{ psi_id, {} }
+		}
+	};
+	BOOST_TEST( compare_interaction_term == interaction_term );
+	
+	auto gauge_fixing_term = lagrangian_sum_node.children.at(4);
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( gauge_fixing_term ) );
+	auto gauge_fixing_term_node = cxxmath::get_node<mathutils::product>( gauge_fixing_term );
+	
+	BOOST_TEST_REQUIRE( std::size( gauge_fixing_term_node.children ) == 5 );
+	d_mu_tree = gauge_fixing_term_node.children.at(1);
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::spacetime_derivative>( d_mu_tree ) );
+	d_mu = cxxmath::get_node<model::spacetime_derivative>( d_mu_tree ).data;
+	
+	mu_index = d_mu.index.id;
+	upper_mu_index_spec.upper.at(0) = mu_index;
+	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( mu_index ) );
+	
+	auto d_nu_tree = gauge_fixing_term_node.children.at(3);
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::spacetime_derivative>( d_nu_tree ) );
+	auto d_nu = cxxmath::get_node<model::spacetime_derivative>( d_nu_tree ).data;
+	
+	nu_index = d_nu.index.id;
+	upper_nu_index_spec.upper.at(0) = nu_index;
+	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( nu_index ) );
+	
+	model::lagrangian_tree compare_gauge_fixing_term = {
+		mathutils::product{},
+		model::indexed_parameter{ xi_id, {} },
+		model::spacetime_derivative{ model::spacetime_index::index_variance::lower, mu_index },
+		model::indexed_field{ a_id, upper_mu_index_spec },
+		model::spacetime_derivative{ model::spacetime_index::index_variance::lower, nu_index },
+		model::indexed_field{ a_id, upper_nu_index_spec }
+	};
+	BOOST_TEST( compare_gauge_fixing_term == gauge_fixing_term );
 }
