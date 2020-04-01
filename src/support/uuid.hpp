@@ -32,11 +32,15 @@ public:
 	}
 	
 	constexpr bool operator==( const uuid &id ) const {
-		return data_.data == id.data_.data;
+		for( std::size_t i = 0; i != boost::uuids::uuid::static_size(); i++ ) {
+			if( data_.data[i] != id.data_.data[i] )
+				return false;
+		}
+		return true;
 	}
 	
 	constexpr bool operator!=( const uuid &id ) const {
-		return data_.data != id.data_.data;
+		return !(*this == id);
 	}
 	
 	bool operator>=( const uuid &id ) const {

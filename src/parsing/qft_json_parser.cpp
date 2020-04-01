@@ -152,8 +152,9 @@ model::model_specification qft_json_parser::parse_model_specification( const jso
 	std::map<support::uuid, std::string> parameter_id_map;
 	std::map<std::string, support::uuid> parameter_name_map;
 	for( auto &&p : parameters ) {
-		parameter_id_map.emplace( uuid_generator, p );
-		parameter_name_map.emplace( std::move( p ), uuid_generator );
+		support::uuid id{uuid_generator};
+		parameter_name_map.emplace( p, id );
+		parameter_id_map.emplace( id, std::move( p ) );
 	}
 	
 	auto lagrangian = parse_lagrangian(

@@ -158,6 +158,9 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	auto photon_kinetic_term = lagrangian_sum_node.children[2];
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( photon_kinetic_term ) );
 	auto photon_kinetic_term_node = cxxmath::get_node<mathutils::product>( photon_kinetic_term );
+	
+	std::cout << photon_kinetic_term_node << std::endl;
+	
 	BOOST_TEST_REQUIRE( std::size( photon_kinetic_term_node.children ) == 4 );
 	
 	auto f_mu_nu_tree = photon_kinetic_term_node.children[2];

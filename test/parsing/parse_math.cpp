@@ -143,4 +143,19 @@ BOOST_AUTO_TEST_CASE( parse_math_precedence ) {
 	};
 	
 	BOOST_TEST( compare == root_incarnation );
+	
+	test = "a - b c";
+	root_incarnation = parsing::parse_math( test );
+	
+	compare = {
+		mathutils::difference{},
+		tree_a,
+		parsing::math_tree{
+			mathutils::product{},
+			tree_b,
+			tree_c
+		},
+	};
+	
+	BOOST_TEST( compare == root_incarnation );
 }

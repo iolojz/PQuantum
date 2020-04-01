@@ -39,13 +39,13 @@
 %nterm <math_tree> arithmetic_expr;
 %nterm <math_tree> root_arithmetic_expr;
 
-%precedence LEFT_ROUND_BRACE RIGHT_ROUND_BRACE
-%precedence COMMA
-%precedence ATOM INDEX
+%precedence COMMA;
 %left PLUS MINUS;
+%precedence ATOM;
 %left ASTERISK SLASH;
-%precedence LEFT_CURLY_BRACE RIGHT_CURLY_BRACE
+%precedence LEFT_CURLY_BRACE RIGHT_CURLY_BRACE;
 %right CARET;
+%precedence LEFT_ROUND_BRACE RIGHT_ROUND_BRACE;
 
 %start root_rule
 
