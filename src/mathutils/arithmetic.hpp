@@ -17,6 +17,7 @@ struct quotient {};
 struct sum {};
 struct difference {};
 struct negation {};
+struct parentheses {};
 
 static constexpr auto ops_by_precedence = boost::hana::tuple_t<power, product, quotient, sum, difference>;
 
@@ -26,7 +27,8 @@ static constexpr auto arithmetic_arity_map = boost::hana::make_map(
 	boost::hana::make_pair( boost::hana::type_c<quotient>, boost::hana::int_c<2> ),
 	boost::hana::make_pair( boost::hana::type_c<sum>, cxxmath::runtime_arity ),
 	boost::hana::make_pair( boost::hana::type_c<difference>, boost::hana::int_c<2> ),
-	boost::hana::make_pair( boost::hana::type_c<negation>, boost::hana::int_c<1> )
+	boost::hana::make_pair( boost::hana::type_c<negation>, boost::hana::int_c<1> ),
+	boost::hana::make_pair( boost::hana::type_c<parentheses>, boost::hana::int_c<1> )
 );
 
 #ifdef PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR
@@ -51,6 +53,7 @@ PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( quotient, "/" )
 PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( sum, "+" )
 PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( difference, "-" )
 PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( negation, "-" )
+PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR( parentheses, "()" )
 
 PQUANTUM_DEFINE_ARITHMETIC_NODE_COMPARISON_OPERATOR( power )
 PQUANTUM_DEFINE_ARITHMETIC_NODE_COMPARISON_OPERATOR( product )
@@ -58,6 +61,7 @@ PQUANTUM_DEFINE_ARITHMETIC_NODE_COMPARISON_OPERATOR( quotient )
 PQUANTUM_DEFINE_ARITHMETIC_NODE_COMPARISON_OPERATOR( sum )
 PQUANTUM_DEFINE_ARITHMETIC_NODE_COMPARISON_OPERATOR( difference )
 PQUANTUM_DEFINE_ARITHMETIC_NODE_COMPARISON_OPERATOR( negation )
+PQUANTUM_DEFINE_ARITHMETIC_NODE_COMPARISON_OPERATOR( parentheses )
 
 #undef PQUANTUM_DEFINE_ARITHMETIC_NODE_OSTREAM_OPERATOR
 #undef PQUANTUM_DEFINE_ARITHMETIC_NODE_COMPARISON_OPERATOR

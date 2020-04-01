@@ -88,7 +88,7 @@ arithmetic_expr:
 | arithmetic_expr arithmetic_expr  %prec ASTERISK          { $$ = make_arithmetic_product( std::move($1), std::move($2) ); }
 | arithmetic_expr SLASH arithmetic_expr                    { $$ = make_arithmetic_quotient( std::move($1), std::move($3) ); }
 | arithmetic_expr CARET arithmetic_expr                    { $$ = make_arithmetic_power( std::move($1), std::move($3) ); }
-| LEFT_ROUND_BRACE root_arithmetic_expr RIGHT_ROUND_BRACE  { $$ = std::move($2); }
+| LEFT_ROUND_BRACE root_arithmetic_expr RIGHT_ROUND_BRACE  { $$ = make_arithmetic_parentheses( std::move($2) ); }
 ;
 
 root_arithmetic_expr:

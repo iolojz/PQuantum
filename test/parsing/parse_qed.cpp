@@ -162,8 +162,11 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	BOOST_TEST_REQUIRE( std::size( photon_kinetic_term_node.children ) == 4 );
 	
 	auto f_mu_nu_tree = photon_kinetic_term_node.children.at(2);
-	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::difference>( f_mu_nu_tree ) );
-	auto f_mu_nu_node = cxxmath::get_node<mathutils::difference>( f_mu_nu_tree );
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::parentheses>( f_mu_nu_tree ) );
+	auto f_mu_nu_parentheses_node = cxxmath::get_node<mathutils::parentheses>( f_mu_nu_tree );
+	BOOST_TEST_REQUIRE( std::size( f_mu_nu_parentheses_node.children ) == 1 );
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::difference>( f_mu_nu_parentheses_node.children.front() ) );
+	auto f_mu_nu_node = cxxmath::get_node<mathutils::difference>( f_mu_nu_parentheses_node.children.front() );
 	BOOST_TEST_REQUIRE( std::size( f_mu_nu_node.children ) == 2 );
 	
 	auto d_mu_a_nu_tree = f_mu_nu_node.children.at(0);
@@ -214,29 +217,35 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 		},
 		model::indexed_parameter{ za_id, {} },
 		model::lagrangian_tree{
-			mathutils::difference{},
+			mathutils::parentheses{},
 			model::lagrangian_tree{
-				mathutils::product{},
-				model::spacetime_derivative{ lower_mu_index },
-				model::indexed_field{ a_id, lower_nu_index_spec }
-			},
-			model::lagrangian_tree{
-				mathutils::product{},
-				model::spacetime_derivative{ lower_nu_index },
-				model::indexed_field{ a_id, lower_mu_index_spec }
+				mathutils::difference{},
+				model::lagrangian_tree{
+					mathutils::product{},
+					model::spacetime_derivative{ lower_mu_index },
+					model::indexed_field{ a_id, lower_nu_index_spec }
+				},
+				model::lagrangian_tree{
+					mathutils::product{},
+					model::spacetime_derivative{ lower_nu_index },
+					model::indexed_field{ a_id, lower_mu_index_spec }
+				}
 			}
 		},
 		model::lagrangian_tree{
-			mathutils::difference{},
+			mathutils::parentheses{},
 			model::lagrangian_tree{
-				mathutils::product{},
-				model::spacetime_derivative{ upper_mu_index },
-				model::indexed_field{ a_id, upper_nu_index_spec }
-			},
-			model::lagrangian_tree{
-				mathutils::product{},
-				model::spacetime_derivative{ upper_nu_index },
-				model::indexed_field{ a_id, upper_mu_index_spec }
+				mathutils::difference{},
+				model::lagrangian_tree{
+					mathutils::product{},
+					model::spacetime_derivative{upper_mu_index},
+					model::indexed_field{a_id, upper_nu_index_spec}
+				},
+				model::lagrangian_tree{
+					mathutils::product{},
+					model::spacetime_derivative{upper_nu_index},
+					model::indexed_field{a_id, upper_mu_index_spec}
+				}
 			}
 		}
 	};
@@ -276,8 +285,19 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( gauge_fixing_term ) );
 	auto gauge_fixing_term_node = cxxmath::get_node<mathutils::product>( gauge_fixing_term );
 	
-	BOOST_TEST_REQUIRE( std::size( gauge_fixing_term_node.children ) == 5 );
-	d_mu_tree = gauge_fixing_term_node.children.at(1);
+	BOOST_TEST_REQUIRE( std::size( gauge_fixing_term_node.children ) == 3 );
+	auto contraction1_tree = gauge_fixing_term_node.children.at(1);
+	auto contraction2_tree = gauge_fixing_term_node.children.at(2);
+	
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( contraction1_tree ) );
+	auto contraction1_node = cxxmath::get_node<mathutils::product>( contraction1_tree );
+	BOOST_TEST_REQUIRE( std::size( contraction1_node.children ) == 2 );
+	
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( contraction1_tree ) );
+	auto contraction2_node = cxxmath::get_node<mathutils::product>( contraction2_tree );
+	BOOST_TEST_REQUIRE( std::size( contraction2_node.children ) == 2 );
+	
+	d_mu_tree = contraction1_node.children.at(0);
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::spacetime_derivative>( d_mu_tree ) );
 	d_mu = cxxmath::get_node<model::spacetime_derivative>( d_mu_tree ).data;
 	
@@ -285,7 +305,7 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	upper_mu_index_spec.upper.at(0) = mu_index;
 	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( mu_index ) );
 	
-	auto d_nu_tree = gauge_fixing_term_node.children.at(3);
+	auto d_nu_tree = contraction2_node.children.at(0);
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::spacetime_derivative>( d_nu_tree ) );
 	auto d_nu = cxxmath::get_node<model::spacetime_derivative>( d_nu_tree ).data;
 	

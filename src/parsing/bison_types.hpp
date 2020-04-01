@@ -73,6 +73,10 @@ PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC( power )
 	return { mathutils::negation{}, std::move( n ) };
 }
 
+[[maybe_unused]] static math_tree make_arithmetic_parentheses( math_tree &&n ) {
+	return { mathutils::parentheses{}, std::move( n ) };
+}
+
 #undef PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC
 #undef PQUANTUM_PARSING_DEFINE_MAKE_BINARY_ARITHMETIC
 }
