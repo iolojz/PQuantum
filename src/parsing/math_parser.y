@@ -61,7 +61,7 @@ index_spec:
   UNDERSCORE LEFT_CURLY_BRACE index_list RIGHT_CURLY_BRACE CARET LEFT_CURLY_BRACE index_list RIGHT_CURLY_BRACE  { $$.lower = std::move($3); $$.upper = std::move($7); }
 | CARET LEFT_CURLY_BRACE index_list RIGHT_CURLY_BRACE UNDERSCORE LEFT_CURLY_BRACE index_list RIGHT_CURLY_BRACE  { $$.upper = std::move($3); $$.lower = std::move($7); }
 | UNDERSCORE LEFT_CURLY_BRACE index_list RIGHT_CURLY_BRACE                                                      { $$.lower = std::move($3); }
-| CARET LEFT_CURLY_BRACE index_list RIGHT_CURLY_BRACE                                                           { $$.lower = std::move($3); }
+| CARET LEFT_CURLY_BRACE index_list RIGHT_CURLY_BRACE                                                           { $$.upper = std::move($3); }
 ;
 
 atom_with_optional_indices:

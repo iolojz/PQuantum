@@ -43,7 +43,7 @@ std::ostream &operator<<( std::ostream &os, const index_spec<IndexAtom> &is ) {
 	}
 	
 	if( is.upper.empty() == false ) {
-		os << "^{" << is.lower.front();
+		os << "^{" << is.upper.front();
 		for( auto it = ++( is.upper.begin() ); it != is.upper.end(); ++it ) {
 			os << ", " << *it;
 		}

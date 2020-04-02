@@ -265,6 +265,7 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::gamma_matrix>( gamma_mu_tree ) );
 	auto gamma_mu = cxxmath::get_node<model::gamma_matrix>( gamma_mu_tree ).data;
 	mu_index = gamma_mu.index.id;
+	
 	upper_mu_index_spec.upper.at(0) = mu_index;
 	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( mu_index ) );
 	
@@ -275,7 +276,7 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 			model::indexed_parameter{ e_id, {} },
 			model::indexed_field{ bar_psi_id, {} },
 			model::gamma_matrix{ model::spacetime_index::index_variance::lower, mu_index },
-			model::indexed_field{ bar_psi_id, upper_mu_index_spec },
+			model::indexed_field{ a_id, upper_mu_index_spec },
 			model::indexed_field{ psi_id, {} }
 		}
 	};
@@ -286,16 +287,22 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	auto gauge_fixing_term_node = cxxmath::get_node<mathutils::product>( gauge_fixing_term );
 	
 	BOOST_TEST_REQUIRE( std::size( gauge_fixing_term_node.children ) == 3 );
-	auto contraction1_tree = gauge_fixing_term_node.children.at(1);
-	auto contraction2_tree = gauge_fixing_term_node.children.at(2);
+	auto contraction1_parentheses_tree = gauge_fixing_term_node.children.at(1);
+	auto contraction2_parentheses_tree = gauge_fixing_term_node.children.at(2);
 	
-	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( contraction1_tree ) );
-	auto contraction1_node = cxxmath::get_node<mathutils::product>( contraction1_tree );
-	BOOST_TEST_REQUIRE( std::size( contraction1_node.children ) == 2 );
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::parentheses>( contraction1_parentheses_tree ) );
+	auto contraction1_parentheses_node = cxxmath::get_node<mathutils::parentheses>( contraction1_parentheses_tree );
 	
-	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( contraction1_tree ) );
-	auto contraction2_node = cxxmath::get_node<mathutils::product>( contraction2_tree );
-	BOOST_TEST_REQUIRE( std::size( contraction2_node.children ) == 2 );
+	BOOST_TEST_REQUIRE( std::size( contraction1_parentheses_node.children ) == 1 );
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( contraction1_parentheses_node.children.front() ) );
+	auto contraction1_node = cxxmath::get_node<mathutils::product>( contraction1_parentheses_node.children.front() );
+	
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::parentheses>( contraction2_parentheses_tree ) );
+	auto contraction2_parentheses_node = cxxmath::get_node<mathutils::parentheses>( contraction2_parentheses_tree );
+	
+	BOOST_TEST_REQUIRE( std::size( contraction2_parentheses_node.children ) == 1 );
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::product>( contraction2_parentheses_node.children.front() ) );
+	auto contraction2_node = cxxmath::get_node<mathutils::product>( contraction2_parentheses_node.children.front() );
 	
 	d_mu_tree = contraction1_node.children.at(0);
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::spacetime_derivative>( d_mu_tree ) );
@@ -316,10 +323,22 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	model::lagrangian_tree compare_gauge_fixing_term = {
 		mathutils::product{},
 		model::indexed_parameter{ xi_id, {} },
-		model::spacetime_derivative{ model::spacetime_index::index_variance::lower, mu_index },
-		model::indexed_field{ a_id, upper_mu_index_spec },
-		model::spacetime_derivative{ model::spacetime_index::index_variance::lower, nu_index },
-		model::indexed_field{ a_id, upper_nu_index_spec }
+		model::lagrangian_tree{
+			mathutils::parentheses{},
+			model::lagrangian_tree{
+				mathutils::product{},
+				model::spacetime_derivative{ model::spacetime_index::index_variance::lower, mu_index },
+				model::indexed_field{ a_id, upper_mu_index_spec }
+			}
+		},
+		model::lagrangian_tree{
+			mathutils::parentheses{},
+			model::lagrangian_tree{
+				mathutils::product{},
+				model::spacetime_derivative{ model::spacetime_index::index_variance::lower, nu_index },
+				model::indexed_field{ a_id, upper_nu_index_spec }
+			}
+		}
 	};
 	BOOST_TEST( compare_gauge_fixing_term == gauge_fixing_term );
 }
