@@ -3,6 +3,8 @@
 //
 
 #include "program_options_handler.hpp"
+#include "calculation_controller.hpp"
+
 #include "parsing/qft_json_parser.hpp"
 #include "error/error.hpp"
 
@@ -21,6 +23,20 @@ program_options_handler::program_options_handler( int argc, const char **argv ) 
 		po::value<std::string>(
 			&model_file
 		), "model file"
+	)(
+		"calculate",
+		po::value<std::vector<std::string>>(
+			&calculation_commands
+		), "The things to calculate.\n"
+			"Possible options:\n"
+			"\tbeta_functions: Calculate the beta functions of the given model"
+	)(
+		"method",
+		po::value<std::string>(
+			&calculation_method
+		), "The method to use for the calculation.\n"
+	 		"Possible options:\n"
+			"\tWetterich: Solve the Wetterich equation"
 	);
 	
 	po::store( boost::program_options::parse_command_line( argc, argv, program_options_description ), program_options );
@@ -48,6 +64,32 @@ void program_options_handler::take_action( void ) {
 		error::exit_upon_error();
 	}
 	
-	qft_json_parser::parse( model_file );
+	BOOST_LOG_SEV( logger, logging::severity_level::user_info ) << "Attempting to parse model file:" << model_file;
+	auto parser = parsing::qft_json_parser::parse( model_file );
+	auto model = parser.model();
+	BOOST_LOG_SEV( logger, logging::severity_level::user_info )
+		<< "Successfully parsed model file: " << model_file << std::endl
+		<< "JSON schema header: " << parser.json_header() << std::endl
+		<< "Model: " << model.name();
+	
+	calculation_controller::calculation_method method;
+	std::vector<calculation_controller::calculation_command> commands;
+	for( const auto &command : calculation_commands ) {
+		if( command == "beta_functions" )
+			commands.push_back( calculation_controller::calculation_command::beta_functions );
+		else {
+			BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Unknown calculation command: " << command;
+			error::exit_upon_error();
+		}
+	}
+	if( calculation_method == "Wetterich" )
+		method = calculation_controller::calculation_method::wetterich;
+	else {
+		BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Unknown calculation method: " << calculation_method;
+		error::exit_upon_error();
+	}
+	
+	calculation_controller controller = { commands, method };
+	controller.calculate();
 }
 }

@@ -15,6 +15,14 @@
 #include "mathutils/number.hpp"
 
 namespace PQuantum::model {
+struct euler_constant {
+	constexpr bool operator==( const euler_constant & ) const { return true; }
+};
+
+struct pi_constant {
+	constexpr bool operator==( const pi_constant & ) const { return true; }
+};
+
 struct gamma_matrix {
 	spacetime_index index;
 	
@@ -50,6 +58,23 @@ static constexpr auto lagrangian_arity_map = boost::hana::union_(
 	lagrangian_atom_arity_map
 );
 using lagrangian_tree = cxxmath::typesafe_tree<decltype(lagrangian_arity_map)>;
+
+static constexpr auto lagrangian_delta_field_arity_map = boost::hana::make_map(
+	boost::hana::make_pair( boost::hana::type_c<delta_indexed_field>, boost::hana::int_c<0> )
+);
+static constexpr auto delta_lagrangian_arity_map = boost::hana::union_(
+	lagrangian_arity_map,
+	lagrangian_delta_field_arity_map
+);
+using delta_lagrangian_tree = cxxmath::typesafe_tree<decltype(delta_lagrangian_arity_map)>;
+
+[[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const euler_constant & ) {
+	return os << "\\EulerConstant";
+}
+
+[[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const pi_constant & ) {
+	return os << "\\pi";
+}
 
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const gamma_matrix &gm ) {
 	return os << "\\gamma" << gm.index;

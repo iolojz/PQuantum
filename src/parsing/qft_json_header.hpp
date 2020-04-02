@@ -13,6 +13,10 @@ struct json_schema_header {
 	int version_major;
 	int version_minor;
 };
+
+[[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const json_schema_header &header ) {
+	return os << header.name << ", version = " << header.version_major << "." << header.version_minor;
+}
 }
 
 #endif //PQUANTUM_QFT_JSON_HEADER_HPP
