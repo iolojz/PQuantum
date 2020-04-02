@@ -7,22 +7,27 @@
 
 #include <vector>
 
+#include "../model/model_specification.hpp"
+
 namespace PQuantum {
-struct calculation_controller {
-	enum class calculation_command {
-		beta_functions
-	};
-	enum class calculation_method {
-		wetterich
-	};
-private:
+enum class calculation_command {
+	beta_functions
+};
+enum class calculation_method {
+	wetterich
+};
+
+class calculation_controller {
 	std::vector<calculation_command> commands;
 	calculation_method method;
-public:
-	calculation_controller( const std::vector<calculation_command> &cs, calculation_method cm )
-	: commands{ cs }, method{ cm } {}
 	
-	void calculate( void );
+	logging::severity_logger logger;
+	
+	void calculate_beta_functions( const model::model_specification &model );
+public:
+	calculation_controller( const std::vector<calculation_command> &cs, calculation_method cm );
+	
+	void calculate( const model::model_specification &model );
 };
 }
 

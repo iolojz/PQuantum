@@ -30,21 +30,8 @@ struct indexed_field {
 	}
 };
 
-struct delta_indexed_field {
-	indexed_field field;
-	int delta_index;
-	
-	constexpr bool operator==( const delta_indexed_field &other ) const {
-		return (field == other.field && delta_index == other.delta_index);
-	}
-};
-
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const indexed_field &ifield ) {
 	return os << ifield.id << ifield.indices;
-}
-
-[[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const delta_indexed_field &difield ) {
-	return os << "\\Delta{" << difield.field << "}_" << difield.delta_index << difield.field.indices;
 }
 }
 

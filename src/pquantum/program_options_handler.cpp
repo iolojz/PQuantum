@@ -26,14 +26,14 @@ program_options_handler::program_options_handler( int argc, const char **argv ) 
 	)(
 		"calculate",
 		po::value<std::vector<std::string>>(
-			&calculation_commands
+			&calculation_command_names
 		), "The things to calculate.\n"
 			"Possible options:\n"
 			"\tbeta_functions: Calculate the beta functions of the given model"
 	)(
 		"method",
 		po::value<std::string>(
-			&calculation_method
+			&calculation_method_name
 		), "The method to use for the calculation.\n"
 	 		"Possible options:\n"
 			"\tWetterich: Solve the Wetterich equation"
@@ -72,24 +72,25 @@ void program_options_handler::take_action( void ) {
 		<< "JSON schema header: " << parser.json_header() << std::endl
 		<< "Model: " << model.name();
 	
-	calculation_controller::calculation_method method;
-	std::vector<calculation_controller::calculation_command> commands;
-	for( const auto &command : calculation_commands ) {
+	calculation_method method;
+	std::vector<calculation_command> commands;
+	for( const auto &command : calculation_command_names ) {
 		if( command == "beta_functions" )
-			commands.push_back( calculation_controller::calculation_command::beta_functions );
+			commands.push_back( calculation_command::beta_functions );
 		else {
 			BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Unknown calculation command: " << command;
 			error::exit_upon_error();
 		}
 	}
-	if( calculation_method == "Wetterich" )
-		method = calculation_controller::calculation_method::wetterich;
+	if( calculation_method_name == "Wetterich" )
+		method = calculation_method::wetterich;
 	else {
-		BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Unknown calculation method: " << calculation_method;
+		BOOST_LOG_SEV( logger, logging::severity_level::error )
+			<< "Unknown calculation method: " << calculation_method_name;
 		error::exit_upon_error();
 	}
 	
 	calculation_controller controller = { commands, method };
-	controller.calculate();
+	controller.calculate( model );
 }
 }

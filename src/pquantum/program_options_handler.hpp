@@ -19,8 +19,8 @@ class program_options_handler {
 	bool print_help_message;
 	std::string model_file;
 	
-	std::vector<std::string> calculation_commands;
-	std::string calculation_method;
+	std::vector<std::string> calculation_command_names;
+	std::string calculation_method_name;
 	
 	logging::severity_logger logger;
 public:
