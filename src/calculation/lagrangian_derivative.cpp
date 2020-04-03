@@ -6,7 +6,28 @@
 
 #include <boost/range/combine.hpp>
 
+namespace {
+struct to_delta_lagrangian_impl {
+	template<class Atom> PQuantum::calculation::delta_lagrangian_tree operator()( Atom &&atom ) const {
+		return std::forward<Atom>( atom );
+	}
+	
+	template<class NonTerminalNodeData, class Children, class TransformedChildren>
+	PQuantum::calculation::delta_lagrangian_tree
+	operator()( NonTerminalNodeData &&nt, Children &&, TransformedChildren &&tch ) const {
+		return {
+			std::forward<NonTerminalNodeData>( nt ),
+			std::forward<TransformedChildren>( tch )
+		};
+	}
+};
+}
+
 namespace PQuantum::calculation {
+delta_lagrangian_tree to_delta_lagrangian( const model::lagrangian_tree &tree ) {
+	return cxxmath::recursive_tree_transform( tree, to_delta_lagrangian_impl{} );
+}
+
 class derive_lagrangian_t {
 	int delta_index;
 public:
@@ -33,9 +54,10 @@ public:
 		>;
 		std::vector<delta_lagrangian_tree> summands;
 		
+		auto tf_it = std::begin( tf );
 		for( std::size_t i = 0; i != std::size( tf ); ++i ) {
 			product_node term = { mathutils::product{}, f };
-			term.children[i] = tf[i];
+			term.children[i] = *tf_it++;
 			summands.emplace_back( std::move( term ) );
 		}
 		
@@ -109,13 +131,12 @@ public:
 		if( f.atom == "ln" ) {
 			delta_lagrangian_tree{
 				mathutils::quotient{},
-				ta,
-				a
+				std::forward<TransformedArgs>( ta ).front(),
+				std::forward<Args>( a ).front()
 			};
 		}
 		
 		throw std::runtime_error( "Cannot take derivative of given function_call" );
-		return {};
 	}
 	
 	template<class Args, class TransformedArgs>
@@ -134,13 +155,9 @@ delta_lagrangian_tree
 derive_lagrangian_t::operator()<model::indexed_field>( const model::indexed_field &ifield ) const {
 	return delta_indexed_field{ ifield, delta_index };
 }
-template<>
-delta_lagrangian_tree derive_lagrangian_t::operator()<delta_indexed_field>( const delta_indexed_field &difield ) const {
-	return difield;
-}
 
 delta_lagrangian_tree take_nth_derivative( int n, const model::lagrangian_tree &lagrangian ) {
-	return cxxmath::recursive_tree_transform( lagrangian, derive_lagrangian_t{n} );
+	return cxxmath::recursive_tree_transform( to_delta_lagrangian( lagrangian ), derive_lagrangian_t{n} );
 }
 
 delta_lagrangian_tree take_nth_derivative( int n, const delta_lagrangian_tree &delta_lagrangian ) {
