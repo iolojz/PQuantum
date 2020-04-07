@@ -197,8 +197,8 @@ template<> model::input_lagrangian_tree converter::operator()<mathutils::atom_wi
 				error::exit_upon_error();
 			}
 
-			return model::gamma_matrix{
-				model::spacetime_index::index_variance::upper,
+			return mathutils::gamma_matrix{
+				mathutils::spacetime_index::index_variance::upper,
 				std::move( indices.upper.front() )
 			};
 		} else if( indices.upper.empty() ) {
@@ -207,8 +207,8 @@ template<> model::input_lagrangian_tree converter::operator()<mathutils::atom_wi
 				error::exit_upon_error();
 			}
 			
-			return model::gamma_matrix{
-				{ model::spacetime_index::index_variance::lower, std::move( indices.lower.front() ) }
+			return mathutils::gamma_matrix{
+				{ mathutils::spacetime_index::index_variance::lower, std::move( indices.lower.front() ) }
 			};
 		}
 
@@ -225,8 +225,8 @@ template<> model::input_lagrangian_tree converter::operator()<mathutils::atom_wi
 				error::exit_upon_error();
 			}
 			
-			return model::spacetime_derivative{
-				{ model::spacetime_index::index_variance::upper, std::move( indices.upper.front() ) }
+			return mathutils::spacetime_derivative{
+				{ mathutils::spacetime_index::index_variance::upper, std::move( indices.upper.front() ) }
 			};
 		} else if( indices.upper.empty() ) {
 			if( indices.lower.size() != 1 ) {
@@ -234,8 +234,8 @@ template<> model::input_lagrangian_tree converter::operator()<mathutils::atom_wi
 				error::exit_upon_error();
 			}
 			
-			return model::spacetime_derivative{
-				{ model::spacetime_index::index_variance::lower, std::move( indices.lower.front() ) }
+			return mathutils::spacetime_derivative{
+				{ mathutils::spacetime_index::index_variance::lower, std::move( indices.lower.front() ) }
 			};
 		}
 		
@@ -247,7 +247,7 @@ template<> model::input_lagrangian_tree converter::operator()<mathutils::atom_wi
 			error::exit_upon_error();
 		}
 
-		return model::dirac_operator{};
+		return mathutils::dirac_operator{};
 	} else if( indexed_atom_node.data.atom == "\\ImaginaryUnit" ) {
 		if( !(indices.lower.empty() && indices.upper.empty()) ) {
 			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Imaginary unit with indices";

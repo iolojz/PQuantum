@@ -8,8 +8,6 @@
 #include "mathutils/manifold_specification.hpp"
 #include "mathutils/atom_indices.hpp"
 
-#include "spacetime_index.hpp"
-
 #include <string>
 
 #include "support/uuid.hpp"

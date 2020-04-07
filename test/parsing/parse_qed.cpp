@@ -128,24 +128,24 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	support::uuid e_id = *e_id_it;
 	support::uuid xi_id = *xi_id_it;
 	
-	auto lagrangian = model.model_lagrangian();
-	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::sum>( lagrangian ) );
-	auto lagrangian_sum_node = cxxmath::get_node<mathutils::sum>( lagrangian );
+	auto input_lagrangian = model.input_lagrangian();
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::sum>( input_lagrangian ) );
+	auto lagrangian_sum_node = cxxmath::get_node<mathutils::sum>( input_lagrangian );
 	BOOST_TEST_REQUIRE( std::size( lagrangian_sum_node.children ) == 5 );
 	
-	model::lagrangian_tree compare_fermion_kinetic_term = {
+	model::input_lagrangian_tree compare_fermion_kinetic_term = {
 		mathutils::product{},
 		mathutils::number{ 0, 1 },
 		model::indexed_parameter{ zpsi_id, {} },
 		model::indexed_field{ bar_psi_id, {} },
-		model::dirac_operator{},
+		mathutils::dirac_operator{},
 		model::indexed_field{ psi_id, {} }
 	};
 	BOOST_TEST( lagrangian_sum_node.children.at(0) == compare_fermion_kinetic_term );
 	
-	model::lagrangian_tree compare_fermion_mass_term = {
+	model::input_lagrangian_tree compare_fermion_mass_term = {
 		mathutils::negation{},
-		model::lagrangian_tree {
+		model::input_lagrangian_tree {
 			mathutils::product{},
 			mathutils::number{ 0, 1 },
 			model::indexed_parameter{ m_id, {} },
@@ -177,14 +177,14 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	auto d_mu_tree = d_mu_a_nu_node.children.at(0);
 	auto a_nu_tree = d_mu_a_nu_node.children.at(1);
 	
-	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::spacetime_derivative>( d_mu_tree ) );
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::spacetime_derivative>( d_mu_tree ) );
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::indexed_field>( a_nu_tree ) );
 	
-	auto d_mu = cxxmath::get_node<model::spacetime_derivative>( d_mu_tree ).data;
+	auto d_mu = cxxmath::get_node<mathutils::spacetime_derivative>( d_mu_tree ).data;
 	auto a_nu = cxxmath::get_node<model::indexed_field>( a_nu_tree ).data;
 	
 	auto lower_mu_index = d_mu.index;
-	BOOST_TEST_REQUIRE( lower_mu_index.variance == model::spacetime_index::index_variance::lower );
+	BOOST_TEST_REQUIRE( lower_mu_index.variance == mathutils::spacetime_index::index_variance::lower );
 	auto mu_index = lower_mu_index.id;
 	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( mu_index ) );
 	
@@ -193,9 +193,9 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	auto nu_index = a_nu.indices.lower.front();
 	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( nu_index ) );
 	
-	model::spacetime_index lower_nu_index = { model::spacetime_index::index_variance::lower, nu_index };
-	model::spacetime_index upper_mu_index = { model::spacetime_index::index_variance::upper, mu_index };
-	model::spacetime_index upper_nu_index = { model::spacetime_index::index_variance::upper, nu_index };
+	mathutils::spacetime_index lower_nu_index = { mathutils::spacetime_index::index_variance::lower, nu_index };
+	mathutils::spacetime_index upper_mu_index = { mathutils::spacetime_index::index_variance::upper, mu_index };
+	mathutils::spacetime_index upper_nu_index = { mathutils::spacetime_index::index_variance::upper, nu_index };
 	
 	decltype(a_nu.indices) lower_nu_index_spec = a_nu.indices;
 	
@@ -208,42 +208,42 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	decltype(a_nu.indices) upper_mu_index_spec = lower_mu_index_spec;
 	std::swap( upper_mu_index_spec.lower, upper_mu_index_spec.upper );
 	
-	model::lagrangian_tree compare_photon_kinetic_term = {
+	model::input_lagrangian_tree compare_photon_kinetic_term = {
 		mathutils::product{},
-		model::lagrangian_tree {
+		model::input_lagrangian_tree {
 			mathutils::quotient{},
 			mathutils::number{ 1, 0 },
 			mathutils::number{ 4, 0 }
 		},
 		model::indexed_parameter{ za_id, {} },
-		model::lagrangian_tree{
+		model::input_lagrangian_tree{
 			mathutils::parentheses{},
-			model::lagrangian_tree{
+			model::input_lagrangian_tree{
 				mathutils::difference{},
-				model::lagrangian_tree{
+				model::input_lagrangian_tree{
 					mathutils::product{},
-					model::spacetime_derivative{ lower_mu_index },
+					mathutils::spacetime_derivative{ lower_mu_index },
 					model::indexed_field{ a_id, lower_nu_index_spec }
 				},
-				model::lagrangian_tree{
+				model::input_lagrangian_tree{
 					mathutils::product{},
-					model::spacetime_derivative{ lower_nu_index },
+					mathutils::spacetime_derivative{ lower_nu_index },
 					model::indexed_field{ a_id, lower_mu_index_spec }
 				}
 			}
 		},
-		model::lagrangian_tree{
+		model::input_lagrangian_tree{
 			mathutils::parentheses{},
-			model::lagrangian_tree{
+			model::input_lagrangian_tree{
 				mathutils::difference{},
-				model::lagrangian_tree{
+				model::input_lagrangian_tree{
 					mathutils::product{},
-					model::spacetime_derivative{upper_mu_index},
+					mathutils::spacetime_derivative{upper_mu_index},
 					model::indexed_field{a_id, upper_nu_index_spec}
 				},
-				model::lagrangian_tree{
+				model::input_lagrangian_tree{
 					mathutils::product{},
-					model::spacetime_derivative{upper_nu_index},
+					mathutils::spacetime_derivative{upper_nu_index},
 					model::indexed_field{a_id, upper_mu_index_spec}
 				}
 			}
@@ -262,20 +262,20 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	BOOST_TEST_REQUIRE( std::size( interaction_product.children ) == 5 );
 	auto gamma_mu_tree = interaction_product.children.at(2);
 	
-	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::gamma_matrix>( gamma_mu_tree ) );
-	auto gamma_mu = cxxmath::get_node<model::gamma_matrix>( gamma_mu_tree ).data;
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::gamma_matrix>( gamma_mu_tree ) );
+	auto gamma_mu = cxxmath::get_node<mathutils::gamma_matrix>( gamma_mu_tree ).data;
 	mu_index = gamma_mu.index.id;
 	
 	upper_mu_index_spec.upper.at(0) = mu_index;
 	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( mu_index ) );
 	
-	model::lagrangian_tree compare_interaction_term = {
+	model::input_lagrangian_tree compare_interaction_term = {
 		mathutils::negation{},
-		model::lagrangian_tree{
+		model::input_lagrangian_tree{
 			mathutils::product{},
 			model::indexed_parameter{ e_id, {} },
 			model::indexed_field{ bar_psi_id, {} },
-			model::gamma_matrix{ model::spacetime_index::index_variance::lower, mu_index },
+			mathutils::gamma_matrix{ mathutils::spacetime_index::index_variance::lower, mu_index },
 			model::indexed_field{ a_id, upper_mu_index_spec },
 			model::indexed_field{ psi_id, {} }
 		}
@@ -305,37 +305,37 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	auto contraction2_node = cxxmath::get_node<mathutils::product>( contraction2_parentheses_node.children.front() );
 	
 	d_mu_tree = contraction1_node.children.at(0);
-	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::spacetime_derivative>( d_mu_tree ) );
-	d_mu = cxxmath::get_node<model::spacetime_derivative>( d_mu_tree ).data;
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::spacetime_derivative>( d_mu_tree ) );
+	d_mu = cxxmath::get_node<mathutils::spacetime_derivative>( d_mu_tree ).data;
 	
 	mu_index = d_mu.index.id;
 	upper_mu_index_spec.upper.at(0) = mu_index;
 	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( mu_index ) );
 	
 	auto d_nu_tree = contraction2_node.children.at(0);
-	BOOST_TEST_REQUIRE( cxxmath::holds_node<model::spacetime_derivative>( d_nu_tree ) );
-	auto d_nu = cxxmath::get_node<model::spacetime_derivative>( d_nu_tree ).data;
+	BOOST_TEST_REQUIRE( cxxmath::holds_node<mathutils::spacetime_derivative>( d_nu_tree ) );
+	auto d_nu = cxxmath::get_node<mathutils::spacetime_derivative>( d_nu_tree ).data;
 	
 	nu_index = d_nu.index.id;
 	upper_nu_index_spec.upper.at(0) = nu_index;
 	BOOST_TEST_REQUIRE( std::holds_alternative<support::uuid>( nu_index ) );
 	
-	model::lagrangian_tree compare_gauge_fixing_term = {
+	model::input_lagrangian_tree compare_gauge_fixing_term = {
 		mathutils::product{},
 		model::indexed_parameter{ xi_id, {} },
-		model::lagrangian_tree{
+		model::input_lagrangian_tree{
 			mathutils::parentheses{},
-			model::lagrangian_tree{
+			model::input_lagrangian_tree{
 				mathutils::product{},
-				model::spacetime_derivative{ model::spacetime_index::index_variance::lower, mu_index },
+				mathutils::spacetime_derivative{ mathutils::spacetime_index::index_variance::lower, mu_index },
 				model::indexed_field{ a_id, upper_mu_index_spec }
 			}
 		},
-		model::lagrangian_tree{
+		model::input_lagrangian_tree{
 			mathutils::parentheses{},
-			model::lagrangian_tree{
+			model::input_lagrangian_tree{
 				mathutils::product{},
-				model::spacetime_derivative{ model::spacetime_index::index_variance::lower, nu_index },
+				mathutils::spacetime_derivative{ mathutils::spacetime_index::index_variance::lower, nu_index },
 				model::indexed_field{ a_id, upper_nu_index_spec }
 			}
 		}

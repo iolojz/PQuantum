@@ -8,7 +8,7 @@
 #include "support/uuid.hpp"
 #include "support/variant.hpp"
 
-namespace PQuantum::model {
+namespace PQuantum::mathutils {
 struct spacetime_index {
 	enum class index_variance {
 		lower, upper

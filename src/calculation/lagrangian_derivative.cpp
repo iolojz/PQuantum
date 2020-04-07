@@ -150,13 +150,13 @@ public:
 	}
 	
 	template<class Args, class TransformedArgs>
-	delta_lagrangian_tree operator()( model::spacetime_derivative, Args &&, TransformedArgs &&ta ) const {
-		return { model::spacetime_derivative{}, std::forward<TransformedArgs>( ta ) };
+	delta_lagrangian_tree operator()( mathutils::spacetime_derivative, Args &&, TransformedArgs &&ta ) const {
+		return { mathutils::spacetime_derivative{}, std::forward<TransformedArgs>( ta ) };
 	}
 	
 	template<class Args, class TransformedArgs>
-	delta_lagrangian_tree operator()( model::dirac_operator, Args &&, TransformedArgs &&ta ) const {
-		return { model::dirac_operator{}, std::forward<TransformedArgs>( ta ) };
+	delta_lagrangian_tree operator()( mathutils::dirac_operator, Args &&, TransformedArgs &&ta ) const {
+		return { mathutils::dirac_operator{}, std::forward<TransformedArgs>( ta ) };
 	}
 };
 
