@@ -11,7 +11,7 @@
 #include "model/lagrangian.hpp"
 
 namespace PQuantum::parsing {
-model::lagrangian_tree math_to_lagrangian( math_tree &&mtree, qft_parsing_context &&qft_context );
+model::input_lagrangian_tree math_to_input_lagrangian( math_tree &&mtree, qft_parsing_context &&qft_context );
 }
 
 #endif //PQUANTUM_PARSING_MATH_TO_LAGRANGIAN_HPP

@@ -24,11 +24,12 @@ class model_specification {
 	mathutils::manifold_specification spacetime_manifold;
 	std::map<support::uuid, classical_field_specification> field_id_map;
 	std::map<support::uuid, std::string> parameter_id_map;
-	lagrangian_tree lagrangian;
+	input_lagrangian_tree input_lagrangian_;
+	//lagrangian_tree lagrangian;
 public:
 	model_specification( std::string &&n, mathutils::manifold_specification &&m,
 		std::map<support::uuid, classical_field_specification> &&fi,
-		std::map<support::uuid, std::string> &&pi, lagrangian_tree &&l
+		std::map<support::uuid, std::string> &&pi, input_lagrangian_tree &&il
 	);
 	
 	const std::string &name( void ) const { return model_name; }
@@ -59,7 +60,7 @@ public:
 		return parameter_id_map.at( id );
 	}
 	
-	const lagrangian_tree &model_lagrangian( void ) const { return lagrangian; }
+	const input_lagrangian_tree &input_lagrangian( void ) const { return input_lagrangian_; }
 };
 }
 }

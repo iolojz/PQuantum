@@ -2,7 +2,6 @@
 #define PQUANTUM_PARSING_BISON_TYPES_HPP
 
 #include "mathutils/arithmetic.hpp"
-#include "mathutils/string_atom.hpp"
 #include "mathutils/atom_indices.hpp"
 #include "mathutils/function_call.hpp"
 
@@ -12,20 +11,20 @@
 namespace PQuantum::parsing {
 static constexpr auto math_atom_arity_map = boost::hana::make_map(
 	boost::hana::make_pair(
-		boost::hana::type_c<mathutils::atom_with_optional_indices<mathutils::string_atom>>,
+		boost::hana::type_c<mathutils::atom_with_optional_indices<std::string>>,
 		boost::hana::int_c<0>
 	)
 );
 static constexpr auto math_tree_arity_map = boost::hana::union_(
 	boost::hana::union_(
-		mathutils::function_call_arity_map<mathutils::string_atom>,
+		mathutils::function_call_arity_map<std::string>,
 		mathutils::arithmetic_arity_map
 	),
 	math_atom_arity_map
 );
 
 using math_tree = cxxmath::typesafe_tree<decltype(math_tree_arity_map)>;
-using function_call_node = cxxmath::typesafe_tree_node<mathutils::function_call<mathutils::string_atom>, math_tree>;
+using function_call_node = cxxmath::typesafe_tree_node<mathutils::function_call<std::string>, math_tree>;
 
 #ifdef PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC
 #error "PQUANTUM_PARSING_DEFINE_MAKE_ASSOCIATIVE_ARITHMETIC is already defined"

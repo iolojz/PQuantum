@@ -2,7 +2,7 @@
 // Created by jayz on 02.04.20.
 //
 
-#include "lagrangian_derivative.hpp"
+#include "lagrangian_manipulations.hpp"
 
 #include <boost/range/combine.hpp>
 
@@ -24,9 +24,9 @@ struct to_delta_lagrangian_impl {
 }
 
 namespace PQuantum::calculation {
-delta_lagrangian_tree to_delta_lagrangian( const model::lagrangian_tree &tree ) {
+/*delta_lagrangian_tree to_delta_lagrangian( const model::lagrangian_tree &tree ) {
 	return cxxmath::recursive_tree_transform( tree, to_delta_lagrangian_impl{} );
-}
+}*/
 
 class derive_lagrangian_t {
 	int delta_index;
@@ -112,7 +112,7 @@ public:
 			delta_lagrangian_tree{
 				mathutils::product{},
 				delta_lagrangian_tree{
-					mathutils::function_call<mathutils::string_atom>{ "ln" },
+					mathutils::function_call<std::string>{ "ln" },
 					a.front()
 				},
 				delta_lagrangian_tree{
@@ -127,7 +127,7 @@ public:
 	
 	template<class Args, class TransformedArgs>
 	delta_lagrangian_tree
-	operator()( const mathutils::function_call<mathutils::string_atom> &f, Args &&a, TransformedArgs &&ta ) const {
+	operator()( const mathutils::function_call<std::string> &f, Args &&a, TransformedArgs &&ta ) const {
 		if( f.atom == "ln" ) {
 			delta_lagrangian_tree{
 				mathutils::quotient{},
@@ -148,6 +148,16 @@ public:
 	delta_lagrangian_tree operator()( mathutils::parentheses, Args &&, TransformedArgs &&ta ) const {
 		return { mathutils::parentheses{}, std::forward<TransformedArgs>( ta ) };
 	}
+	
+	template<class Args, class TransformedArgs>
+	delta_lagrangian_tree operator()( model::spacetime_derivative, Args &&, TransformedArgs &&ta ) const {
+		return { model::spacetime_derivative{}, std::forward<TransformedArgs>( ta ) };
+	}
+	
+	template<class Args, class TransformedArgs>
+	delta_lagrangian_tree operator()( model::dirac_operator, Args &&, TransformedArgs &&ta ) const {
+		return { model::dirac_operator{}, std::forward<TransformedArgs>( ta ) };
+	}
 };
 
 template<>
@@ -155,10 +165,10 @@ delta_lagrangian_tree
 derive_lagrangian_t::operator()<model::indexed_field>( const model::indexed_field &ifield ) const {
 	return delta_indexed_field{ ifield, delta_index };
 }
-
+/*
 delta_lagrangian_tree take_nth_derivative( int n, const model::lagrangian_tree &lagrangian ) {
 	return cxxmath::recursive_tree_transform( to_delta_lagrangian( lagrangian ), derive_lagrangian_t{n} );
-}
+}*/
 
 delta_lagrangian_tree take_nth_derivative( int n, const delta_lagrangian_tree &delta_lagrangian ) {
 	return cxxmath::recursive_tree_transform( delta_lagrangian, derive_lagrangian_t{n} );

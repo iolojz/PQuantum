@@ -46,9 +46,9 @@ std::variant<int, support::uuid> string_to_index( const std::string &str, parsin
 	return context.index_id_lookup_and_generate( str );
 }
 
-class converter: public boost::static_visitor<model::lagrangian_tree> {
+class converter: public boost::static_visitor<model::input_lagrangian_tree> {
 	template<class T> using old_node = cxxmath::typesafe_tree_node<T, parsing::math_tree>;
-	template<class T> using new_node = cxxmath::typesafe_tree_node<T, model::lagrangian_tree>;
+	template<class T> using new_node = cxxmath::typesafe_tree_node<T, model::input_lagrangian_tree>;
 	
 	parsing::qft_parsing_context &context;
 	
@@ -108,7 +108,7 @@ class converter: public boost::static_visitor<model::lagrangian_tree> {
 public:
 	converter( parsing::qft_parsing_context &c ) : context{c} {}
 	
-	template<class OldNodeData> model::lagrangian_tree operator()( old_node<OldNodeData> &&node ) const {
+	template<class OldNodeData> model::input_lagrangian_tree operator()( old_node<OldNodeData> &&node ) const {
 		using new_node_type = new_node<OldNodeData>;
 		using new_child_container = typename new_node_type::child_container;
 		
@@ -118,13 +118,13 @@ public:
 	}
 };
 
-template<> model::lagrangian_tree converter::operator()<mathutils::function_call<mathutils::string_atom>>(
-	old_node<mathutils::function_call<mathutils::string_atom>> &&fcall_node
+template<> model::input_lagrangian_tree converter::operator()<mathutils::function_call<std::string>>(
+	old_node<mathutils::function_call<std::string>> &&fcall_node
 ) const {
 	BOOST_LOG_NAMED_SCOPE( "converter::operator()()" );
 	logging::severity_logger logger;
 	
-	if( fcall_node.data.atom.name == "\\bar" ) {
+	if( fcall_node.data.atom == "\\bar" ) {
 		if( std::empty( fcall_node.children ) ) {
 			BOOST_LOG_SEV(logger, logging::severity_level::error) << "\\bar{} without arguments";
 			error::exit_upon_error();
@@ -135,23 +135,23 @@ template<> model::lagrangian_tree converter::operator()<mathutils::function_call
 		}
 		
 		auto &&child_variant = fcall_node.children.front();
-		if( !cxxmath::holds_node<mathutils::atom_with_optional_indices<mathutils::string_atom>>( child_variant ) ) {
+		if( !cxxmath::holds_node<mathutils::atom_with_optional_indices<std::string>>( child_variant ) ) {
 			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Argument to \\bar{} must be a field";
 			error::exit_upon_error();
 		}
-		auto &&child = cxxmath::get_node<mathutils::atom_with_optional_indices<mathutils::string_atom>>( std::move( child_variant ) );
-		if( !context.field_id_lookup( child.data.atom.name ) ) {
+		auto &&child = cxxmath::get_node<mathutils::atom_with_optional_indices<std::string>>( std::move( child_variant ) );
+		if( !context.field_id_lookup( child.data.atom ) ) {
 			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Argument to \\bar{} must be a field";
 			error::exit_upon_error();
 		}
 		
 		std::string barred_name = "\\bar{";
-		barred_name += std::move( child.data.atom.name );
+		barred_name += std::move( child.data.atom );
 		barred_name.push_back( '}' );
 
 		std::optional<support::uuid> id = context.field_id_lookup( barred_name );
 		if( !id ) {
-			BOOST_LOG_SEV(logger, logging::severity_level::error) << "The field \"" << child.data.atom.name << "\" cannot be barred.";
+			BOOST_LOG_SEV(logger, logging::severity_level::error) << "The field \"" << child.data.atom << "\" cannot be barred.";
 			error::exit_upon_error();
 		}
 		
@@ -161,15 +161,15 @@ template<> model::lagrangian_tree converter::operator()<mathutils::function_call
 			error::exit_upon_error();
 		}
 		
-		return { model::indexed_field{ *id, {} } };
+		return model::indexed_field{ *id, {} };
 	}
 
-	using new_child_container = typename new_node<mathutils::function_call<mathutils::string_atom>>::child_container;
-	return { std::move(fcall_node.data), convert_container<new_child_container>(std::move(fcall_node.children)) };
+	BOOST_LOG_SEV(logger, logging::severity_level::error) << "Unknown function \"" << fcall_node.data.atom << "\"";
+	error::exit_upon_error();
 }
 
-template<> model::lagrangian_tree converter::operator()<mathutils::atom_with_optional_indices<mathutils::string_atom>>(
-	old_node<mathutils::atom_with_optional_indices<mathutils::string_atom>> &&indexed_atom_node
+template<> model::input_lagrangian_tree converter::operator()<mathutils::atom_with_optional_indices<std::string>>(
+	old_node<mathutils::atom_with_optional_indices<std::string>> &&indexed_atom_node
 ) const {
 	BOOST_LOG_NAMED_SCOPE( "converter::operator()()" );
 	logging::severity_logger logger;
@@ -177,16 +177,16 @@ template<> model::lagrangian_tree converter::operator()<mathutils::atom_with_opt
 	mathutils::index_spec<std::variant<int, support::uuid>> indices;
 	
 	for( auto &&index : indexed_atom_node.data.indices.lower )
-		indices.lower.push_back( string_to_index( index.name, context ) );
+		indices.lower.push_back( string_to_index( index, context ) );
 	for( auto &&index : indexed_atom_node.data.indices.upper )
-		indices.upper.push_back( string_to_index( index.name, context ) );
+		indices.upper.push_back( string_to_index( index, context ) );
 	
 	std::optional<support::uuid> id;
-	if( (id = context.field_id_lookup( indexed_atom_node.data.atom.name )) )
+	if( (id = context.field_id_lookup( indexed_atom_node.data.atom )) )
 		return model::indexed_field{ *id, std::move( indices ) };
-	else if( (id = context.parameter_id_lookup( indexed_atom_node.data.atom.name )) )
+	else if( (id = context.parameter_id_lookup( indexed_atom_node.data.atom )) )
 		return model::indexed_parameter{ *id, std::move( indices ) };
-	else if( indexed_atom_node.data.atom.name == "\\gamma" ) {
+	else if( indexed_atom_node.data.atom == "\\gamma" ) {
 		if( indices.lower.empty() ) {
 			if( indices.upper.empty() ) {
 				BOOST_LOG_SEV(logger, logging::severity_level::error) << "Gamma matrix without indices";
@@ -214,7 +214,7 @@ template<> model::lagrangian_tree converter::operator()<mathutils::atom_with_opt
 
 		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Gamma matrix with too many indices";
 		error::exit_upon_error();
-	} else if( indexed_atom_node.data.atom.name == "\\SpacetimeDerivative" ) {
+	} else if( indexed_atom_node.data.atom == "\\SpacetimeDerivative" ) {
 		if( indices.lower.empty() ) {
 			if( indices.upper.empty() ) {
 				BOOST_LOG_SEV(logger, logging::severity_level::error) << "Spacetime derivative without indices";
@@ -241,14 +241,14 @@ template<> model::lagrangian_tree converter::operator()<mathutils::atom_with_opt
 		
 		BOOST_LOG_SEV(logger, logging::severity_level::error) << "Spacetime derivative with too many indices";
 		error::exit_upon_error();
-	} else if( indexed_atom_node.data.atom.name == "\\DiracOperator" ) {
+	} else if( indexed_atom_node.data.atom == "\\DiracOperator" ) {
 		if( !(indices.lower.empty() && indices.upper.empty()) ) {
 			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Dirac operator with indices";
 			error::exit_upon_error();
 		}
 
 		return model::dirac_operator{};
-	} else if( indexed_atom_node.data.atom.name == "\\ImaginaryUnit" ) {
+	} else if( indexed_atom_node.data.atom == "\\ImaginaryUnit" ) {
 		if( !(indices.lower.empty() && indices.upper.empty()) ) {
 			BOOST_LOG_SEV(logger, logging::severity_level::error) << "Imaginary unit with indices";
 			error::exit_upon_error();
@@ -256,19 +256,19 @@ template<> model::lagrangian_tree converter::operator()<mathutils::atom_with_opt
 
 		return mathutils::number{ 0, 1 };
 	} else {
-		auto as_int = string_to_int( indexed_atom_node.data.atom.name );
+		auto as_int = string_to_int( indexed_atom_node.data.atom );
 		if( as_int )
 			return mathutils::number{ *as_int, 0 };
 	}
 	
 	BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Unrecognized field or parameter identifier \"" <<
-		indexed_atom_node.data.atom.name << "\".";
+		indexed_atom_node.data.atom << "\".";
 	error::exit_upon_error();
 }
 }
 
 namespace PQuantum::parsing {
-model::lagrangian_tree math_to_lagrangian( math_tree &&mtree, qft_parsing_context &&qft_context ) {
+model::input_lagrangian_tree math_to_input_lagrangian( math_tree &&mtree, qft_parsing_context &&qft_context ) {
 	BOOST_LOG_NAMED_SCOPE( "parsing::math_to_lagrangian()" );
 	return cxxmath::visit( converter{ qft_context }, std::move( mtree ) );
 }

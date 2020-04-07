@@ -17,8 +17,8 @@
 %lex-param {scanner_state &state}
 %parse-param {scanner_state &state} {math_tree &root}
 
-%token <mathutils::string_atom> ATOM;
-%token <mathutils::string_atom> INDEX;
+%token <std::string> ATOM;
+%token <std::string> INDEX;
 %token PLUS;
 %token MINUS;
 %token ASTERISK;
@@ -31,9 +31,9 @@
 %token LEFT_CURLY_BRACE;
 %token RIGHT_CURLY_BRACE;
 %token END_OF_INPUT 0;
-%nterm <mathutils::index_list<mathutils::string_atom>> index_list;
-%nterm <mathutils::index_spec<mathutils::string_atom>> index_spec;
-%nterm <mathutils::atom_with_optional_indices<mathutils::string_atom>> atom_with_optional_indices;
+%nterm <mathutils::index_list<std::string>> index_list;
+%nterm <mathutils::index_spec<std::string>> index_spec;
+%nterm <mathutils::atom_with_optional_indices<std::string>> atom_with_optional_indices;
 %nterm <std::vector<math_tree>> argument_list;
 %nterm <function_call_node> function_call;
 %nterm <math_tree> arithmetic_expr;
@@ -76,7 +76,7 @@ argument_list:
 ;
 
 function_call:
-  ATOM LEFT_CURLY_BRACE argument_list RIGHT_CURLY_BRACE       { $$.data.atom = std::move($1.name); $$.children.insert( std::end($$.children), std::make_move_iterator( std::begin($3) ), std::make_move_iterator( std::end($3) ) ); }
+  ATOM LEFT_CURLY_BRACE argument_list RIGHT_CURLY_BRACE       { $$.data.atom = std::move($1); $$.children.insert( std::end($$.children), std::make_move_iterator( std::begin($3) ), std::make_move_iterator( std::end($3) ) ); }
 ;
 
 arithmetic_expr:

@@ -1,11 +1,11 @@
 //
-// Created by jayz on 02.04.20.
+// Created by jayz on 07.04.20.
 //
 
-#ifndef PQUANTUM_MODEL_LAGRANGIAN_DERIVATIVE_HPP
-#define PQUANTUM_MODEL_LAGRANGIAN_DERIVATIVE_HPP
+#ifndef PQUANTUM_CALCULATION_LAGRANGIAN_MANIPULATIONS_HPP
+#define PQUANTUM_CALCULATION_LAGRANGIAN_MANIPULATIONS_HPP
 
-#include "../model/lagrangian.hpp"
+#include "model/lagrangian.hpp"
 
 namespace PQuantum::calculation {
 struct euler_constant {
@@ -34,9 +34,9 @@ static constexpr auto delta_lagrangian_arity_map = boost::hana::union_(
 );
 using delta_lagrangian_tree = cxxmath::typesafe_tree<decltype(delta_lagrangian_arity_map)>;
 
-delta_lagrangian_tree to_delta_lagrangian( const model::lagrangian_tree &tree );
+/*delta_lagrangian_tree to_delta_lagrangian( const model::lagrangian_tree &tree );
 
-delta_lagrangian_tree take_nth_derivative( int n, const model::lagrangian_tree &lagrangian );
+delta_lagrangian_tree take_nth_derivative( int n, const model::lagrangian_tree &lagrangian );*/
 delta_lagrangian_tree take_nth_derivative( int n, const delta_lagrangian_tree &delta_lagrangian );
 
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const euler_constant & ) {
@@ -52,4 +52,4 @@ delta_lagrangian_tree take_nth_derivative( int n, const delta_lagrangian_tree &d
 }
 }
 
-#endif //PQUANTUM_MODEL_LAGRANGIAN_DERIVATIVE_HPP
+#endif //PQUANTUM_CALCULATION_LAGRANGIAN_MANIPULATIONS_HPP

@@ -9,7 +9,6 @@
 #include "spacetime_index.hpp"
 #include "parameter.hpp"
 
-#include "mathutils/string_atom.hpp"
 #include "mathutils/arithmetic.hpp"
 #include "mathutils/function_call.hpp"
 #include "mathutils/number.hpp"
@@ -34,7 +33,7 @@ struct dirac_operator {
 	constexpr bool operator==( const dirac_operator & ) const { return true; }
 };
 
-static constexpr auto lagrangian_atom_arity_map = boost::hana::make_map(
+static constexpr auto input_lagrangian_atom_arity_map = boost::hana::make_map(
 	boost::hana::make_pair( boost::hana::type_c<indexed_field>, boost::hana::int_c<0> ),
 	boost::hana::make_pair( boost::hana::type_c<indexed_parameter>, boost::hana::int_c<0> ),
 	boost::hana::make_pair( boost::hana::type_c<gamma_matrix>, boost::hana::int_c<0> ),
@@ -42,14 +41,37 @@ static constexpr auto lagrangian_atom_arity_map = boost::hana::make_map(
 	boost::hana::make_pair( boost::hana::type_c<dirac_operator>, boost::hana::int_c<0> ),
 	boost::hana::make_pair( boost::hana::type_c<mathutils::number>, boost::hana::int_c<0> )
 );
+static constexpr auto input_lagrangian_arity_map = boost::hana::union_(
+	mathutils::arithmetic_arity_map,
+	input_lagrangian_atom_arity_map
+);
+using input_lagrangian_tree = cxxmath::typesafe_tree<decltype(input_lagrangian_arity_map)>;
+
+struct field_multiplication_operator {
+	constexpr bool operator==( const field_multiplication_operator & ) const { return true; }
+};
+
+static constexpr auto lagrangian_atom_arity_map = boost::hana::make_map(
+	boost::hana::make_pair( boost::hana::type_c<indexed_field>, boost::hana::int_c<0> ),
+	boost::hana::make_pair( boost::hana::type_c<indexed_parameter>, boost::hana::int_c<0> ),
+	boost::hana::make_pair( boost::hana::type_c<gamma_matrix>, boost::hana::int_c<0> ),
+	boost::hana::make_pair( boost::hana::type_c<mathutils::number>, boost::hana::int_c<0> )
+);
+static constexpr auto lagrangian_operator_arity_map = boost::hana::make_map(
+	boost::hana::make_pair( boost::hana::type_c<spacetime_derivative>, boost::hana::int_c<1> ),
+	boost::hana::make_pair( boost::hana::type_c<dirac_operator>, boost::hana::int_c<1> )
+);
 static constexpr auto lagrangian_arity_map = boost::hana::union_(
 	boost::hana::union_(
-		mathutils::function_call_arity_map<mathutils::string_atom>,
-		mathutils::arithmetic_arity_map
+		boost::hana::union_(
+			mathutils::arithmetic_arity_map,
+			mathutils::function_call_arity_map<std::string>
+		),
+		lagrangian_operator_arity_map
 	),
 	lagrangian_atom_arity_map
 );
-using lagrangian_tree = cxxmath::typesafe_tree<decltype(lagrangian_arity_map)>;
+//using lagrangian_tree = cxxmath::typesafe_tree<decltype(lagrangian_arity_map)>;
 
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const gamma_matrix &gm ) {
 	return os << "\\gamma" << gm.index;
