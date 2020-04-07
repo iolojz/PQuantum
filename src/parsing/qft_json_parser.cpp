@@ -163,7 +163,9 @@ model::model_specification qft_json_parser::parse_model_specification( const jso
 	);
 	
 	return {
-		std::move( model_name ), std::move( manifold_spec ), std::move( field_id_map ), std::move( parameter_id_map ),
+		std::move( model_name ), std::move( manifold_spec ),
+		std::move( uuid_generator ),
+		std::move( field_id_map ), std::move( parameter_id_map ),
 		std::move( lagrangian )
 	};
 }

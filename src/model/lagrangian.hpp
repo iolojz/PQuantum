@@ -28,6 +28,10 @@ static constexpr auto input_lagrangian_arity_map = boost::hana::union_(
 );
 using input_lagrangian_tree = cxxmath::typesafe_tree<decltype(input_lagrangian_arity_map)>;
 
+static constexpr auto arithmetic_arity_map_without_parentheses = boost::hana::erase_key(
+	mathutils::arithmetic_arity_map,
+	boost::hana::type_c<mathutils::parentheses>
+);
 static constexpr auto lagrangian_atom_arity_map = boost::hana::make_map(
 	boost::hana::make_pair( boost::hana::type_c<indexed_field>, boost::hana::int_c<0> ),
 	boost::hana::make_pair( boost::hana::type_c<indexed_parameter>, boost::hana::int_c<0> ),
@@ -36,12 +40,13 @@ static constexpr auto lagrangian_atom_arity_map = boost::hana::make_map(
 );
 static constexpr auto lagrangian_operator_arity_map = boost::hana::make_map(
 	boost::hana::make_pair( boost::hana::type_c<mathutils::spacetime_derivative>, boost::hana::int_c<1> ),
-	boost::hana::make_pair( boost::hana::type_c<mathutils::dirac_operator>, boost::hana::int_c<1> )
+	boost::hana::make_pair( boost::hana::type_c<mathutils::dirac_operator>, boost::hana::int_c<1> ),
+	boost::hana::make_pair( boost::hana::type_c<mathutils::field_multiplication_operator>, boost::hana::int_c<1> )
 );
 static constexpr auto lagrangian_arity_map = boost::hana::union_(
 	boost::hana::union_(
 		boost::hana::union_(
-			mathutils::arithmetic_arity_map,
+			arithmetic_arity_map_without_parentheses,
 			mathutils::function_call_arity_map<std::string>
 		),
 		lagrangian_operator_arity_map

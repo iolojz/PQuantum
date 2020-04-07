@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE( parse_qed ) {
 	BOOST_TEST( json_header.version_major == 0 );
 	BOOST_TEST( json_header.version_minor == 1 );
 	
-	auto model = parser.model();
+	const auto &model = parser.model();
 	BOOST_TEST( model.name() == "qed" );
 	
 	auto field_ids = model.field_ids();

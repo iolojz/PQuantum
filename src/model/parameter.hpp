@@ -10,7 +10,7 @@
 namespace PQuantum::model {
 struct indexed_parameter {
 	support::uuid id;
-	mathutils::index_spec <std::variant<int, support::uuid>> indices;
+	mathutils::index_spec<std::variant<int, support::uuid>> indices;
 	
 	constexpr bool operator==( const indexed_parameter &other ) const {
 		return (id == other.id && indices == other.indices);

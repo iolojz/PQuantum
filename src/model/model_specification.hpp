@@ -22,12 +22,16 @@ namespace model {
 class model_specification {
 	std::string model_name;
 	mathutils::manifold_specification spacetime_manifold;
+	boost::uuids::random_generator uuid_gen;
 	std::map<support::uuid, classical_field_specification> field_id_map;
 	std::map<support::uuid, std::string> parameter_id_map;
 	input_lagrangian_tree input_lagrangian_;
-	//lagrangian_tree lagrangian;
+	lagrangian_tree lagrangian;
+	
+	static lagrangian_tree to_lagrangian( boost::uuids::random_generator &, const input_lagrangian_tree & );
 public:
 	model_specification( std::string &&n, mathutils::manifold_specification &&m,
+		boost::uuids::random_generator &&ug,
 		std::map<support::uuid, classical_field_specification> &&fi,
 		std::map<support::uuid, std::string> &&pi, input_lagrangian_tree &&il
 	);
