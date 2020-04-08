@@ -28,6 +28,8 @@ class model_specification {
 	input_lagrangian_tree input_lagrangian_;
 	lagrangian_tree lagrangian;
 	
+	logging::severity_logger logger;
+	
 	static lagrangian_tree to_lagrangian( boost::uuids::random_generator &, const input_lagrangian_tree & );
 public:
 	model_specification( std::string &&n, mathutils::manifold_specification &&m,

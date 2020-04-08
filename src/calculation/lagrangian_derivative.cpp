@@ -24,9 +24,9 @@ struct to_delta_lagrangian_impl {
 }
 
 namespace PQuantum::calculation {
-/*delta_lagrangian_tree to_delta_lagrangian( const model::lagrangian_tree &tree ) {
+delta_lagrangian_tree to_delta_lagrangian( const model::lagrangian_tree &tree ) {
 	return cxxmath::recursive_tree_transform( tree, to_delta_lagrangian_impl{} );
-}*/
+}
 
 class derive_lagrangian_t {
 	int delta_index;
@@ -158,6 +158,11 @@ public:
 	delta_lagrangian_tree operator()( mathutils::dirac_operator, Args &&, TransformedArgs &&ta ) const {
 		return { mathutils::dirac_operator{}, std::forward<TransformedArgs>( ta ) };
 	}
+	
+	template<class Args, class TransformedArgs>
+	delta_lagrangian_tree operator()( mathutils::field_multiplication_operator, Args &&, TransformedArgs &&ta ) const {
+		return { mathutils::field_multiplication_operator{}, std::forward<TransformedArgs>( ta ) };
+	}
 };
 
 template<>
@@ -165,10 +170,10 @@ delta_lagrangian_tree
 derive_lagrangian_t::operator()<model::indexed_field>( const model::indexed_field &ifield ) const {
 	return delta_indexed_field{ ifield, delta_index };
 }
-/*
+
 delta_lagrangian_tree take_nth_derivative( int n, const model::lagrangian_tree &lagrangian ) {
 	return cxxmath::recursive_tree_transform( to_delta_lagrangian( lagrangian ), derive_lagrangian_t{n} );
-}*/
+}
 
 delta_lagrangian_tree take_nth_derivative( int n, const delta_lagrangian_tree &delta_lagrangian ) {
 	return cxxmath::recursive_tree_transform( delta_lagrangian, derive_lagrangian_t{n} );

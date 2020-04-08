@@ -34,9 +34,11 @@ static constexpr auto delta_lagrangian_arity_map = boost::hana::union_(
 );
 using delta_lagrangian_tree = cxxmath::typesafe_tree<decltype(delta_lagrangian_arity_map)>;
 
-/*delta_lagrangian_tree to_delta_lagrangian( const model::lagrangian_tree &tree );
+model::lagrangian_tree flatten_arithmetic( const model::lagrangian_tree &lagrangian );
 
-delta_lagrangian_tree take_nth_derivative( int n, const model::lagrangian_tree &lagrangian );*/
+delta_lagrangian_tree to_delta_lagrangian( const model::lagrangian_tree &tree );
+
+delta_lagrangian_tree take_nth_derivative( int n, const model::lagrangian_tree &lagrangian );
 delta_lagrangian_tree take_nth_derivative( int n, const delta_lagrangian_tree &delta_lagrangian );
 
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const euler_constant & ) {
