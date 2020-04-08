@@ -7,38 +7,19 @@
 #include <boost/range/combine.hpp>
 
 namespace {
-struct to_delta_lagrangian_impl {
-	template<class Atom> PQuantum::calculation::delta_lagrangian_tree operator()( Atom &&atom ) const {
-		return std::forward<Atom>( atom );
-	}
-	
-	template<class NonTerminalNodeData, class Children, class TransformedChildren>
-	PQuantum::calculation::delta_lagrangian_tree
-	operator()( NonTerminalNodeData &&nt, Children &&, TransformedChildren &&tch ) const {
-		return {
-			std::forward<NonTerminalNodeData>( nt ),
-			std::forward<TransformedChildren>( tch )
-		};
-	}
-};
-}
+using namespace PQuantum;
 
-namespace PQuantum::calculation {
-delta_lagrangian_tree to_delta_lagrangian( const model::lagrangian_tree &tree ) {
-	return cxxmath::recursive_tree_transform( tree, to_delta_lagrangian_impl{} );
-}
-
-class derive_lagrangian_t {
-	int delta_index;
+class derive_lagrangian_impl {
+	const std::map<support::uuid, support::uuid> &delta_field_map;
 public:
-	derive_lagrangian_t( int di ) : delta_index{ di } {}
+	derive_lagrangian_impl( const std::map<support::uuid, support::uuid> &dfm ) : delta_field_map{ dfm } {}
 	
-	template<class Atom> delta_lagrangian_tree operator()( const Atom & ) const {
+	template<class Atom> model::lagrangian_tree operator()( const Atom & ) const {
 		return mathutils::number{ 0, 0 };
 	}
 	
 	template<class Summands, class TransformedSummands>
-	delta_lagrangian_tree operator()( mathutils::sum, Summands &&, TransformedSummands &&ts ) const {
+	model::lagrangian_tree operator()( mathutils::sum, Summands &&, TransformedSummands &&ts ) const {
 		return { mathutils::sum{}, std::forward<TransformedSummands>( ts ) };
 	}
 	
@@ -48,7 +29,7 @@ public:
 	}
 	
 	template<class Factors, class TransformedFactors>
-	delta_lagrangian_tree operator()( mathutils::product, Factors &&f, TransformedFactors &&tf ) const {
+	model::lagrangian_tree operator()( mathutils::product, Factors &&f, TransformedFactors &&tf ) const {
 		using product_node = std::decay_t<
 			decltype(cxxmath::get_node<mathutils::product>( std::declval<delta_lagrangian_tree>() ))
 		>;
@@ -68,27 +49,27 @@ public:
 	}
 	
 	template<class Args, class TransformedArgs>
-	delta_lagrangian_tree operator()( mathutils::quotient, Args &&a, TransformedArgs &&ta ) const {
+	model::lagrangian_tree operator()( mathutils::quotient, Args &&a, TransformedArgs &&ta ) const {
 		if( cxxmath::holds_node<mathutils::number>( ta.back() ) ) {
 			if( cxxmath::get_node<mathutils::number>( ta.back() ).data == mathutils::number{ 0, 0 } )
 				return { mathutils::quotient{}, ta.front(), a.back() };
 		}
 		
-		return delta_lagrangian_tree{
+		return {
 			mathutils::difference{},
-			delta_lagrangian_tree{
+			model::lagrangian_tree{
 				mathutils::quotient{},
 				ta.front(),
 				a.back()
 			},
-			delta_lagrangian_tree{
+			model::lagrangian_tree{
 				mathutils::quotient{},
-				delta_lagrangian_tree{
+				model::lagrangian_tree{
 					mathutils::product{},
 					a.front(),
 					ta.back()
 				},
-				delta_lagrangian_tree{
+				model::lagrangian_tree{
 					mathutils::product{},
 					a.back(),
 					a.back()
@@ -98,7 +79,7 @@ public:
 	}
 	
 	template<class Args, class TransformedArgs>
-	delta_lagrangian_tree operator()( mathutils::power, Args &&a, TransformedArgs &&ta ) const {
+	model::lagrangian_tree operator()( mathutils::power, Args &&a, TransformedArgs &&ta ) const {
 		if( cxxmath::holds_node<mathutils::number>( a.back() ) ) {
 			if( cxxmath::get_node<mathutils::number>( a.back() ).data == mathutils::number{ 0, 0 } )
 				return mathutils::number{ 0, 0 };
@@ -106,14 +87,14 @@ public:
 				return ta.front();
 		}
 		
-		return delta_lagrangian_tree{
+		return {
 			mathutils::sum{},
-			delta_lagrangian_tree{
+			model::lagrangian_tree{
 				mathutils::product{},
-				delta_lagrangian_tree{
+				model::lagrangian_tree{
 					mathutils::power{},
 					a.front(),
-					delta_lagrangian_tree{
+					model::lagrangian_tree{
 						mathutils::difference{},
 						a.back(),
 						mathutils::number{ 1, 0 }
@@ -122,13 +103,13 @@ public:
 				a.back(),
 				ta.front()
 			},
-			delta_lagrangian_tree{
+			model::lagrangian_tree{
 				mathutils::product{},
 				delta_lagrangian_tree{
 					mathutils::function_call<std::string>{ "ln" },
 					a.front()
 				},
-				delta_lagrangian_tree{
+				model::lagrangian_tree{
 					mathutils::power{},
 					a.front(),
 					a.back()
@@ -139,10 +120,10 @@ public:
 	}
 	
 	template<class Args, class TransformedArgs>
-	delta_lagrangian_tree
+	model::lagrangian_tree
 	operator()( const mathutils::function_call<std::string> &f, Args &&a, TransformedArgs &&ta ) const {
 		if( f.atom == "ln" ) {
-			delta_lagrangian_tree{
+			return {
 				mathutils::quotient{},
 				std::move( *std::begin( ta ) ),
 				std::move( *std::begin( a ) )
@@ -153,22 +134,22 @@ public:
 	}
 	
 	template<class Args, class TransformedArgs>
-	delta_lagrangian_tree operator()( mathutils::negation, Args &&, TransformedArgs &&ta ) const {
+	model::lagrangian_tree operator()( mathutils::negation, Args &&, TransformedArgs &&ta ) const {
 		return { mathutils::negation{}, std::forward<TransformedArgs>( ta ) };
 	}
 	
 	template<class Args, class TransformedArgs>
-	delta_lagrangian_tree operator()( const mathutils::spacetime_derivative &sd, Args &&, TransformedArgs &&ta ) const {
+	model::lagrangian_tree operator()( const mathutils::spacetime_derivative &sd, Args &&, TransformedArgs &&ta ) const {
 		return { sd, std::forward<TransformedArgs>( ta ) };
 	}
 	
 	template<class Args, class TransformedArgs>
-	delta_lagrangian_tree operator()( mathutils::dirac_operator, Args &&, TransformedArgs &&ta ) const {
+	model::lagrangian_tree operator()( mathutils::dirac_operator, Args &&, TransformedArgs &&ta ) const {
 		return { mathutils::dirac_operator{}, std::forward<TransformedArgs>( ta ) };
 	}
 	
 	template<class Args, class TransformedArgs>
-	delta_lagrangian_tree operator()( mathutils::field_multiplication_operator, Args &&, TransformedArgs &&ta ) const {
+	model::lagrangian_tree operator()( mathutils::field_multiplication_operator, Args &&, TransformedArgs &&ta ) const {
 		auto &&transformed = *std::begin( ta );
 		if( !(cxxmath::holds_node<model::indexed_field>( transformed ) ||
 		    cxxmath::holds_node<delta_indexed_field>( transformed )) )
@@ -179,16 +160,19 @@ public:
 };
 
 template<>
-delta_lagrangian_tree
-derive_lagrangian_t::operator()<model::indexed_field>( const model::indexed_field &ifield ) const {
-	return delta_indexed_field{ ifield, delta_index };
+model::lagrangian_tree
+derive_lagrangian_impl::operator()<model::indexed_field>( const model::indexed_field &ifield ) const {
+	auto delta_it = delta_field_map.find( ifield.id );
+	if( delta_it == delta_field_map.end() )
+		return mathutils::number{ 0, 0 };
+	
+	return model::indexed_field{ delta_it->second, ifield.indices };
 }
 
-delta_lagrangian_tree take_nth_derivative( int n, const model::lagrangian_tree &lagrangian ) {
-	return cxxmath::recursive_tree_transform( to_delta_lagrangian( lagrangian ), derive_lagrangian_t{n} );
-}
-
-delta_lagrangian_tree take_nth_derivative( int n, const delta_lagrangian_tree &delta_lagrangian ) {
-	return cxxmath::recursive_tree_transform( delta_lagrangian, derive_lagrangian_t{n} );
+model::lagrangian_tree take_derivative(
+	const std::map<support::uuid, support::uuid> &delta_field_map,
+	const model::lagrangian_tree &lagrangian
+) {
+	return cxxmath::recursive_tree_transform( delta_lagrangian, derive_lagrangian_t{delta_field_map} );
 }
 }

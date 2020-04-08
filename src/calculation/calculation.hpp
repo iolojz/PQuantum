@@ -5,10 +5,14 @@
 #ifndef PQUANTUM_CALCULATION_CALCULATION_HPP
 #define PQUANTUM_CALCULATION_CALCULATION_HPP
 
-#include "../model/model_specification.hpp"
+namespace PQuantum {
+namespace model {
+class model_specification;
+}
 
-namespace PQuantum::calculation {
+namespace calculation {
 void calculate_beta_functions_with_wetterich_equation( const model::model_specification &model );
+}
 }
 
 #endif // PQUANTUM_CALCULATION_CALCULATION_HPP
