@@ -26,7 +26,7 @@ class model_specification {
 	std::map<support::uuid, classical_field_specification> field_id_map;
 	std::map<support::uuid, std::string> parameter_id_map;
 	input_lagrangian_tree input_lagrangian_;
-	lagrangian_tree lagrangian;
+	lagrangian_tree lagrangian_;
 	
 	logging::severity_logger logger;
 	
@@ -67,6 +67,7 @@ public:
 	}
 	
 	const input_lagrangian_tree &input_lagrangian( void ) const { return input_lagrangian_; }
+	const lagrangian_tree &lagrangian( void ) const { return lagrangian_; }
 };
 }
 }

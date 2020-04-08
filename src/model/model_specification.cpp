@@ -153,11 +153,8 @@ model_specification::model_specification(
 ) : model_name{std::move( n )}, spacetime_manifold{std::move( m )},
 	uuid_gen{ std::move( ug ) },
 	field_id_map{std::move( fi )}, parameter_id_map{std::move( pi )},
-	input_lagrangian_{std::move( il )}, lagrangian{ to_lagrangian( uuid_gen, input_lagrangian_ ) } {
+	input_lagrangian_{std::move( il )}, lagrangian_{ to_lagrangian( uuid_gen, input_lagrangian_ ) } {
 	BOOST_LOG_NAMED_SCOPE( "model_specification::model_specification()" );
 	// TODO: assert that the lagrangian only contains correct ids
-	
-	std::cout << input_lagrangian_ << std::endl;
-	std::cout << lagrangian << std::endl;
 }
 }

@@ -66,7 +66,7 @@ void program_options_handler::take_action( void ) {
 	
 	BOOST_LOG_SEV( logger, logging::severity_level::user_info ) << "Attempting to parse model file:" << model_file;
 	auto parser = parsing::qft_json_parser::parse( model_file );
-	auto model = parser.model();
+	const auto &model = parser.model();
 	BOOST_LOG_SEV( logger, logging::severity_level::user_info )
 		<< "Successfully parsed model file: " << model_file << std::endl
 		<< "JSON schema header: " << parser.json_header() << std::endl
