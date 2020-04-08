@@ -34,7 +34,8 @@ static constexpr auto delta_lagrangian_arity_map = boost::hana::union_(
 );
 using delta_lagrangian_tree = cxxmath::typesafe_tree<decltype(delta_lagrangian_arity_map)>;
 
-model::lagrangian_tree flatten_arithmetic( const model::lagrangian_tree &lagrangian );
+model::lagrangian_tree simplify_arithmetic( const model::lagrangian_tree &lagrangian );
+delta_lagrangian_tree simplify_arithmetic( const delta_lagrangian_tree &lagrangian );
 
 delta_lagrangian_tree to_delta_lagrangian( const model::lagrangian_tree &tree );
 

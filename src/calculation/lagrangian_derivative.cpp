@@ -69,6 +69,11 @@ public:
 	
 	template<class Args, class TransformedArgs>
 	delta_lagrangian_tree operator()( mathutils::quotient, Args &&a, TransformedArgs &&ta ) const {
+		if( cxxmath::holds_node<mathutils::number>( ta.back() ) ) {
+			if( cxxmath::get_node<mathutils::number>( ta.back() ).data == mathutils::number{ 0, 0 } )
+				return { mathutils::quotient{}, ta.front(), a.back() };
+		}
+		
 		return delta_lagrangian_tree{
 			mathutils::difference{},
 			delta_lagrangian_tree{
@@ -94,6 +99,13 @@ public:
 	
 	template<class Args, class TransformedArgs>
 	delta_lagrangian_tree operator()( mathutils::power, Args &&a, TransformedArgs &&ta ) const {
+		if( cxxmath::holds_node<mathutils::number>( a.back() ) ) {
+			if( cxxmath::get_node<mathutils::number>( a.back() ).data == mathutils::number{ 0, 0 } )
+				return mathutils::number{ 0, 0 };
+			if( cxxmath::get_node<mathutils::number>( a.back() ).data == mathutils::number{ 1, 0 } )
+				return ta.front();
+		}
+		
 		return delta_lagrangian_tree{
 			mathutils::sum{},
 			delta_lagrangian_tree{
@@ -104,9 +116,10 @@ public:
 					delta_lagrangian_tree{
 						mathutils::difference{},
 						a.back(),
-						mathutils::number{ -1, 0 }
+						mathutils::number{ 1, 0 }
 					}
 				},
+				a.back(),
 				ta.front()
 			},
 			delta_lagrangian_tree{
@@ -131,8 +144,8 @@ public:
 		if( f.atom == "ln" ) {
 			delta_lagrangian_tree{
 				mathutils::quotient{},
-				std::forward<TransformedArgs>( ta ).front(),
-				std::forward<Args>( a ).front()
+				std::move( *std::begin( ta ) ),
+				std::move( *std::begin( a ) )
 			};
 		}
 		
@@ -145,13 +158,8 @@ public:
 	}
 	
 	template<class Args, class TransformedArgs>
-	delta_lagrangian_tree operator()( mathutils::parentheses, Args &&, TransformedArgs &&ta ) const {
-		return { mathutils::parentheses{}, std::forward<TransformedArgs>( ta ) };
-	}
-	
-	template<class Args, class TransformedArgs>
-	delta_lagrangian_tree operator()( mathutils::spacetime_derivative, Args &&, TransformedArgs &&ta ) const {
-		return { mathutils::spacetime_derivative{}, std::forward<TransformedArgs>( ta ) };
+	delta_lagrangian_tree operator()( const mathutils::spacetime_derivative &sd, Args &&, TransformedArgs &&ta ) const {
+		return { sd, std::forward<TransformedArgs>( ta ) };
 	}
 	
 	template<class Args, class TransformedArgs>
@@ -161,7 +169,12 @@ public:
 	
 	template<class Args, class TransformedArgs>
 	delta_lagrangian_tree operator()( mathutils::field_multiplication_operator, Args &&, TransformedArgs &&ta ) const {
-		return { mathutils::field_multiplication_operator{}, std::forward<TransformedArgs>( ta ) };
+		auto &&transformed = *std::begin( ta );
+		if( !(cxxmath::holds_node<model::indexed_field>( transformed ) ||
+		    cxxmath::holds_node<delta_indexed_field>( transformed )) )
+			return mathutils::number{ 0, 0 };
+		
+		return { mathutils::field_multiplication_operator{}, std::move( transformed ) };
 	}
 };
 

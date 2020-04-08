@@ -142,7 +142,7 @@ lagrangian_tree model_specification::to_lagrangian(
 	auto lagrangian = cxxmath::recursive_tree_transform( input, to_lagrangian_impl{ invalid_id } );
 	error_if_invalid( lagrangian, invalid_id );
 	
-	return calculation::flatten_arithmetic( lagrangian );
+	return calculation::simplify_arithmetic( lagrangian );
 }
 
 model_specification::model_specification(
