@@ -9,17 +9,16 @@
 namespace {
 using namespace PQuantum;
 
-template<class TreeType>
 struct simplify_arithmetic_impl {
 	mutable logging::severity_logger logger;
 	
 	template<class Atom>
-	TreeType operator()( Atom &&atom ) const {
+	model::lagrangian_tree operator()( Atom &&atom ) const {
 		return std::forward<Atom>( atom );
 	}
 	
 	template<class Children, class TransformedChildren>
-	TreeType
+	model::lagrangian_tree
 	operator()( const mathutils::spacetime_derivative &sd, Children &&, TransformedChildren &&tch ) const {
 		auto &&transformed = tch.front();
 		if( cxxmath::holds_node<mathutils::number>( transformed ) )
@@ -29,7 +28,7 @@ struct simplify_arithmetic_impl {
 	}
 	
 	template<class Children, class TransformedChildren>
-	TreeType operator()( mathutils::dirac_operator, Children &&, TransformedChildren &&tch ) const {
+	model::lagrangian_tree operator()( mathutils::dirac_operator, Children &&, TransformedChildren &&tch ) const {
 		auto &&transformed = tch.front();
 		if( cxxmath::holds_node<mathutils::number>( transformed ) )
 			return mathutils::number{ 0, 1 };
@@ -38,23 +37,23 @@ struct simplify_arithmetic_impl {
 	}
 	
 	template<class Children, class TransformedChildren>
-	TreeType
+	model::lagrangian_tree
 	operator()( mathutils::field_multiplication_operator, Children &&, TransformedChildren &&tch ) const {
 		return { mathutils::field_multiplication_operator{}, std::forward<TransformedChildren>( tch ) };
 	}
 	
 	template<class Children, class TransformedChildren>
-	TreeType
+	model::lagrangian_tree
 	operator()( const mathutils::function_call<std::string> &fc, Children &&, TransformedChildren &&tch ) const {
 		return { fc, std::forward<TransformedChildren>( tch ) };
 	}
 	
 	template<class Children, class TransformedChildren>
-	TreeType operator()( mathutils::sum, Children &&, TransformedChildren &&tch ) const {
+	model::lagrangian_tree operator()( mathutils::sum, Children &&, TransformedChildren &&tch ) const {
 		if( std::size( tch ) == 1 )
 			return std::move( *std::begin( tch ) );
 		
-		std::vector<TreeType> summands;
+		std::vector<model::lagrangian_tree> summands;
 		for( auto &&t : tch ) {
 			if( cxxmath::holds_node<mathutils::sum>( t ) ) {
 				auto &&children = cxxmath::get_node<mathutils::sum>( t ).children;
@@ -75,8 +74,8 @@ struct simplify_arithmetic_impl {
 		auto numerical_factor = cxxmath::get_node<mathutils::number>( std::reduce(
 			std::make_move_iterator( std::begin( summands ) ),
 			std::make_move_iterator( numbers_end ),
-			TreeType{ mathutils::number{ 0, 0 } },
-			[] ( auto &&num1, auto &&num2 ) -> TreeType {
+			model::lagrangian_tree{ mathutils::number{ 0, 0 } },
+			[] ( auto &&num1, auto &&num2 ) -> model::lagrangian_tree {
 				return (
 					cxxmath::get_node<mathutils::number>( num1 ).data +
 					cxxmath::get_node<mathutils::number>( num2 ).data
@@ -95,11 +94,11 @@ struct simplify_arithmetic_impl {
 	}
 	
 	template<class Children, class TransformedChildren>
-	TreeType operator()( mathutils::product, Children &&, TransformedChildren &&tch ) const {
+	model::lagrangian_tree operator()( mathutils::product, Children &&, TransformedChildren &&tch ) const {
 		if( std::size( tch ) == 1 )
 			return std::move( *std::begin( tch ) );
 		
-		std::vector<TreeType> factors;
+		std::vector<model::lagrangian_tree> factors;
 		for( auto &&t : tch ) {
 			if( cxxmath::holds_node<mathutils::product>( t ) ) {
 				auto &&children = cxxmath::get_node<mathutils::product>( t ).children;
@@ -120,8 +119,8 @@ struct simplify_arithmetic_impl {
 		auto numerical_factor = cxxmath::get_node<mathutils::number>( std::reduce(
 			std::make_move_iterator( std::begin( factors ) ),
 			std::make_move_iterator( numbers_end ),
-			TreeType{ mathutils::number{ 1, 0 } },
-			[] ( auto &&num1, auto &&num2 ) -> TreeType {
+			model::lagrangian_tree{ mathutils::number{ 1, 0 } },
+			[] ( auto &&num1, auto &&num2 ) -> model::lagrangian_tree {
 				return (
 					cxxmath::get_node<mathutils::number>( num1 ).data *
 					cxxmath::get_node<mathutils::number>( num2 ).data
@@ -143,7 +142,7 @@ struct simplify_arithmetic_impl {
 	}
 	
 	template<class Children, class TransformedChildren>
-	TreeType operator()( mathutils::difference, Children &&ch, TransformedChildren &&tch ) const {
+	model::lagrangian_tree operator()( mathutils::difference, Children &&ch, TransformedChildren &&tch ) const {
 		if( cxxmath::holds_node<mathutils::number>( tch.front() ) ) {
 			auto &&minuend = cxxmath::get_node<mathutils::number>( tch.front() );
 			
@@ -155,8 +154,8 @@ struct simplify_arithmetic_impl {
 			if( minuend.data == mathutils::number{ 0, 0 } ) {
 				return this->operator()(
 					mathutils::negation{},
-					std::array<TreeType, 1>{ std::move( ch.back() ) },
-					std::array<TreeType, 1>{ std::move( tch.back() ) }
+					std::array<model::lagrangian_tree, 1>{ std::move( ch.back() ) },
+					std::array<model::lagrangian_tree, 1>{ std::move( tch.back() ) }
 				);
 			}
 		} else if( cxxmath::holds_node<mathutils::number>( tch.back() ) ) {
@@ -170,7 +169,7 @@ struct simplify_arithmetic_impl {
 	}
 	
 	template<class Children, class TransformedChildren>
-	TreeType operator()( mathutils::quotient, Children &&, TransformedChildren &&tch ) const {
+	model::lagrangian_tree operator()( mathutils::quotient, Children &&, TransformedChildren &&tch ) const {
 		BOOST_LOG_NAMED_SCOPE( "simplify_arithmetic_impl::operator()()" );
 		
 		if( cxxmath::holds_node<mathutils::number>( tch.front() ) ) {
@@ -200,7 +199,7 @@ struct simplify_arithmetic_impl {
 	}
 	
 	template<class Children, class TransformedChildren>
-	TreeType operator()( mathutils::power, Children &&, TransformedChildren &&tch ) const {
+	model::lagrangian_tree operator()( mathutils::power, Children &&, TransformedChildren &&tch ) const {
 		if( cxxmath::holds_node<mathutils::number>( tch.front() ) ) {
 			auto &&basis = cxxmath::get_node<mathutils::number>( tch.front() );
 			
@@ -227,7 +226,7 @@ struct simplify_arithmetic_impl {
 	}
 	
 	template<class Children, class TransformedChildren>
-	TreeType operator()( mathutils::negation, Children &&, TransformedChildren &&tch ) const {
+	model::lagrangian_tree operator()( mathutils::negation, Children &&, TransformedChildren &&tch ) const {
 		if( cxxmath::holds_node<mathutils::number>( *std::begin( tch ) ) ) {
 			return - cxxmath::get_node<mathutils::number>( *std::begin( tch ) ).data;
 		}
@@ -242,10 +241,6 @@ struct simplify_arithmetic_impl {
 
 namespace PQuantum::calculation {
 model::lagrangian_tree simplify_arithmetic( const model::lagrangian_tree &lagrangian ) {
-	return cxxmath::recursive_tree_transform( lagrangian, simplify_arithmetic_impl<model::lagrangian_tree>{} );
-}
-
-delta_lagrangian_tree simplify_arithmetic( const delta_lagrangian_tree &lagrangian ){
-	return cxxmath::recursive_tree_transform( lagrangian, simplify_arithmetic_impl<delta_lagrangian_tree>{} );
+	return cxxmath::recursive_tree_transform( lagrangian, simplify_arithmetic_impl{} );
 }
 }

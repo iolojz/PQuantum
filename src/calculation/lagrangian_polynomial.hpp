@@ -11,7 +11,7 @@
 
 namespace PQuantum::cxxmath_compatibility {
 struct less_model_parameters {
-	static constexpr apply( const model::indexed_parameter &p1, const model::indexed_parameter &p2 ) {
+	static constexpr bool apply( const model::indexed_parameter &p1, const model::indexed_parameter &p2 ) {
 		if( p1.id < p2.id )
 			return true;
 		if( p1.id > p2.id )
@@ -22,7 +22,7 @@ struct less_model_parameters {
 };
 
 struct less_lagrangian_polynomial_symbol {
-	static constexpr apply(
+	static constexpr bool apply(
 		const calculation::lagrangian_polynomial_symbol &s1,
 		const calculation::lagrangian_polynomial_symbol &s2
 	) {
@@ -44,13 +44,13 @@ struct less_lagrangian_polynomial_symbol {
 };
 
 struct less_gamma_matrix {
-	static constexpr apply( const mathutils::gamma_matrix &gm1, const mathutils::gamma_matrix &gm2 ) {
+	static constexpr bool apply( const mathutils::gamma_matrix &gm1, const mathutils::gamma_matrix &gm2 ) {
 		return cxxmath::less( gm1.index, gm2.index );
 	}
 };
 
 struct less_spacetime_index {
-	static constexpr apply( const mathutils::spacetime_index &si1, const mathutils::spacetime_index &si2 ) {
+	static constexpr bool apply( const mathutils::spacetime_index &si1, const mathutils::spacetime_index &si2 ) {
 		if( si1.id.index() < si2.id.index() )
 			return true;
 		if( si1.id.index() > si2.id.index() )

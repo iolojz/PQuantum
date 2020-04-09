@@ -22,7 +22,7 @@ namespace model {
 class model_specification {
 	std::string model_name;
 	mathutils::manifold_specification spacetime_manifold;
-	boost::uuids::random_generator uuid_gen;
+	mutable boost::uuids::random_generator uuid_gen;
 	std::map<support::uuid, classical_field_specification> field_id_map;
 	std::map<support::uuid, std::string> parameter_id_map;
 	input_lagrangian_tree input_lagrangian_;
@@ -39,8 +39,8 @@ public:
 	);
 	
 	const std::string &name( void ) const { return model_name; }
-	
 	const mathutils::manifold_specification &spacetime( void ) const { return spacetime_manifold; }
+	support::uuid new_id( void ) const { return uuid_gen; }
 	
 	std::vector<support::uuid> field_ids( void ) const {
 		std::vector<support::uuid> fields;
