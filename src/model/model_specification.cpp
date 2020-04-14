@@ -20,7 +20,8 @@ struct to_lagrangian_impl {
 	    class Atom,
 	    class = std::enable_if_t<!std::is_same_v<std::decay_t<Atom>, mathutils::spacetime_derivative>>,
 		class = std::enable_if_t<!std::is_same_v<std::decay_t<Atom>, mathutils::dirac_operator>>,
-		class = std::enable_if_t<!std::is_same_v<std::decay_t<Atom>, indexed_field>>
+		class = std::enable_if_t<!std::is_same_v<std::decay_t<Atom>, indexed_field>>,
+		class = std::enable_if_t<!std::is_same_v<std::decay_t<Atom>, mathutils::index_sum>>
 	> lagrangian_tree operator()( Atom &&atom ) const {
 		return std::forward<Atom>( atom );
 	}
@@ -30,6 +31,10 @@ struct to_lagrangian_impl {
 	}
 	
 	lagrangian_tree operator()( const mathutils::dirac_operator & ) const {
+		return indexed_parameter{ invalid_id, {} };
+	}
+	
+	lagrangian_tree operator()( const mathutils::index_sum & ) const {
 		return indexed_parameter{ invalid_id, {} };
 	}
 	
@@ -53,39 +58,48 @@ struct to_lagrangian_impl {
 	template<class Children, class TransformedChildren>
 	lagrangian_tree operator()( mathutils::product, Children &&ch, TransformedChildren &&tch ) const {
 		BOOST_LOG_NAMED_SCOPE( "to_lagrangian_impl::operator()" );
-		auto is_derivative = [] ( const auto &ch_tch ) {
+		auto is_implicit_operator = [] ( const auto &ch_tch ) {
 			if( cxxmath::holds_node<mathutils::spacetime_derivative>( boost::get<0>( ch_tch ) )
-				|| cxxmath::holds_node<mathutils::dirac_operator>( boost::get<0>( ch_tch ) ) )
+				|| cxxmath::holds_node<mathutils::dirac_operator>( boost::get<0>( ch_tch ) )
+				|| cxxmath::holds_node<mathutils::index_sum>( boost::get<0>( ch_tch ) ) )
 				return true;
 			
 			return false;
 		};
 		
 		auto combined = boost::range::combine( ch, tch );
-		auto derivative_it = std::find_if( std::begin( combined ), std::end( combined ), is_derivative );
+		auto implicit_operator_it = std::find_if( std::begin( combined ), std::end( combined ), is_implicit_operator );
 		
-		std::vector<lagrangian_tree> factors( std::begin( tch ), boost::get<1>( derivative_it.get_iterator_tuple() ) );
+		std::vector<lagrangian_tree> factors(
+			std::begin( tch ),
+			boost::get<1>( implicit_operator_it.get_iterator_tuple() )
+		);
 		
-		if( derivative_it != std::end( combined ) ) {
-			const auto &derivative_node = boost::get<0>( *derivative_it );
+		if( implicit_operator_it != std::end( combined ) ) {
+			const auto &operator_node = boost::get<0>( *implicit_operator_it );
 			
-			auto next = std::next( derivative_it );
+			auto next = std::next( implicit_operator_it );
 			auto ch_tail = boost::make_iterator_range( boost::get<0>( next.get_iterator_tuple() ), std::end( ch ) );
 			auto tch_tail = boost::make_iterator_range( boost::get<1>( next.get_iterator_tuple() ), std::end( tch ) );
 			
-			if( std::empty( tch_tail ) ) {
-				BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Derivative does not act on anything.";
+			if( std::size( tch_tail ) == 0 ) {
+				BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Operator does not act on anything.";
 				error::exit_upon_error();
 			}
 			
-			if( cxxmath::holds_node<mathutils::spacetime_derivative>( derivative_node ) ) {
+			if( cxxmath::holds_node<mathutils::spacetime_derivative>( operator_node ) ) {
 				factors.emplace_back(
-					cxxmath::get_node<mathutils::spacetime_derivative>( derivative_node ).data,
+					cxxmath::get_node<mathutils::spacetime_derivative>( operator_node ).data,
 					this->operator()( mathutils::product{}, ch_tail, tch_tail )
 				);
-			} else if( cxxmath::holds_node<mathutils::dirac_operator>( derivative_node ) ) {
+			} else if( cxxmath::holds_node<mathutils::dirac_operator>( operator_node ) ) {
 				factors.emplace_back(
 					mathutils::dirac_operator{},
+					this->operator()( mathutils::product{}, ch_tail, tch_tail )
+				);
+			} else if( cxxmath::holds_node<mathutils::index_sum>( operator_node ) ) {
+				factors.emplace_back(
+					cxxmath::get_node<mathutils::index_sum>( operator_node ).data,
 					this->operator()( mathutils::product{}, ch_tail, tch_tail )
 				);
 			}

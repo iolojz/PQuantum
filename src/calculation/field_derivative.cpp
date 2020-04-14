@@ -202,6 +202,11 @@ public:
 		
 		return {mathutils::field_multiplication_operator{}, std::move( transformed )};
 	}
+	
+	template<class Args, class TransformedArgs>
+	model::lagrangian_tree operator()( const mathutils::index_sum &is, Args &&, TransformedArgs &&ta ) const {
+		return {is, std::forward<TransformedArgs>( ta )};
+	}
 };
 }
 

@@ -44,6 +44,12 @@ struct simplify_arithmetic_impl {
 	
 	template<class Children, class TransformedChildren>
 	model::lagrangian_tree
+	operator()( const mathutils::index_sum &is, Children &&, TransformedChildren &&tch ) const {
+		return { is, std::forward<TransformedChildren>( tch ) };
+	}
+	
+	template<class Children, class TransformedChildren>
+	model::lagrangian_tree
 	operator()( const mathutils::function_call<std::string> &fc, Children &&, TransformedChildren &&tch ) const {
 		return { fc, std::forward<TransformedChildren>( tch ) };
 	}

@@ -38,9 +38,9 @@
 		"lagrangian": [
 			"\\ImaginaryUnit Z_\\psi \\bar{\\psi} \\DiracOperator \\psi",
 			"- \\ImaginaryUnit m \\bar{\\psi} \\psi",
-			"1/4 Z_A (\\SpacetimeDerivative_{\\mu} A_{\\nu} - \\SpacetimeDerivative_{\\nu} A_{\\mu}) (\\SpacetimeDerivative^{\\mu} A^{\\nu} - \\SpacetimeDerivative^{\\nu} A^{\\mu})",
-			"- e \\bar{\\psi} \\gamma_{\\mu} A^{\\mu} \\psi",
-			"\\xi (\\SpacetimeDerivative_{\\mu} A^{\\mu}) * (\\SpacetimeDerivative_{\\nu} A^{\\nu})"
+			"1/4 Z_A \\IndexSum{\\mu, \\nu} (\\SpacetimeDerivative_{\\mu} A_{\\nu} - \\SpacetimeDerivative_{\\nu} A_{\\mu}) (\\SpacetimeDerivative^{\\mu} A^{\\nu} - \\SpacetimeDerivative^{\\nu} A^{\\mu})",
+			"- e \\IndexSum{\\mu} \\bar{\\psi} \\gamma_{\\mu} A^{\\mu} \\psi",
+			"\\xi (\\IndexSum{\\mu} \\SpacetimeDerivative_{\\mu} A^{\\mu})^2"
 		]
 	}
 }

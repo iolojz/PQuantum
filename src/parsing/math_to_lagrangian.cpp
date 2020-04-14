@@ -162,6 +162,48 @@ template<> model::input_lagrangian_tree converter::operator()<mathutils::functio
 		}
 		
 		return model::indexed_field{ *id, {} };
+	} else if( fcall_node.data.atom == "\\IndexSum" ) {
+		if( std::empty( fcall_node.children ) ) {
+			BOOST_LOG_SEV(logger, logging::severity_level::error) << "\\IndexSum{} without arguments";
+			error::exit_upon_error();
+		}
+		
+		std::vector<support::uuid> indices;
+		std::transform(
+			std::begin( fcall_node.children ),
+			std::end( fcall_node.children ),
+			std::back_inserter( indices ),
+			[this, &logger] ( const auto &child ) {
+				if( cxxmath::holds_node<mathutils::atom_with_optional_indices<std::string>>( child ) == false ) {
+					BOOST_LOG_SEV(logger, logging::severity_level::error)
+						<< "Arguments to \\IndexSum{} must be indices";
+					error::exit_upon_error();
+				}
+				
+				const auto &child_atom =
+					cxxmath::get_node<mathutils::atom_with_optional_indices<std::string>>( child ).data;
+				if( std::empty( child_atom.indices.upper ) == false ||
+					std::empty( child_atom.indices.lower ) == false ) {
+					BOOST_LOG_SEV(logger, logging::severity_level::error)
+						<< "Indexed index encountered";
+					error::exit_upon_error();
+				}
+				
+				auto as_int = string_to_int( child_atom.atom );
+				if( as_int ) {
+					BOOST_LOG_SEV(logger, logging::severity_level::error)
+						<< "Arguments to \\IndexSum{} must be symbolic indices";
+					error::exit_upon_error();
+				}
+				
+				return context.index_id_lookup_and_generate( child_atom.atom );
+			}
+		);
+		
+		return mathutils::index_sum{
+			std::make_move_iterator( std::begin( indices ) ),
+			std::make_move_iterator( std::end( indices ) )
+		};
 	}
 
 	BOOST_LOG_SEV(logger, logging::severity_level::error) << "Unknown function \"" << fcall_node.data.atom << "\"";

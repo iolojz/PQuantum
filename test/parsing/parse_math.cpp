@@ -26,7 +26,7 @@ struct logging_setup {
 BOOST_TEST_GLOBAL_FIXTURE( logging_setup );
 
 BOOST_AUTO_TEST_CASE( parse_math_binary ) {
-	using indexed_string_atom = atom_with_optional_indices<string_atom>;
+	using indexed_string_atom = atom_with_optional_indices<std::string>;
 	
 	std::string test = "a + b - c - d * e / (f + g)";
 	auto root_incarnation = parsing::parse_math( test );
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE( parse_math_binary ) {
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<indexed_string_atom>( a_plus_b_minus_c.children[1] ) );
 	auto c = cxxmath::get_node<indexed_string_atom>( a_plus_b_minus_c.children[1] );
 	
-	BOOST_TEST( c.data.atom.name == "c" );
+	BOOST_TEST( c.data.atom == "c" );
 	BOOST_TEST( c.data.indices.lower.size() == 0 );
 	BOOST_TEST( c.data.indices.upper.size() == 0 );
 	
@@ -57,11 +57,11 @@ BOOST_AUTO_TEST_CASE( parse_math_binary ) {
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<indexed_string_atom>( a_plus_b.children[1] ) );
 	auto b = cxxmath::get_node<indexed_string_atom>( a_plus_b.children[1] );
 	
-	BOOST_TEST( a.data.atom.name == "a" );
+	BOOST_TEST( a.data.atom == "a" );
 	BOOST_TEST( a.data.indices.lower.size() == 0 );
 	BOOST_TEST( a.data.indices.upper.size() == 0 );
 	
-	BOOST_TEST( b.data.atom.name == "b" );
+	BOOST_TEST( b.data.atom == "b" );
 	BOOST_TEST( b.data.indices.lower.size() == 0 );
 	BOOST_TEST( b.data.indices.upper.size() == 0 );
 	
@@ -78,11 +78,11 @@ BOOST_AUTO_TEST_CASE( parse_math_binary ) {
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<indexed_string_atom>( d_times_e.children[1] ) );
 	auto e = cxxmath::get_node<indexed_string_atom>( d_times_e.children[1] );
 	
-	BOOST_TEST( d.data.atom.name == "d" );
+	BOOST_TEST( d.data.atom == "d" );
 	BOOST_TEST( d.data.indices.lower.size() == 0 );
 	BOOST_TEST( d.data.indices.upper.size() == 0 );
 	
-	BOOST_TEST( e.data.atom.name == "e" );
+	BOOST_TEST( e.data.atom == "e" );
 	BOOST_TEST( e.data.indices.lower.size() == 0 );
 	BOOST_TEST( e.data.indices.upper.size() == 0 );
 	
@@ -93,17 +93,17 @@ BOOST_AUTO_TEST_CASE( parse_math_binary ) {
 	BOOST_TEST_REQUIRE( cxxmath::holds_node<indexed_string_atom>( f_plus_g.children[1] ) );
 	auto g = cxxmath::get_node<indexed_string_atom>( f_plus_g.children[1] );
 	
-	BOOST_TEST( f.data.atom.name == "f" );
+	BOOST_TEST( f.data.atom == "f" );
 	BOOST_TEST( f.data.indices.lower.size() == 0 );
 	BOOST_TEST( f.data.indices.upper.size() == 0 );
 	
-	BOOST_TEST( g.data.atom.name == "g" );
+	BOOST_TEST( g.data.atom == "g" );
 	BOOST_TEST( g.data.indices.lower.size() == 0 );
 	BOOST_TEST( g.data.indices.upper.size() == 0 );
 }
 
 BOOST_AUTO_TEST_CASE( parse_math_associative ) {
-	using indexed_string_atom = atom_with_optional_indices<string_atom>;
+	using indexed_string_atom = atom_with_optional_indices<std::string>;
 	
 	std::string test = "a b c d e";
 	auto root_incarnation = parsing::parse_math( test );
@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE( parse_math_associative ) {
 }
 
 BOOST_AUTO_TEST_CASE( parse_math_precedence ) {
-	using indexed_string_atom = atom_with_optional_indices<string_atom>;
+	using indexed_string_atom = atom_with_optional_indices<std::string>;
 	
 	std::string test = "a / b c";
 	auto root_incarnation = parsing::parse_math( test );

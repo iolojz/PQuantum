@@ -35,6 +35,11 @@ struct field_degree_counter {
 	}
 	
 	template<class Children, class TransformedChildren>
+	std::size_t operator()( mathutils::index_sum, Children &&, TransformedChildren &&tch ) const {
+		return tch.front();
+	}
+	
+	template<class Children, class TransformedChildren>
 	std::size_t
 	operator()( const mathutils::function_call<std::string> &fc, Children &&, TransformedChildren &&tch ) const {
 		BOOST_LOG_NAMED_SCOPE( "field_degree_counter::operator()()" );
