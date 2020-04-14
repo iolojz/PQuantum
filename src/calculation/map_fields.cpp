@@ -1,4 +1,8 @@
 //
+// Created by jayz on 14.04.20.
+//
+
+//
 // Created by jayz on 09.04.20.
 //
 
@@ -7,8 +11,8 @@
 namespace {
 using namespace PQuantum;
 
-struct zero_fields_impl {
-	const std::set<support::uuid> &field_ids;
+struct map_fields_impl {
+	const std::map<support::uuid, support::uuid> &field_map;
 	
 	template<
 		class Atom,
@@ -18,8 +22,9 @@ struct zero_fields_impl {
 	}
 	
 	model::lagrangian_tree operator()( const model::indexed_field &ifield ) const {
-		if( field_ids.find( ifield.id ) != std::end( field_ids ) )
-			return mathutils::number{ 0, 0 };
+		auto it = field_map.find( ifield.id );
+		if( it != std::end( field_map ) )
+			return model::indexed_field{ it->second, ifield.indices };
 		return ifield;
 	}
 	
@@ -34,7 +39,10 @@ struct zero_fields_impl {
 }
 
 namespace PQuantum::calculation {
-model::lagrangian_tree zero_fields( const model::lagrangian_tree &expr, const std::set<support::uuid> &field_ids ) {
-	return cxxmath::recursive_tree_transform( expr, zero_fields_impl{ field_ids } );
+model::lagrangian_tree map_fields(
+	const model::lagrangian_tree &expr,
+	const std::map<support::uuid, support::uuid> &field_id_map
+) {
+	return cxxmath::recursive_tree_transform( expr, map_fields_impl{ field_id_map } );
 }
 }

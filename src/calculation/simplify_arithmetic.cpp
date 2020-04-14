@@ -22,7 +22,7 @@ struct simplify_arithmetic_impl {
 	operator()( const mathutils::spacetime_derivative &sd, Children &&, TransformedChildren &&tch ) const {
 		auto &&transformed = tch.front();
 		if( cxxmath::holds_node<mathutils::number>( transformed ) )
-			return mathutils::number{ 0, 1 };
+			return mathutils::number{ 0, 0 };
 		
 		return { sd, std::forward<TransformedChildren>( tch ) };
 	}
@@ -31,7 +31,7 @@ struct simplify_arithmetic_impl {
 	model::lagrangian_tree operator()( mathutils::dirac_operator, Children &&, TransformedChildren &&tch ) const {
 		auto &&transformed = tch.front();
 		if( cxxmath::holds_node<mathutils::number>( transformed ) )
-			return mathutils::number{ 0, 1 };
+			return mathutils::number{ 0, 0 };
 		
 		return { mathutils::dirac_operator{}, std::forward<TransformedChildren>( tch ) };
 	}
@@ -90,6 +90,8 @@ struct simplify_arithmetic_impl {
 			summands.front() = std::move( numerical_factor );
 		}
 		
+		if( std::empty( summands ) )
+			return mathutils::number{ 0, 0 };
 		return { mathutils::sum{}, std::move( summands ) };
 	}
 	
@@ -138,6 +140,8 @@ struct simplify_arithmetic_impl {
 			factors.front() = std::move( numerical_factor );
 		}
 		
+		if( std::empty( factors ) )
+			return mathutils::number{ 1, 0 };
 		return { mathutils::product{}, std::move( factors ) };
 	}
 	

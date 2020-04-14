@@ -42,10 +42,10 @@ public:
 	const mathutils::manifold_specification &spacetime( void ) const { return spacetime_manifold; }
 	support::uuid new_id( void ) const { return uuid_gen; }
 	
-	std::vector<support::uuid> field_ids( void ) const {
-		std::vector<support::uuid> fields;
+	std::set<support::uuid> field_ids( void ) const {
+		std::set<support::uuid> fields;
 		for( const auto &id_entry : field_id_map ) {
-			fields.push_back( id_entry.first );
+			fields.emplace( id_entry.first );
 		}
 		return fields;
 	}

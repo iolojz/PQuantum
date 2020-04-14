@@ -73,7 +73,7 @@ struct to_lagrangian_impl {
 			auto ch_tail = boost::make_iterator_range( boost::get<0>( next.get_iterator_tuple() ), std::end( ch ) );
 			auto tch_tail = boost::make_iterator_range( boost::get<1>( next.get_iterator_tuple() ), std::end( tch ) );
 			
-			if( std::size( tch_tail ) == 0 ) {
+			if( std::empty( tch_tail ) ) {
 				BOOST_LOG_SEV( logger, logging::severity_level::error ) << "Derivative does not act on anything.";
 				error::exit_upon_error();
 			}

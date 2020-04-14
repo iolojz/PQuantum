@@ -10,6 +10,7 @@ namespace {
 using namespace PQuantum;
 
 class derive_expr_impl {
+	mutable logging::severity_logger logger;
 	const std::map<support::uuid, support::uuid> &delta_field_map;
 public:
 	derive_expr_impl( const std::map<support::uuid, support::uuid> &dfm ) : delta_field_map{dfm} {}
@@ -61,11 +62,20 @@ public:
 	
 	template<class Args, class TransformedArgs>
 	model::lagrangian_tree operator()( mathutils::quotient, Args &&a, TransformedArgs &&ta ) const {
+		BOOST_LOG_NAMED_SCOPE( "calculation::derive_expr_impl::operator()()" );
+		
 		if( cxxmath::holds_node<mathutils::number>( ta.back() ) ) {
 			if( cxxmath::get_node<mathutils::number>( ta.back() ).data == mathutils::number{0, 0} )
 				return {mathutils::quotient{}, ta.front(), a.back()};
 		}
 		
+		// FIXME: Fix indices
+		
+		BOOST_LOG_SEV( logger, logging::severity_level::error )
+			<< "Cannot take derivative of quotient. "
+			<< "Index handling is not implemented yet.";
+		error::exit_upon_error();
+		/*
 		return {
 			mathutils::difference{},
 			model::lagrangian_tree{
@@ -86,11 +96,13 @@ public:
 					a.back()
 				}
 			},
-		};
+		};*/
 	}
 	
 	template<class Args, class TransformedArgs>
 	model::lagrangian_tree operator()( mathutils::power, Args &&a, TransformedArgs &&ta ) const {
+		BOOST_LOG_NAMED_SCOPE( "calculation::derive_expr_impl::operator()()" );
+		
 		if( cxxmath::holds_node<mathutils::number>( a.back() ) ) {
 			if( cxxmath::get_node<mathutils::number>( a.back() ).data == mathutils::number{0, 0} )
 				return mathutils::number{0, 0};
@@ -98,6 +110,12 @@ public:
 				return ta.front();
 		}
 		
+		// FIXME: Fix indices
+		BOOST_LOG_SEV( logger, logging::severity_level::error )
+			<< "Cannot take derivative of power. "
+			<< "Index handling is not implemented yet.";
+		error::exit_upon_error();
+		/*
 		return {
 			mathutils::sum{},
 			model::lagrangian_tree{
@@ -127,18 +145,34 @@ public:
 				},
 				ta.back()
 			}
-		};
+		};*/
 	}
 	
 	template<class Args, class TransformedArgs>
 	model::lagrangian_tree
-	operator()( const mathutils::function_call<std::string> &f, Args &&a, TransformedArgs &&ta ) const {
+	operator()( const mathutils::function_call<std::string> &f, Args &&, TransformedArgs &&ta ) const {
+		BOOST_LOG_NAMED_SCOPE( "calculation::derive_expr_impl::operator()()" );
+		// FIXME: Fix indices
+		
 		if( f.atom == "ln" ) {
-			return {
+			BOOST_LOG_SEV( logger, logging::severity_level::error )
+				<< "Cannot take derivative of ln(). "
+				<< "Index handling is not implemented yet.";
+			error::exit_upon_error();
+			
+			/*return {
 				mathutils::quotient{},
 				std::move( *std::begin( ta ) ),
 				std::move( *std::begin( a ) )
-			};
+			};*/
+		} else if( f.atom == "factorial" ) {
+			if( cxxmath::holds_node<mathutils::number>( *std::begin( ta ) ) == false ) {
+				BOOST_LOG_SEV( logger, logging::severity_level::error )
+					<< "Cannot take derivative of factorial()";
+				error::exit_upon_error();
+			}
+			
+			return { f, std::move( *std::begin( ta ) ) };
 		}
 		
 		throw std::runtime_error( "Cannot take derivative of given function_call" );
@@ -172,9 +206,9 @@ public:
 }
 
 namespace PQuantum::calculation {
-model::lagrangian_tree take_derivative(
-	const std::map<support::uuid, support::uuid> &delta_field_map,
-	const model::lagrangian_tree &expr
+model::lagrangian_tree field_derivative(
+	const model::lagrangian_tree &expr,
+	const std::map<support::uuid, support::uuid> &delta_field_map
 ) {
 	return cxxmath::recursive_tree_transform( expr, derive_expr_impl{delta_field_map} );
 }

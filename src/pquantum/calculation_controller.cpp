@@ -44,7 +44,7 @@ void calculation_controller::calculate_beta_functions( const model::model_specif
 	
 	switch( method ) {
 	case calculation_method::wetterich:
-		calculation::calculate_beta_functions_with_wetterich_equation( model );
+		calculation::wetterich::calculate_beta_functions( model );
 		break;
 	default:
 		throw std::runtime_error( "This cannot happen!" );

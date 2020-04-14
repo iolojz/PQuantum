@@ -16,16 +16,27 @@ struct pi_constant {
 	constexpr bool operator==( const pi_constant & ) const { return true; }
 };
 
-std::size_t maximum_field_degree( const model::lagrangian_tree &expr );
-
 model::lagrangian_tree simplify_arithmetic( const model::lagrangian_tree &expr );
 
-model::lagrangian_tree take_derivative(
-	const std::map<support::uuid, support::uuid> &delta_field_map,
-	const model::lagrangian_tree &expr
+model::lagrangian_tree field_derivative(
+	const model::lagrangian_tree &expr,
+	const std::map<support::uuid, support::uuid> &delta_field_map
 );
 
-model::lagrangian_tree zero_fields( const model::lagrangian_tree &expr, const std::vector<support::uuid> &field_ids );
+std::size_t maximum_field_degree( const model::lagrangian_tree &expr );
+
+std::map<std::size_t, model::lagrangian_tree> expand_in_field_degrees(
+	const model::lagrangian_tree &expr,
+	const std::set<support::uuid> &field_ids,
+	const std::set<std::size_t> &field_degrees,
+	const std::function<support::uuid(void)> &uuid_gen
+);
+
+model::lagrangian_tree zero_fields( const model::lagrangian_tree &expr, const std::set<support::uuid> &field_ids );
+model::lagrangian_tree map_fields(
+	const model::lagrangian_tree &expr,
+	const std::map<support::uuid, support::uuid> &field_id_map
+);
 
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const euler_constant & ) {
 	return os << "\\EulerConstant";
