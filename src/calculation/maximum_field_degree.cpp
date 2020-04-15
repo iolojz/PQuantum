@@ -94,7 +94,7 @@ struct field_degree_counter {
 	}
 	
 	template<class Children, class TransformedChildren>
-	std::size_t operator()( mathutils::power, Children &&, TransformedChildren &&tch ) const {
+	std::size_t operator()( mathutils::power, Children &&ch, TransformedChildren &&tch ) const {
 		BOOST_LOG_NAMED_SCOPE( "field_degree_counter::operator()()" );
 		std::size_t exponent_degree = tch.back();
 		
@@ -104,12 +104,28 @@ struct field_degree_counter {
 			error::exit_upon_error();
 		}
 		
-		// TODO: Check if the exponent is a positive integer
-		
 		std::size_t base_degree = tch.front();
 		if( base_degree != 0 ) {
+			if( cxxmath::holds_node<mathutils::number>( ch.back() ) ) {
+				const auto &exponent_node = cxxmath::get_node<mathutils::number>( ch.back() );
+				if( exponent_node.data.is_real_integer() ) {
+					if( sign( exponent_node.data.real_data() ) >= 0 ) {
+						std::size_t exponent = exponent_node.data.real_data().template convert_to<std::size_t>();
+						std::size_t degree = base_degree * exponent;
+						
+						if( degree / base_degree == exponent )
+							return degree;
+						
+						BOOST_LOG_SEV( logger, logging::severity_level::error )
+							<< "Overflow occurred.";
+						error::exit_upon_error();
+					}
+				}
+			}
+			
 			BOOST_LOG_SEV( logger, logging::severity_level::error )
-				<< "Cannot determine field degree of expression with non-zero field degree in base.";
+				<< "Cannot determine field degree of expression with non-zero field degree in base "
+				<< "and non-integer exponent.";
 			error::exit_upon_error();
 		}
 		

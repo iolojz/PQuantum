@@ -7,6 +7,7 @@ add_library(calculation SHARED
 	maximum_field_degree.cpp
 	lagrangian_expansion.cpp
 	map_fields.cpp
+	reindex_internal_indices.cpp
 	wetterich/trace_terms_of_degrees.cpp
 	wetterich/beta_functions.cpp)
 target_link_libraries(calculation logging error)

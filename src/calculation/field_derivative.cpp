@@ -69,13 +69,6 @@ public:
 				return {mathutils::quotient{}, ta.front(), a.back()};
 		}
 		
-		// FIXME: Fix indices
-		
-		BOOST_LOG_SEV( logger, logging::severity_level::error )
-			<< "Cannot take derivative of quotient. "
-			<< "Index handling is not implemented yet.";
-		error::exit_upon_error();
-		/*
 		return {
 			mathutils::difference{},
 			model::lagrangian_tree{
@@ -96,7 +89,7 @@ public:
 					a.back()
 				}
 			},
-		};*/
+		};
 	}
 	
 	template<class Args, class TransformedArgs>
@@ -110,12 +103,6 @@ public:
 				return ta.front();
 		}
 		
-		// FIXME: Fix indices
-		BOOST_LOG_SEV( logger, logging::severity_level::error )
-			<< "Cannot take derivative of power. "
-			<< "Index handling is not implemented yet.";
-		error::exit_upon_error();
-		/*
 		return {
 			mathutils::sum{},
 			model::lagrangian_tree{
@@ -145,26 +132,20 @@ public:
 				},
 				ta.back()
 			}
-		};*/
+		};
 	}
 	
 	template<class Args, class TransformedArgs>
 	model::lagrangian_tree
-	operator()( const mathutils::function_call<std::string> &f, Args &&, TransformedArgs &&ta ) const {
+	operator()( const mathutils::function_call<std::string> &f, Args &&a, TransformedArgs &&ta ) const {
 		BOOST_LOG_NAMED_SCOPE( "calculation::derive_expr_impl::operator()()" );
-		// FIXME: Fix indices
 		
 		if( f.atom == "ln" ) {
-			BOOST_LOG_SEV( logger, logging::severity_level::error )
-				<< "Cannot take derivative of ln(). "
-				<< "Index handling is not implemented yet.";
-			error::exit_upon_error();
-			
-			/*return {
+			return {
 				mathutils::quotient{},
 				std::move( *std::begin( ta ) ),
 				std::move( *std::begin( a ) )
-			};*/
+			};
 		} else if( f.atom == "factorial" ) {
 			if( cxxmath::holds_node<mathutils::number>( *std::begin( ta ) ) == false ) {
 				BOOST_LOG_SEV( logger, logging::severity_level::error )

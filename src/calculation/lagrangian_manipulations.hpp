@@ -38,6 +38,11 @@ model::lagrangian_tree map_fields(
 	const std::map<support::uuid, support::uuid> &field_id_map
 );
 
+model::lagrangian_tree reindex_internal_indices(
+	const model::lagrangian_tree &expr,
+	const std::function<support::uuid(void)> &uuid_gen
+);
+
 [[maybe_unused]] static std::ostream &operator<<( std::ostream &os, const euler_constant & ) {
 	return os << "\\EulerConstant";
 }
