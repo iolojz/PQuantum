@@ -39,6 +39,9 @@ struct simplify_arithmetic_impl {
 	template<class Children, class TransformedChildren>
 	model::lagrangian_tree
 	operator()( mathutils::field_multiplication_operator, Children &&, TransformedChildren &&tch ) const {
+		if( cxxmath::holds_node<mathutils::number>( tch.front() ) )
+			return std::move( tch.front() );
+		
 		return { mathutils::field_multiplication_operator{}, std::forward<TransformedChildren>( tch ) };
 	}
 	
