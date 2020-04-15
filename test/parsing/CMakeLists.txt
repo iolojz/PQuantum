@@ -5,5 +5,5 @@ target_link_libraries(parse_math parsing)
 add_test(parse_math parse_math)
 
 add_executable(parse_qed parse_qed.cpp)
-target_link_libraries(parse_qed parsing mathutils logging error model)
+target_link_libraries(parse_qed parsing logging error model)
 add_test(parse_qed parse_qed)

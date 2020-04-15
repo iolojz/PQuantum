@@ -5,7 +5,7 @@ add_library(calculation SHARED
 	simplify_arithmetic.cpp
 	zero_fields.cpp
 	maximum_field_degree.cpp
-	lagrangian_expansion.cpp
+	expand_in_field_degrees.cpp
 	map_fields.cpp
 	reindex_internal_indices.cpp
 	wetterich/trace_terms_of_degrees.cpp

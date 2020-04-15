@@ -20,8 +20,7 @@ struct simplify_arithmetic_impl {
 	template<class Children, class TransformedChildren>
 	model::lagrangian_tree
 	operator()( const mathutils::spacetime_derivative &sd, Children &&, TransformedChildren &&tch ) const {
-		auto &&transformed = tch.front();
-		if( cxxmath::holds_node<mathutils::number>( transformed ) )
+		if( cxxmath::holds_node<mathutils::number>( tch.front() ) )
 			return mathutils::number{ 0, 0 };
 		
 		return { sd, std::forward<TransformedChildren>( tch ) };
@@ -29,8 +28,7 @@ struct simplify_arithmetic_impl {
 	
 	template<class Children, class TransformedChildren>
 	model::lagrangian_tree operator()( mathutils::dirac_operator, Children &&, TransformedChildren &&tch ) const {
-		auto &&transformed = tch.front();
-		if( cxxmath::holds_node<mathutils::number>( transformed ) )
+		if( cxxmath::holds_node<mathutils::number>( tch.front() ) )
 			return mathutils::number{ 0, 0 };
 		
 		return { mathutils::dirac_operator{}, std::forward<TransformedChildren>( tch ) };
@@ -164,7 +162,7 @@ struct simplify_arithmetic_impl {
 			
 			if( cxxmath::holds_node<mathutils::number>( tch.back() ) ) {
 				auto &&subtrahend = cxxmath::get_node<mathutils::number>( tch.back() );
-				return ( minuend.data - subtrahend.data );
+				return (std::move( minuend.data ) - std::move( subtrahend.data ));
 			}
 			
 			if( minuend.data == mathutils::number{ 0, 0 } ) {

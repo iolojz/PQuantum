@@ -81,6 +81,7 @@ std::map<std::size_t, model::lagrangian_tree> expand_in_field_degrees(
 	for( auto &&lazy_derivative : lazy_derivatives ) {
 		std::size_t degree = lazy_derivative.first;
 		auto derivative = lazy_derivative.second.get();
+		
 		model::lagrangian_tree expansion_term = {
 			mathutils::quotient{},
 			std::move( derivative ),

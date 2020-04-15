@@ -52,7 +52,7 @@ public:
 	}
 	
 	template<class Number, CXXMATH_ENABLE_IF_TAG_IS(Number,number_tag)>
-	number &operator+( Number &&other ) const {
+	number operator+( Number &&other ) const {
 		return (number{ *this } += std::forward<Number>( other ));
 	}
 	
@@ -64,24 +64,23 @@ public:
 	}
 	
 	template<class Number, CXXMATH_ENABLE_IF_TAG_IS(Number,number_tag)>
-	number &operator-( Number &&other ) const {
+	number operator-( Number &&other ) const {
 		return (number{ *this } -= std::forward<Number>( other ));
 	}
 	
 	template<class Number, CXXMATH_ENABLE_IF_TAG_IS(Number,number_tag)>
 	number &operator*=( Number &&other ) {
-		auto new_real = real * other.real - imag * other.imag;
-		imag *= std::forward<Number>( other ).real;
-		real *= std::forward<Number>( other ).imag;
+		boost::multiprecision::cpp_rational new_real = real * other.real - imag * other.imag;
+		imag *= other.real; //std::forward<Number>( other ).real;
+		real *= other.imag; //std::forward<Number>( other ).imag;
 		
-		imag += std::move( real );
-		real = std::move( new_real );
-		
+		imag += real; //std::move( real );
+		real = new_real; //std::move( new_real );
 		return *this;
 	}
 	
 	template<class Number, CXXMATH_ENABLE_IF_TAG_IS(Number,number_tag)>
-	number &operator*( Number &&other ) const {
+	number operator*( Number &&other ) const {
 		return (number{ *this } *= std::forward<Number>( other ));
 	}
 	
@@ -96,7 +95,7 @@ public:
 	}
 	
 	template<class Number, CXXMATH_ENABLE_IF_TAG_IS(Number,number_tag)>
-	number &operator/( Number &&other ) const {
+	number operator/( Number &&other ) const {
 		return (number{ *this } /= std::forward<Number>( other ));
 	}
 	
@@ -106,7 +105,7 @@ public:
 		return *this;
 	}
 	
-	number &operator-( void ) const & {
+	number operator-( void ) const & {
 		return - number{ *this };
 	}
 	
